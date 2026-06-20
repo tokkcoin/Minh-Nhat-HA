@@ -81,9 +81,15 @@
   - `pi-test-payment.html` + `js/piPayment.js` — a standalone page (not linked from main nav, `<meta name="robots" content="noindex">`) with a clear Mainnet/real-money warning banner, an "authenticate → createPayment → approve → complete" flow for a fixed 0.01 π amount, and an `onIncompletePaymentFound` handler per Pi SDK requirements.
 - **Not done yet / still needs the user**: add `PI_API_KEY` to Vercel's environment variables (the user must do this themselves in the Vercel dashboard — not something that can be done from here), then open `pi-test-payment.html` inside Pi Browser at the Mainnet production URL and actually tap pay once to complete the checklist step.
 
+## 2026-06-21 — "Sign in with Pi" (username scope)
+
+- **What was built**: `js/piAuth.js` (auto-triggers on `index.html` load, plus a manual "Sign in with Pi" button in the header) and `api/verify-auth.js` (validates the client's `accessToken` against Pi's `GET /v2/me`, then issues an HMAC-signed HttpOnly session cookie — no database). `js/common.js`'s `initPiSdk()` was made async/memoized so `Pi.init()` is awaited exactly once before any `Pi.authenticate()` call.
+- **New required env var**: `SESSION_SECRET` (any long random string) — same pattern as `PI_API_KEY`, must be added in Vercel before sign-in will work, otherwise `/api/verify-auth` returns 500.
+- **Not built**: sign-out, persisting users anywhere beyond the session cookie, using the session for anything yet (no protected routes/features check it). This is sign-in only, not a full account system.
+
 ## Open TODOs
 
-- [ ] User needs to add `PI_API_KEY` as a Vercel environment variable before the payment buttons will work (server returns a 500 "missing PI_API_KEY" otherwise)
+- [x] `PI_API_KEY` Vercel env var — confirmed working 2026-06-20/21. Note: the dashboard showed it saved with Production checked *before* it actually took effect; a plain "Redeploy" of the existing deployment didn't pick it up, but a fresh `git push` (new deployment from scratch) did. If this env-var pattern recurs, prefer triggering a brand-new deployment over trusting the Redeploy button.
 - [ ] Confirm the one-time Mainnet verification payment actually completes successfully inside Pi Browser
 - [ ] Decide what a single "balance entry" (mood/health/etc. *rating*, distinct from the journal posts) looks like before building the rating half of the dashboard
 - [ ] Real backend/multi-user social platform for the journal — explicitly deferred by the user, not yet scheduled

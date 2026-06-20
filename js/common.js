@@ -16,16 +16,25 @@ function showToast(message, duration = 2500) {
 }
 
 // ── 2. Pi SDK Init ────────────────────────────────────────────
+// Returns a Promise<boolean> (true once Pi.init() has resolved).
+// Memoized so concurrent callers (e.g. main.js and piAuth.js on the
+// same page) await the same init instead of calling Pi.init() twice.
 
-function initPiSdk() {
+let piInitPromise = null;
+
+async function initPiSdk() {
   const statusEl = document.getElementById('pi-status');
-  if (!statusEl) return;
 
   if (!window.Pi) {
-    statusEl.textContent = '⚠️ Not running in Pi Browser';
-    return;
+    if (statusEl) statusEl.textContent = '⚠️ Not running in Pi Browser';
+    return false;
   }
 
-  Pi.init({ version: '2.0', sandbox: true });
-  statusEl.textContent = '✅ Pi Browser detected (sandbox)';
+  if (!piInitPromise) {
+    piInitPromise = Promise.resolve(Pi.init({ version: '2.0', sandbox: true }));
+  }
+  await piInitPromise;
+
+  if (statusEl) statusEl.textContent = '✅ Pi Browser detected (sandbox)';
+  return true;
 }

@@ -45,7 +45,14 @@ Pi Network App Studio apps must be deployable as static files and run inside the
 `api/approve-payment.js` and `api/complete-payment.js` are Vercel serverless Node functions (zero-config, no `package.json`/build step needed — Vercel auto-detects `/api/*.js`). They exist because Pi's Payments API (`POST /v2/payments/{id}/approve` and `/complete`) requires the app's secret **Server API Key**, which must never be sent from client-side JS or committed to the repo.
 
 - **Secret storage**: `PI_API_KEY` is set as a Vercel project Environment Variable (Project Settings → Environment Variables in the Vercel dashboard) — never hardcoded, never in a file the repo tracks.
-- **Scope of the exception**: these two endpoints only. Don't add other server-side features here without going back to the user — the project is still "static + 2 payment endpoints," not "now a general backend."
+- **Scope of the exception**: originally these two payment endpoints; `api/verify-auth.js` (below) is a third, deliberately added one. Don't add further server-side features without going back to the user.
+
+### Sign-in with Pi (`api/verify-auth.js`)
+
+- Client (`js/piAuth.js`, wired into `index.html` only) calls `Pi.authenticate(['username'], onIncompletePaymentFound)`, then POSTs the resulting `accessToken` to `/api/verify-auth`.
+- The server validates it via `GET https://api.minepi.com/v2/me` with `Authorization: Bearer <accessToken>` — this does **not** need `PI_API_KEY` (that key is only for the app-initiated payments endpoints).
+- No database: a session is just a `{uid, username, iat}` payload HMAC-signed with a second secret, `SESSION_SECRET` (also a Vercel env var, same rules as `PI_API_KEY` — never committed), set as an HttpOnly cookie. There's nowhere to log out yet (not built — no logout flow exists).
+- `js/common.js`'s `initPiSdk()` is memoized (`piInitPromise`) specifically so `Pi.init()` is only ever called once and is fully awaited before any `Pi.authenticate()` call, even though both `main.js` and `piAuth.js` independently call `initPiSdk()` on `index.html`.
 - **Mainnet, not testnet**: this app's Pi Developer Portal entry is on Mainnet — `pi-test-payment.html` sends a real (small) amount of Pi. The user explicitly confirmed this is intentional (2026-06-21) when this was built — see `.claude/memory.md`.
 
 ---

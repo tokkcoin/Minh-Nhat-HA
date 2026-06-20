@@ -27,9 +27,13 @@
           <span>Five Elements Tracker</span>
         </div>
       </div>
-      <span class="pi-status" id="pi-status">Checking Pi Browser…</span>
+      <div class="header-actions">
+        <span class="pi-status" id="pi-status">Checking Pi Browser…</span>
+        <button type="button" id="pi-signin-button" class="pi-signin-btn">Sign in with Pi</button>
+      </div>
     </div>
   </header>
+  <p id="auth-status" class="auth-status"></p>
 
   <!-- ══════════════════════════════════════════════════
        1. HERO
@@ -167,5 +171,6 @@
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <script src="js/common.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/piAuth.js"></script>
 </body>
 </html>

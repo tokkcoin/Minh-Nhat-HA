@@ -31,10 +31,12 @@ life-balance/
 │   ├── main.js                 # index.html boot
 │   ├── journal.js              # journal.html: composer, feed, like/delete, localStorage persistence
 │   ├── chartConcepts.js        # chart-concepts.html: builds weekly post-count series (real or demo) and renders the 5 chart designs
-│   └── piPayment.js            # pi-test-payment.html: authenticate -> createPayment -> server approve/complete flow
-├── api/                     # Vercel serverless functions — ONLY exception to the static/no-backend rule (see tech-defaults.md)
+│   ├── piPayment.js            # pi-test-payment.html: authenticate -> createPayment -> server approve/complete flow
+│   └── piAuth.js               # index.html only: Pi.authenticate (username scope) -> /api/verify-auth -> session cookie
+├── api/                     # Vercel serverless functions — deliberate, scoped exception to the static/no-backend rule (see tech-defaults.md)
 │   ├── approve-payment.js     # POST: server-side U2A payment approval (uses PI_API_KEY env var)
-│   └── complete-payment.js    # POST: server-side U2A payment completion (uses PI_API_KEY env var)
+│   ├── complete-payment.js    # POST: server-side U2A payment completion (uses PI_API_KEY env var)
+│   └── verify-auth.js         # POST: validates a Pi accessToken via GET /v2/me, issues a signed session cookie (uses SESSION_SECRET env var)
 ├── data/                    # Script-loaded static data files (see .claude/agents/researcher.md) — NOT user content
 └── .claude/                 # Claude Configuration Folder
     ├── CLAUDE.md           # Project identity & guidelines
