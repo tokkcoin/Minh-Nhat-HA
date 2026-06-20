@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Journal — Life Balance</title>
+  <meta name="description" content="Your personal journal for one of the Five Elements — post, attach photos/video/audio, and look back." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════════
+       TOAST NOTIFICATION
+  ══════════════════════════════════════════════════ -->
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ══════════════════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════════════════ -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="logo">
+        <div class="logo-mark">LB</div>
+        <div class="logo-text">
+          <strong>Life Balance</strong>
+          <span>Five Elements Tracker</span>
+        </div>
+      </div>
+      <span class="pi-status" id="pi-status">Checking Pi Browser…</span>
+    </div>
+  </header>
+
+  <a class="journal-back" href="index.html#dashboard">← Back to dashboard</a>
+
+  <!-- ══════════════════════════════════════════════════
+       NOT FOUND (shown only if ?el= is missing/invalid)
+  ══════════════════════════════════════════════════ -->
+  <section class="not-found" id="not-found" hidden>
+    <p>This journal link doesn't point to a known element.</p>
+    <a class="btn btn-primary" href="index.html#dashboard">Back to dashboard</a>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       JOURNAL
+  ══════════════════════════════════════════════════ -->
+  <div id="journal">
+    <section class="journal-hero">
+      <div class="journal-hero__icon" data-el-icon aria-hidden="true">⛏️</div>
+      <h1 class="journal-hero__title"><span data-el-name>Metal</span> Journal</h1>
+      <p class="journal-hero__dimension"><span data-el-dimension>Money</span> — your private check-ins for this element</p>
+    </section>
+
+    <main class="journal" role="main">
+      <div class="composer">
+        <textarea id="composer-text" placeholder="How did today go?" aria-label="Write a journal entry"></textarea>
+        <input type="file" id="composer-file" accept="image/*,video/*,audio/*" hidden />
+        <div class="composer__row">
+          <button type="button" id="composer-attach" class="composer__attach">📎 Attach photo/video/audio</button>
+          <span id="composer-preview" class="composer__preview" hidden></span>
+          <button type="button" id="composer-post" class="composer__post">Post</button>
+        </div>
+      </div>
+
+      <div class="feed" id="feed" role="feed" aria-label="Journal entries"></div>
+    </main>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════════════ -->
+  <footer class="site-footer" role="contentinfo">
+    <p>&copy; 2026 <strong>Life Balance</strong> — built for Pi Network App Studio.</p>
+  </footer>
+
+  <!-- Pi SDK must load before js/common.js -->
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/journal.js"></script>
+</body>
+</html>

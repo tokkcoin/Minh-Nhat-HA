@@ -1,0 +1,53 @@
+{
+  "project": {
+    "name": "Life Balance — Five Elements Tracker",
+    "version": "0.1.0",
+    "type": "static-website",
+    "platform": "pi-network-app-studio",
+    "language": "en"
+  },
+  "ai": {
+    "model_preference": "claude-sonnet",
+    "context_files": [
+      ".claude/CLAUDE.md",
+      ".claude/rules/workflow.md",
+      ".claude/rules/design.md",
+      ".claude/rules/tech-defaults.md"
+    ],
+    "always_read_before_edit": [
+      ".claude/rules/design.md",
+      ".claude/rules/tech-defaults.md"
+    ]
+  },
+  "codeStyle": {
+    "indentation": "2 spaces",
+    "quotes": "single",
+    "semicolons": true,
+    "cssNaming": "BEM-like",
+    "jsStyle": "ES6+ arrow functions, const/let only"
+  },
+  "design": {
+    "elements": {
+      "metal": { "dimension": "Money", "color": "#b8860b" },
+      "wood": { "dimension": "Health", "color": "#4caf50" },
+      "water": { "dimension": "Talent", "color": "#2196f3" },
+      "fire": { "dimension": "Mood", "color": "#e64a3c" },
+      "earth": { "dimension": "Situation", "color": "#8d6e4f" }
+    },
+    "font": "Inter",
+    "fontSource": "Google Fonts",
+    "iconStyle": "emoji + inline SVG",
+    "darkMode": false
+  },
+  "paths": {
+    "root": "c:/Users/ADM/Desktop/life-balance",
+    "styles": "css/style.css",
+    "scripts": "js/main.js",
+    "entry": "index.html"
+  },
+  "piNetwork": {
+    "sdkUrl": "https://sdk.minepi.com/pi-sdk.js",
+    "sdkVersion": "2.0",
+    "sandbox": true
+  }
+}

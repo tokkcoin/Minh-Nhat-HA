@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Life Balance — Five Elements Tracker</title>
+  <meta name="description" content="Track your balance across Money, Health, Talent, Mood, and Situation through the Five Elements." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════════
+       TOAST NOTIFICATION
+  ══════════════════════════════════════════════════ -->
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ══════════════════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════════════════ -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="logo">
+        <div class="logo-mark">LB</div>
+        <div class="logo-text">
+          <strong>Life Balance</strong>
+          <span>Five Elements Tracker</span>
+        </div>
+      </div>
+      <span class="pi-status" id="pi-status">Checking Pi Browser…</span>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════
+       1. HERO
+  ══════════════════════════════════════════════════ -->
+  <section class="hero">
+    <div>
+      <span class="hero-badge">✨ Five Elements, one dashboard</span>
+      <h1 class="hero-title">Balance<br>for <em>your life</em></h1>
+      <p class="hero-subtitle">Track Money, Health, Talent, Mood, and Situation through the Five Elements. One check-in, five dimensions, daily clarity.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#dashboard">Get started</a>
+        <a class="btn-text" href="#how-it-works">How it works</a>
+      </div>
+    </div>
+    <div class="hero-graphic" aria-hidden="true">
+      <div class="hero-orb"></div>
+      <div class="hero-orb__node hero-orb__node--metal">⛏️</div>
+      <div class="hero-orb__node hero-orb__node--wood">🌳</div>
+      <div class="hero-orb__node hero-orb__node--water">💧</div>
+      <div class="hero-orb__node hero-orb__node--fire">🔥</div>
+      <div class="hero-orb__node hero-orb__node--earth">🪨</div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       2. ELEMENTS SHOWCASE
+  ══════════════════════════════════════════════════ -->
+  <section class="showcase">
+    <p class="showcase-heading">Five elements of balance, mapped to five dimensions of life.</p>
+    <div class="showcase-row">
+      <span class="showcase-badge showcase-badge--metal"><span class="showcase-badge__icon">⛏️</span> Metal — Money</span>
+      <span class="showcase-badge showcase-badge--wood"><span class="showcase-badge__icon">🌳</span> Wood — Health</span>
+      <span class="showcase-badge showcase-badge--water"><span class="showcase-badge__icon">💧</span> Water — Talent</span>
+      <span class="showcase-badge showcase-badge--fire"><span class="showcase-badge__icon">🔥</span> Fire — Mood</span>
+      <span class="showcase-badge showcase-badge--earth"><span class="showcase-badge__icon">🪨</span> Earth — Situation</span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       3. HOW IT WORKS
+  ══════════════════════════════════════════════════ -->
+  <section class="how" id="how-it-works">
+    <h2 class="how-title">Rebalance <em>this morning</em></h2>
+    <p class="how-subtitle">A simple, elegant check-in so you can rate your day in seconds. No spreadsheets, no overthinking — just five taps.</p>
+
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="how-step__num">01</div>
+        <div class="how-step__title">Rate</div>
+        <div class="how-step__desc">Score each of the five elements for how today actually felt.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-step__num">02</div>
+        <div class="how-step__title">Reflect</div>
+        <div class="how-step__desc">See which dimension is pulling your balance down this week.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-step__num">03</div>
+        <div class="how-step__title">Rebalance</div>
+        <div class="how-step__desc">Make one small adjustment tomorrow, not a five-part life overhaul.</div>
+      </div>
+    </div>
+
+    <div class="how-preview">
+      <div class="how-preview__tabs">
+        <button type="button" class="how-preview__tab active" data-range="today">Today</button>
+        <button type="button" class="how-preview__tab" data-range="week">This Week</button>
+        <button type="button" class="how-preview__tab" data-range="month">This Month</button>
+      </div>
+      <div class="how-preview__bars">
+        <div class="how-preview__bar how-preview__bar--metal"><span class="how-preview__bar-label">Metal</span><div class="how-preview__bar-track"><div class="how-preview__bar-fill"></div></div><span class="how-preview__bar-count">0</span></div>
+        <div class="how-preview__bar how-preview__bar--wood"><span class="how-preview__bar-label">Wood</span><div class="how-preview__bar-track"><div class="how-preview__bar-fill"></div></div><span class="how-preview__bar-count">0</span></div>
+        <div class="how-preview__bar how-preview__bar--water"><span class="how-preview__bar-label">Water</span><div class="how-preview__bar-track"><div class="how-preview__bar-fill"></div></div><span class="how-preview__bar-count">0</span></div>
+        <div class="how-preview__bar how-preview__bar--fire"><span class="how-preview__bar-label">Fire</span><div class="how-preview__bar-track"><div class="how-preview__bar-fill"></div></div><span class="how-preview__bar-count">0</span></div>
+        <div class="how-preview__bar how-preview__bar--earth"><span class="how-preview__bar-label">Earth</span><div class="how-preview__bar-track"><div class="how-preview__bar-fill"></div></div><span class="how-preview__bar-count">0</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       MAIN — FIVE ELEMENT DASHBOARD
+  ══════════════════════════════════════════════════ -->
+  <main class="page-main" id="dashboard" role="main">
+    <h2 class="page-title">Today's Balance</h2>
+    <p class="page-subtitle">Five dimensions, one you. Rate how each feels today.</p>
+
+    <div class="element-grid" role="list">
+
+      <a class="element-card element-card--metal" href="journal.html?el=metal" role="listitem" aria-label="Metal — Money — open journal">
+        <div class="element-card__icon" aria-hidden="true">⛏️</div>
+        <h3 class="element-card__name">Metal</h3>
+        <p class="element-card__dimension">Money</p>
+        <span class="element-card__cta">Open journal →</span>
+      </a>
+
+      <a class="element-card element-card--wood" href="journal.html?el=wood" role="listitem" aria-label="Wood — Health — open journal">
+        <div class="element-card__icon" aria-hidden="true">🌳</div>
+        <h3 class="element-card__name">Wood</h3>
+        <p class="element-card__dimension">Health</p>
+        <span class="element-card__cta">Open journal →</span>
+      </a>
+
+      <a class="element-card element-card--water" href="journal.html?el=water" role="listitem" aria-label="Water — Talent — open journal">
+        <div class="element-card__icon" aria-hidden="true">💧</div>
+        <h3 class="element-card__name">Water</h3>
+        <p class="element-card__dimension">Talent</p>
+        <span class="element-card__cta">Open journal →</span>
+      </a>
+
+      <a class="element-card element-card--fire" href="journal.html?el=fire" role="listitem" aria-label="Fire — Mood — open journal">
+        <div class="element-card__icon" aria-hidden="true">🔥</div>
+        <h3 class="element-card__name">Fire</h3>
+        <p class="element-card__dimension">Mood</p>
+        <span class="element-card__cta">Open journal →</span>
+      </a>
+
+      <a class="element-card element-card--earth" href="journal.html?el=earth" role="listitem" aria-label="Earth — Situation — open journal">
+        <div class="element-card__icon" aria-hidden="true">🪨</div>
+        <h3 class="element-card__name">Earth</h3>
+        <p class="element-card__dimension">Situation</p>
+        <span class="element-card__cta">Open journal →</span>
+      </a>
+
+    </div>
+  </main>
+
+  <!-- ══════════════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════════════ -->
+  <footer class="site-footer" role="contentinfo">
+    <p>&copy; 2026 <strong>Life Balance</strong> — built for Pi Network App Studio.</p>
+  </footer>
+
+  <!-- Pi SDK must load before js/common.js -->
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

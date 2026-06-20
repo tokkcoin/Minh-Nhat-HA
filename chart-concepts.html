@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chart Concepts — Life Balance</title>
+  <meta name="description" content="Five combo (bar + line) chart designs comparing growth across the Five Elements, based on journal post counts." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════════
+       TOAST NOTIFICATION
+  ══════════════════════════════════════════════════ -->
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ══════════════════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════════════════ -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="logo">
+        <div class="logo-mark">LB</div>
+        <div class="logo-text">
+          <strong>Life Balance</strong>
+          <span>Five Elements Tracker</span>
+        </div>
+      </div>
+      <span class="pi-status" id="pi-status">Checking Pi Browser…</span>
+    </div>
+  </header>
+
+  <a class="journal-back" href="index.html#dashboard">← Back to dashboard</a>
+
+  <!-- ══════════════════════════════════════════════════
+       MAIN — CHART CONCEPTS
+  ══════════════════════════════════════════════════ -->
+  <main class="page-main" role="main">
+    <h2 class="page-title">Growth Chart Concepts</h2>
+    <p class="page-subtitle">Five combo (bar + line) designs comparing post-based growth across Metal, Wood, Water, Fire and Earth. Pick a winner, then we wire it into the dashboard.</p>
+
+    <p class="chart-note" id="data-source-note">Loading data…</p>
+
+    <!-- Design 1 -->
+    <section class="chart-concept" id="concept-1">
+      <div class="chart-concept__header">
+        <span class="chart-concept__index">01</span>
+        <span class="chart-concept__title">Grouped Bars (Volume) + 5 Growth-% Lines</span>
+      </div>
+      <p class="chart-concept__desc">Five colored bars per week (one per element, left axis) show that week's post volume. Five matching lines (right axis, 0–100%) trace each element's own cumulative growth — indexed so each line reaches 100% at its own all-time total — so you can see who posted the most this week <em>and</em> whose growth is front-loaded vs. still accelerating.</p>
+      <div class="chart-concept__canvas" id="chart-1"></div>
+      <div class="chart-legend" id="legend-1"></div>
+    </section>
+
+    <!-- Design 2 -->
+    <section class="chart-concept" id="concept-2">
+      <div class="chart-concept__header">
+        <span class="chart-concept__index">02</span>
+        <span class="chart-concept__title">Stacked Bars + Per-Element Growth Lines</span>
+      </div>
+      <p class="chart-concept__desc">Stacked bars show each week's post composition across all five elements. Five thin overlaid lines trace each element's own cumulative growth, sharing a secondary right-hand scale. Best for seeing which element is pulling ahead over time.</p>
+      <div class="chart-concept__canvas" id="chart-2"></div>
+      <div class="chart-legend" id="legend-2"></div>
+    </section>
+
+    <!-- Design 3 -->
+    <section class="chart-concept" id="concept-3">
+      <div class="chart-concept__header">
+        <span class="chart-concept__index">03</span>
+        <span class="chart-concept__title">Small-Multiples Element Cards</span>
+      </div>
+      <p class="chart-concept__desc">One mini combo chart per element (weekly bars + cumulative sparkline), styled like the existing dashboard cards. Best fit for dropping straight into the current <code>element-grid</code> layout without a big new section.</p>
+      <div class="chart-mini-grid" id="chart-3"></div>
+    </section>
+
+    <!-- Design 4 -->
+    <section class="chart-concept" id="concept-4">
+      <div class="chart-concept__header">
+        <span class="chart-concept__index">04</span>
+        <span class="chart-concept__title">Ranking Bars + Growth-Rate Line (Dual Axis)</span>
+      </div>
+      <p class="chart-concept__desc">Elements ranked left-to-right by all-time post count (bars, left axis). A second line plots each element's growth rate — recent weeks vs. earlier weeks — around a zero baseline (right axis). Best for "what's winning, and what's accelerating" at a glance.</p>
+      <div class="chart-concept__canvas" id="chart-4"></div>
+      <div class="chart-legend" id="legend-4"></div>
+    </section>
+
+    <!-- Design 5 -->
+    <section class="chart-concept" id="concept-5">
+      <div class="chart-concept__header">
+        <span class="chart-concept__index">05</span>
+        <span class="chart-concept__title">Hero-Style Glow Timeline</span>
+      </div>
+      <p class="chart-concept__desc">Marketing-style full-width chart matching the landing page's dark hero aesthetic: soft background bars for total weekly volume, five glowing smooth lines for each element's cumulative growth, with end-of-line value markers. Best for the homepage hero, not a dense analytics view.</p>
+      <div class="chart-concept__canvas" id="chart-5"></div>
+      <div class="chart-legend" id="legend-5"></div>
+    </section>
+
+  </main>
+
+  <!-- ══════════════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════════════ -->
+  <footer class="site-footer" role="contentinfo">
+    <p>&copy; 2026 <strong>Life Balance</strong> — built for Pi Network App Studio.</p>
+  </footer>
+
+  <!-- Pi SDK must load before js/common.js -->
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/chartConcepts.js"></script>
+</body>
+</html>

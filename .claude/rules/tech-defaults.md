@@ -1,0 +1,145 @@
+# tech-defaults.md — Technology Defaults & Constraints
+
+> These are the technology rules for this project.
+> Claude must NOT add any new technology without explicit user approval.
+
+---
+
+## Approved Tech Stack
+
+| Layer | Technology | Version | Source |
+|-------|-----------|---------|--------|
+| HTML | HTML5 semantic | — | Native browser |
+| CSS | Vanilla CSS | — | Native browser |
+| JavaScript | Vanilla ES6+ | — | Native browser |
+| Platform SDK | Pi Network SDK | 2.0 | `https://sdk.minepi.com/pi-sdk.js` |
+| Font | Inter (body) | variable | fonts.googleapis.com |
+| Font | Fraunces (hero/section display headlines only) | variable | fonts.googleapis.com |
+| Icons | Emoji + inline SVG | — | None (built-in) |
+
+---
+
+## Why No Build Step (this one is a hard requirement, not a preference)
+
+Pi Network App Studio apps must be deployable as static files and run inside the Pi Browser's webview. A build step (bundler, framework compiler, server-side rendering) is not just unnecessary here — it would conflict with how the app gets submitted and sandboxed. If a future requirement genuinely needs a framework or bundler, that changes the deployment story and must be discussed with the user first, not assumed.
+
+---
+
+## Explicitly Forbidden (without user approval)
+
+| Technology | Reason |
+|-----------|--------|
+| React / Vue / Angular | Adds build complexity — conflicts with Pi App Studio's static deployment model |
+| Tailwind CSS | We have our own design token system |
+| jQuery | ES6+ native APIs cover all use cases |
+| Bootstrap | Conflicts with custom CSS |
+| npm / Node.js | No build step — static project, required by the deployment target |
+| TypeScript | No compiler — plain JS only |
+| Webpack / Vite / Parcel | No bundler needed or wanted |
+| CDN JS libraries (general) | Must be approved individually — Pi SDK is the one pre-approved exception |
+
+---
+
+## Pi Network SDK Usage
+
+```html
+<!-- Load before js/main.js -->
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+```
+```js
+// Init once, guarded — never assume window.Pi exists (e.g. testing in a plain browser)
+if (window.Pi) {
+  Pi.init({ version: "2.0", sandbox: true });
+}
+```
+- Keep `sandbox: true` until the user explicitly approves flipping it for production submission.
+- Any `Pi.authenticate()` / payment call must be wrapped so a missing `window.Pi` degrades gracefully (e.g. show a toast like "Open this app in Pi Browser to continue") rather than throwing.
+
+---
+
+## Data File Convention (carried over from the PTE sibling project)
+
+If/when practice or tracking data needs to live in its own file under `data/`, follow this pattern — it avoids a real bug that shipped once on the PTE project:
+
+```js
+// data/example.js
+window.EXAMPLE_DATA = [ { ... }, { ... } ];   // NOT `const EXAMPLE_DATA = [...]`
+```
+Loaded via `<script src="data/example.js"></script>` — **not** `fetch()`. Reason: Chromium blocks `fetch()`/XHR reads of local files when the page is opened directly via `file://` (this project's whole point is to run with no server), but `<script src>` loads are exempt. And critically: a top-level `const`/`let` in a classic script does NOT attach to `window`, so always assign directly to `window.X`, or code checking `window.X` elsewhere will see `undefined` even though the file loaded with no error.
+
+---
+
+## User-Generated Content (Journal) — local-only, demo/testnet stage
+
+The per-element journal (`journal.html`, `js/journal.js`) is **single-user, single-device, client-only** for now — see `.claude/memory.md` (2026-06-18) for the decision and the planned move to a real backend before production.
+
+- Posts persist via `localStorage`, keyed `lifebalance_journal_<element>` (one array of post objects per element), **not** the `window.X_DATA` static-seed-data convention above — that pattern is for read-only shipped content, this is runtime user data.
+- Photo/video/audio attachments are read via `FileReader.readAsDataURL()` and stored as a data URI string inside the post object — `localStorage` can only hold strings, not `Blob`/`File`.
+- `localStorage` has a small total quota (~5-10MB per origin). `js/journal.js` rejects any attachment over 4MB client-side (`MAX_MEDIA_BYTES`) with a toast rather than letting `setItem` throw `QuotaExceededError`. Don't remove this guard without replacing local storage with something that can actually hold media (the planned backend).
+- Post text is inserted via `innerHTML`, so it is always passed through an `escapeHtml()` helper first — never interpolate raw user text into a template string that becomes `innerHTML`.
+
+---
+
+## JavaScript Standards
+
+```js
+// ✅ Correct
+const el = document.querySelector('.my-class');
+el?.addEventListener('click', () => { ... });
+
+// ❌ Wrong — no var, no jQuery, no callbacks without arrow functions
+var el = $('.my-class');
+el.click(function() { ... });
+```
+
+- Use `const` for values that don't change
+- Use `let` only when reassignment is needed
+- Use optional chaining `?.` to guard against null elements
+- Use `querySelectorAll` + `forEach` instead of loops
+- No `innerHTML` with unsanitized user input
+- Modular: one function per responsibility
+
+---
+
+## CSS Standards
+
+```css
+/* ✅ Correct */
+.btn-primary {
+  background: var(--wood);
+  border-radius: var(--radius-md);
+  transition: all var(--transition);
+}
+
+/* ❌ Wrong — hardcoded values */
+.btn-primary {
+  background: #4caf50;
+  border-radius: 8px;
+  transition: all .2s;
+}
+```
+
+---
+
+## File Naming Conventions
+
+| Type | Convention | Example |
+|------|-----------|---------|
+| HTML pages | `kebab-case.html` | `entry-detail.html` |
+| CSS files | `kebab-case.css` | `dashboard.css` |
+| JS files | `camelCase.js` | `elementCard.js` |
+| Image assets | `kebab-case.ext` | `wood-icon.svg` |
+| Folders | `kebab-case/` | `data/` |
+
+---
+
+## Browser/Runtime Support Target
+
+| Runtime | Requirement |
+|---------|-------------|
+| Pi Browser | **Primary required target** — any Pi SDK feature must work here |
+| Chrome / Edge | 90+ (for plain-browser UI development/testing) |
+| Firefox | 88+ |
+| Safari | 14+ |
+
+> No IE11 support required.
