@@ -6,6 +6,7 @@
    ============================================================ */
 
 module.exports = async function handler(req, res) {
+  // forced redeploy to pick up PI_API_KEY env var
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
