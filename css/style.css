@@ -592,7 +592,23 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .chart-mini-card__total { font-size: 16px; font-weight: 700; color: var(--text-primary); }
 .chart-mini-card__svg svg { width: 100%; height: auto; display: block; }
 
-/* ── 13. Responsive ── */
+/* ── 13. Legal Pages ── */
+.legal {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-lg) var(--space-xl);
+  line-height: 1.7;
+}
+.legal__title { font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.legal__updated { font-size: 12px; color: var(--text-muted); margin-bottom: var(--space-lg); }
+.legal h2 { font-size: 16px; font-weight: 700; color: var(--text-primary); margin: var(--space-lg) 0 var(--space-sm); }
+.legal p { font-size: 14px; color: var(--text-secondary); margin-bottom: var(--space-sm); }
+.legal ul { color: var(--text-secondary); font-size: 14px; margin: 0 0 var(--space-sm) 1.2em; }
+.legal li { margin-bottom: 4px; }
+.legal code { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1px 5px; font-size: 13px; }
+.legal a { color: var(--water); text-decoration: underline; }
+
+/* ── 14. Responsive ── */
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; text-align: center; }
   .hero-subtitle { margin-left: auto; margin-right: auto; }
