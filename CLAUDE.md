@@ -21,13 +21,20 @@ life-balance/
 ├── index.html              # Landing page — hero/showcase/how-it-works + the 5-element dashboard
 ├── journal.html             # Per-element journal (shared page, themed via ?el=metal|wood|water|fire|earth)
 ├── chart-concepts.html      # Design-comparison page: 5 combo (bar+line) growth chart concepts
+├── pi-test-payment.html     # One-off Mainnet U2A payment page for the Pi Developer Portal checklist (noindex, not linked from nav)
+├── privacy-policy.html      # Public privacy policy (linked from Pi Developer Portal)
+├── validation-key.txt       # Pi domain-ownership validation file (must stay at root, content from the portal)
 ├── CLAUDE.md                # Root-level AI context
 ├── css/style.css            # All styles
 ├── js/
 │   ├── common.js              # Shared helpers (showToast, initPiSdk) — loaded on every page
 │   ├── main.js                 # index.html boot
 │   ├── journal.js              # journal.html: composer, feed, like/delete, localStorage persistence
-│   └── chartConcepts.js        # chart-concepts.html: builds weekly post-count series (real or demo) and renders the 5 chart designs
+│   ├── chartConcepts.js        # chart-concepts.html: builds weekly post-count series (real or demo) and renders the 5 chart designs
+│   └── piPayment.js            # pi-test-payment.html: authenticate -> createPayment -> server approve/complete flow
+├── api/                     # Vercel serverless functions — ONLY exception to the static/no-backend rule (see tech-defaults.md)
+│   ├── approve-payment.js     # POST: server-side U2A payment approval (uses PI_API_KEY env var)
+│   └── complete-payment.js    # POST: server-side U2A payment completion (uses PI_API_KEY env var)
 ├── data/                    # Script-loaded static data files (see .claude/agents/researcher.md) — NOT user content
 └── .claude/                 # Claude Configuration Folder
     ├── CLAUDE.md           # Project identity & guidelines

@@ -33,10 +33,20 @@ Pi Network App Studio apps must be deployable as static files and run inside the
 | Tailwind CSS | We have our own design token system |
 | jQuery | ES6+ native APIs cover all use cases |
 | Bootstrap | Conflicts with custom CSS |
-| npm / Node.js | No build step — static project, required by the deployment target |
+| npm / Node.js (client-side / build step) | No build step for the site itself — static project, required by the deployment target. **Exception:** two Vercel serverless Node functions under `/api/` exist specifically for Pi U2A payment approve/complete calls — see "Pi Payments Backend" below. That exception does not extend to anything else (no bundler, no client-side npm packages). |
 | TypeScript | No compiler — plain JS only |
 | Webpack / Vite / Parcel | No bundler needed or wanted |
 | CDN JS libraries (general) | Must be approved individually — Pi SDK is the one pre-approved exception |
+
+---
+
+## Pi Payments Backend (deliberate exception to "no backend")
+
+`api/approve-payment.js` and `api/complete-payment.js` are Vercel serverless Node functions (zero-config, no `package.json`/build step needed — Vercel auto-detects `/api/*.js`). They exist because Pi's Payments API (`POST /v2/payments/{id}/approve` and `/complete`) requires the app's secret **Server API Key**, which must never be sent from client-side JS or committed to the repo.
+
+- **Secret storage**: `PI_API_KEY` is set as a Vercel project Environment Variable (Project Settings → Environment Variables in the Vercel dashboard) — never hardcoded, never in a file the repo tracks.
+- **Scope of the exception**: these two endpoints only. Don't add other server-side features here without going back to the user — the project is still "static + 2 payment endpoints," not "now a general backend."
+- **Mainnet, not testnet**: this app's Pi Developer Portal entry is on Mainnet — `pi-test-payment.html` sends a real (small) amount of Pi. The user explicitly confirmed this is intentional (2026-06-21) when this was built — see `.claude/memory.md`.
 
 ---
 

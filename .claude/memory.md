@@ -64,10 +64,29 @@
 - **Range definitions** (rolling windows, not calendar week/month, to avoid timezone/week-start ambiguity): Today = since local midnight, This Week = last 7 days, This Month = last 30 days.
 - If there are zero posts everywhere, all bars correctly render at 0 width with "0" counts — no demo-data fallback here (unlike `chart-concepts.html`), since this lives on the marketing page and an all-zero state is an honest, normal first-run state.
 
+## 2026-06-21 — Pi Developer Portal setup: hosting, domain validation, privacy policy
+
+- **Hosting**: pushed the project to GitHub (`github.com/tokkcoin/Minh-Nhat-HA`, `main` branch) and deployed it on **Vercel** at `https://minh-nhat-ha.vercel.app` (auto-deploys on push). GitHub Pages was tried first but rejected by Pi's portal — Pi's Frontend URL field requires a bare root domain with no path, and GitHub Pages project sites are `username.github.io/repo-name/` (a path). The `username.github.io` special-repo route was blocked by a pre-existing repo of that name on the account, so Vercel was used instead since its default subdomains (`project.vercel.app`) have no path.
+- **Domain validation**: `validation-key.txt` (containing the exact key the portal gave) lives at the repo root and is served at `/validation-key.txt` — this is how Pi's "Validate Domain Ownership" checklist step was satisfied.
+- **Privacy policy**: added `privacy-policy.html`, live at `https://minh-nhat-ha.vercel.app/privacy-policy.html`. Content is accurate to the actual code as of this date — local-only storage, no accounts/analytics/tracking, lists Google Fonts + Pi SDK as the only third-party requests. **Must be revisited and updated if the data-handling story changes** (e.g. the payments backend below, or any future real backend) — don't let this page go stale.
+- **Pi app identity confirmed**: the Pi Developer Portal entry for this app is named **"Mind map"** internally (differs from the site's own "Life Balance" branding — just a naming choice, same app) and is registered on **Mainnet**, not testnet.
+
+## 2026-06-21 — Pi U2A payment verification (Mainnet, real Pi)
+
+- **Trigger**: the Developer Portal's final checklist item, "Process a Transaction on the App," requires one real User-to-App (U2A) payment processed through the app at its production URL. (The user initially described this as "app-to-user to 5 wallets," but the actual checklist step — confirmed via screenshot — is a single U2A payment. No 5-wallet A2U requirement actually exists in this checklist.)
+- **Mainnet risk explicitly confirmed by the user**: this app is on Mainnet, so this is a real (small) Pi payment, not test currency. User was asked directly and confirmed they understand and want to proceed anyway.
+- **Why this needed a backend exception**: Pi's Payments API (`/v2/payments/{id}/approve` and `/complete`) requires the app's secret Server API Key, which can never be shipped client-side. This is the first genuine, deliberate exception to the project's "static files only, no backend" rule — see `.claude/rules/tech-defaults.md` ("Pi Payments Backend" section) for the exact scope of the exception (two Vercel serverless functions, nothing more).
+- **What was built**:
+  - `api/approve-payment.js`, `api/complete-payment.js` — Vercel zero-config Node serverless functions, read `PI_API_KEY` from a Vercel environment variable (never committed to the repo, never pasted into chat).
+  - `pi-test-payment.html` + `js/piPayment.js` — a standalone page (not linked from main nav, `<meta name="robots" content="noindex">`) with a clear Mainnet/real-money warning banner, an "authenticate → createPayment → approve → complete" flow for a fixed 0.01 π amount, and an `onIncompletePaymentFound` handler per Pi SDK requirements.
+- **Not done yet / still needs the user**: add `PI_API_KEY` to Vercel's environment variables (the user must do this themselves in the Vercel dashboard — not something that can be done from here), then open `pi-test-payment.html` inside Pi Browser at the Mainnet production URL and actually tap pay once to complete the checklist step.
+
 ## Open TODOs
 
+- [ ] User needs to add `PI_API_KEY` as a Vercel environment variable before the payment buttons will work (server returns a 500 "missing PI_API_KEY" otherwise)
+- [ ] Confirm the one-time Mainnet verification payment actually completes successfully inside Pi Browser
 - [ ] Decide what a single "balance entry" (mood/health/etc. *rating*, distinct from the journal posts) looks like before building the rating half of the dashboard
-- [ ] Wire up real Pi SDK auth flow once a concrete feature needs it (no payment/auth feature exists yet)
 - [ ] Real backend/multi-user social platform for the journal — explicitly deferred by the user, not yet scheduled
 - [ ] Decide whether historical entries eventually persist via Pi Network storage, a real database, or both
 - [ ] Pick a winning design from `chart-concepts.html` and wire it permanently into `index.html` (still pending, separate from the "How it works" bars above)
+- [ ] Revisit `privacy-policy.html` content if the data story changes (now that a payments backend exists, double check the policy still accurately describes what little server-side processing exists)

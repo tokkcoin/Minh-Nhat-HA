@@ -32,7 +32,7 @@
   ══════════════════════════════════════════════════ -->
   <main class="legal" role="main">
     <h1 class="legal__title">Privacy Policy</h1>
-    <p class="legal__updated">Last updated: June 20, 2026</p>
+    <p class="legal__updated">Last updated: June 21, 2026</p>
 
     <p>Life Balance ("the app") is a personal Five Elements tracker. This page explains what happens to your data when you use it.</p>
 
@@ -53,7 +53,7 @@
     <p>These requests are subject to those providers' own privacy policies. The app does not pass any of your journal content to them.</p>
 
     <h2>Pi Network integration</h2>
-    <p>At this time, the app's use of the Pi SDK is limited to detecting whether it's running inside Pi Browser (sandbox/testnet mode). It does not currently call Pi authentication or payment APIs, so no Pi account data or payment data is collected or processed by the app. If a future version adds sign-in or payments, this policy will be updated before that happens, and Pi Network's own privacy policy would additionally govern any data Pi Network itself processes.</p>
+    <p>The app uses the Pi SDK to detect whether it's running inside Pi Browser, and on one dedicated setup page, to process a Pi payment via <code>Pi.authenticate()</code> and <code>Pi.createPayment()</code>. When you make a payment, the app's server relays only the payment identifier and blockchain transaction ID to Pi Network's own Payments API to approve and complete it — the server does not store this information itself; it is forwarded to Pi Network, whose own privacy policy governs how Pi Network processes it. The app does not otherwise collect, log, or retain any Pi account or payment data.</p>
 
     <h2>Your data, your control</h2>
     <p>Since everything lives in your browser, you're always in control of it:</p>
