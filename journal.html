@@ -55,6 +55,15 @@
       <div class="composer">
         <textarea id="composer-text" placeholder="How did today go?" aria-label="Write a journal entry"></textarea>
         <input type="file" id="composer-file" accept="image/*,video/*,audio/*" hidden />
+        <div class="composer__meta">
+          <select id="composer-level" aria-label="Priority level">
+            <option value="">Priority…</option>
+            <option value="emergency-important">🔴 Emergency &amp; Important</option>
+            <option value="emergency-unimportant">🟠 Emergency &amp; Unimportant</option>
+            <option value="important-unemergency">🟡 Important &amp; Not Emergency</option>
+            <option value="unimportant-unemergency">⚪ Unimportant &amp; Not Emergency</option>
+          </select>
+        </div>
         <div class="composer__row">
           <button type="button" id="composer-attach" class="composer__attach">📎 Attach photo/video/audio</button>
           <span id="composer-preview" class="composer__preview" hidden></span>

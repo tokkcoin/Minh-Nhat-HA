@@ -1,6 +1,9 @@
 /* ============================================================
    Life Balance — main.js
-   Page-specific boot for index.html (toast/Pi SDK live in common.js)
+   index.html boot: "How it works" live preview + the unified
+   multi-element feed that replaced the old 5-card dashboard.
+   Shared helpers/metadata (ELEMENTS, PRIORITY_LEVELS, post storage,
+   timeAgo, escapeHtml, readFileAsDataUrl) live in common.js.
    ============================================================ */
 
 'use strict';
@@ -25,13 +28,9 @@ function countJournalPosts(range) {
   const counts = {};
 
   HOW_PREVIEW_ELEMENTS.forEach(key => {
-    let posts = [];
-    try {
-      posts = JSON.parse(localStorage.getItem(`lifebalance_journal_${key}`)) || [];
-    } catch {
-      posts = [];
-    }
-    counts[key] = posts.filter(post => new Date(post.createdAt).getTime() >= since).length;
+    counts[key] = loadElementPosts(key).filter(
+      post => new Date(post.createdAt).getTime() >= since
+    ).length;
   });
 
   return counts;
@@ -67,9 +66,206 @@ function initHowPreview() {
   renderHowPreview(document.querySelector('.how-preview__tab.active')?.dataset.range ?? 'today');
 }
 
-// ── 2. Boot ───────────────────────────────────────────────────
+// ── 2. Unified Feed — merge all 5 elements' posts ────────────
+
+let activeFeedFilter = 'all';
+
+function loadAllPostsMerged() {
+  const merged = [];
+  Object.values(ELEMENTS).forEach(el => {
+    loadElementPosts(el.key).forEach(post => merged.push({ ...post, element: post.element || el.key }));
+  });
+  merged.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  return merged;
+}
+
+function renderUnifiedFeed() {
+  const feed = document.getElementById('feed');
+  if (!feed) return;
+
+  const all = loadAllPostsMerged();
+  const filtered = activeFeedFilter === 'all' ? all : all.filter(p => p.element === activeFeedFilter);
+
+  feed.innerHTML = '';
+
+  if (filtered.length === 0) {
+    const elName = ELEMENTS[activeFeedFilter]?.name;
+    feed.innerHTML = `<p class="feed-empty">No posts yet${elName ? ` for ${elName}` : ''}.</p>`;
+    return;
+  }
+
+  filtered.forEach(post => feed.appendChild(buildUnifiedPostCard(post)));
+}
+
+function buildUnifiedPostCard(post) {
+  const element = ELEMENTS[post.element];
+  const card = document.createElement('article');
+  card.className = 'post-card';
+
+  const media = post.mediaType === 'image'
+    ? `<img class="post-card__media" src="${post.mediaData}" alt="">`
+    : post.mediaType === 'video'
+      ? `<video class="post-card__media" src="${post.mediaData}" controls></video>`
+      : post.mediaType === 'audio'
+        ? `<audio class="post-card__media post-card__media--audio" src="${post.mediaData}" controls></audio>`
+        : '';
+
+  const levelInfo = PRIORITY_LEVELS[post.level];
+
+  card.innerHTML = `
+    <div class="post-card__head">
+      <span class="post-card__avatar">${element?.icon ?? '❔'}</span>
+      <div>
+        <strong class="post-card__author">You</strong>
+        <span class="post-card__time">${timeAgo(post.createdAt)}</span>
+      </div>
+      <button class="post-card__delete" type="button" aria-label="Delete post">✕</button>
+    </div>
+    <div class="post-card__tags">
+      <span class="post-card__badge post-card__badge--${post.element}">${element?.icon ?? ''} ${element?.name ?? 'Unknown'}</span>
+      ${levelInfo ? `<span class="post-card__level" style="color:${levelInfo.color}">${levelInfo.label}</span>` : ''}
+    </div>
+    ${post.text ? `<p class="post-card__text">${escapeHtml(post.text)}</p>` : ''}
+    ${media}
+    <div class="post-card__actions">
+      <button class="post-card__like ${post.liked ? 'liked' : ''}" type="button">
+        <span aria-hidden="true">${post.liked ? '❤️' : '🤍'}</span>
+        <span class="post-card__like-count">${post.likes}</span>
+      </button>
+    </div>
+  `;
+
+  card.querySelector('.post-card__like')?.addEventListener('click', () => toggleFeedLike(post));
+  card.querySelector('.post-card__delete')?.addEventListener('click', () => deleteFeedPost(post));
+
+  return card;
+}
+
+function toggleFeedLike(post) {
+  const posts = loadElementPosts(post.element);
+  const target = posts.find(p => p.id === post.id);
+  if (!target) return;
+  target.liked = !target.liked;
+  target.likes += target.liked ? 1 : -1;
+  saveElementPosts(post.element, posts);
+  renderUnifiedFeed();
+}
+
+function deleteFeedPost(post) {
+  const posts = loadElementPosts(post.element).filter(p => p.id !== post.id);
+  saveElementPosts(post.element, posts);
+  renderUnifiedFeed();
+}
+
+// ── 3. Stories-style element filter row ───────────────────────
+
+function initStoriesRow() {
+  const chips = document.querySelectorAll('.story-chip');
+  if (!chips.length) return;
+
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      chips.forEach(c => {
+        c.classList.remove('active');
+        c.setAttribute('aria-selected', 'false');
+      });
+      chip.classList.add('active');
+      chip.setAttribute('aria-selected', 'true');
+      activeFeedFilter = chip.dataset.filter;
+      renderUnifiedFeed();
+    });
+  });
+}
+
+// ── 4. Unified Composer ────────────────────────────────────────
+
+function initUnifiedComposer() {
+  const textInput = document.getElementById('composer-text');
+  const fileInput = document.getElementById('composer-file');
+  const attachBtn = document.getElementById('composer-attach');
+  const preview = document.getElementById('composer-preview');
+  const postBtn = document.getElementById('composer-post');
+  const elementSelect = document.getElementById('composer-element');
+  const levelSelect = document.getElementById('composer-level');
+  if (!textInput || !fileInput || !attachBtn || !preview || !postBtn || !elementSelect || !levelSelect) return;
+
+  let pendingFile = null;
+
+  attachBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_MEDIA_BYTES) {
+      showToast('File too large for local demo storage (max 4MB)');
+      fileInput.value = '';
+      return;
+    }
+    pendingFile = file;
+    preview.textContent = `📎 ${file.name}`;
+    preview.hidden = false;
+  });
+
+  postBtn.addEventListener('click', async () => {
+    const text = textInput.value.trim();
+    const element = elementSelect.value;
+    const level = levelSelect.value;
+
+    if (!element) {
+      showToast('Choose an element first');
+      return;
+    }
+    if (!level) {
+      showToast('Choose a priority level first');
+      return;
+    }
+    if (!text && !pendingFile) {
+      showToast('Write something or attach a file first');
+      return;
+    }
+
+    let mediaType = null;
+    let mediaData = null;
+    if (pendingFile) {
+      mediaType = pendingFile.type.startsWith('image/') ? 'image'
+        : pendingFile.type.startsWith('video/') ? 'video'
+        : pendingFile.type.startsWith('audio/') ? 'audio'
+        : null;
+      mediaData = await readFileAsDataUrl(pendingFile);
+    }
+
+    const posts = loadElementPosts(element);
+    posts.unshift({
+      id: `${Date.now()}`,
+      element,
+      level,
+      text,
+      mediaType,
+      mediaData,
+      liked: false,
+      likes: 0,
+      createdAt: new Date().toISOString(),
+    });
+    saveElementPosts(element, posts);
+
+    textInput.value = '';
+    elementSelect.value = '';
+    levelSelect.value = '';
+    pendingFile = null;
+    fileInput.value = '';
+    preview.hidden = true;
+
+    renderUnifiedFeed();
+    showToast('Posted!');
+  });
+}
+
+// ── 5. Boot ───────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
   initPiSdk();
   initHowPreview();
+  initStoriesRow();
+  initUnifiedComposer();
+  renderUnifiedFeed();
 });

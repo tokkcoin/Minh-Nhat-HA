@@ -1,75 +1,20 @@
 /* ============================================================
    Life Balance — journal.js
    Per-element journal: composer, feed, like, delete.
-   Storage: localStorage only (demo/testnet stage — see
-   .claude/rules/tech-defaults.md and .claude/memory.md, 2026-06-18).
+   Shared post storage / metadata (ELEMENTS, PRIORITY_LEVELS,
+   loadElementPosts, saveElementPosts, timeAgo, escapeHtml,
+   readFileAsDataUrl, MAX_MEDIA_BYTES) lives in common.js — both
+   this page and the unified feed on index.html use the same shapes.
    ============================================================ */
 
 'use strict';
-
-// ── 1. Element Theme Lookup ─────────────────────────────────────
-
-const ELEMENTS = {
-  metal: { key: 'metal', name: 'Metal', dimension: 'Money',     icon: '⛏️' },
-  wood:  { key: 'wood',  name: 'Wood',  dimension: 'Health',    icon: '🌳' },
-  water: { key: 'water', name: 'Water', dimension: 'Talent',    icon: '💧' },
-  fire:  { key: 'fire',  name: 'Fire',  dimension: 'Mood',      icon: '🔥' },
-  earth: { key: 'earth', name: 'Earth', dimension: 'Situation', icon: '🪨' },
-};
-
-// localStorage has ~5-10MB total quota shared by the whole origin;
-// this keeps a single attachment from blowing through it.
-const MAX_MEDIA_BYTES = 4 * 1024 * 1024;
 
 function getElementFromUrl() {
   const param = new URLSearchParams(window.location.search).get('el');
   return ELEMENTS[param] || null;
 }
 
-// ── 2. Storage ───────────────────────────────────────────────
-
-function storageKey(elementKey) {
-  return `lifebalance_journal_${elementKey}`;
-}
-
-function loadPosts(elementKey) {
-  try {
-    return JSON.parse(localStorage.getItem(storageKey(elementKey))) || [];
-  } catch {
-    return [];
-  }
-}
-
-function savePosts(elementKey, posts) {
-  localStorage.setItem(storageKey(elementKey), JSON.stringify(posts));
-}
-
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-function timeAgo(iso) {
-  const diffSec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (diffSec < 60) return 'just now';
-  const min = Math.floor(diffSec / 60);
-  if (min < 60) return `${min}m ago`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}h ago`;
-  return `${Math.floor(hr / 24)}d ago`;
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-// ── 3. Theme the Page ───────────────────────────────────────────
+// ── 1. Theme the Page ───────────────────────────────────────────
 
 function applyTheme(element) {
   document.title = `${element.name} Journal — Life Balance`;
@@ -80,13 +25,13 @@ function applyTheme(element) {
   document.body.style.setProperty('--current-element-tint', `var(--${element.key}-tint)`);
 }
 
-// ── 4. Render Feed ───────────────────────────────────────────
+// ── 2. Render Feed ───────────────────────────────────────────
 
 function renderFeed(element) {
   const feed = document.getElementById('feed');
   if (!feed) return;
 
-  const posts = loadPosts(element.key);
+  const posts = loadElementPosts(element.key);
   feed.innerHTML = '';
 
   if (posts.length === 0) {
@@ -109,6 +54,8 @@ function buildPostCard(post, element) {
         ? `<audio class="post-card__media post-card__media--audio" src="${post.mediaData}" controls></audio>`
         : '';
 
+  const levelInfo = PRIORITY_LEVELS[post.level];
+
   card.innerHTML = `
     <div class="post-card__head">
       <span class="post-card__avatar">${element.icon}</span>
@@ -118,6 +65,7 @@ function buildPostCard(post, element) {
       </div>
       <button class="post-card__delete" type="button" aria-label="Delete post">✕</button>
     </div>
+    ${levelInfo ? `<div class="post-card__tags"><span class="post-card__level" style="color:${levelInfo.color}">${levelInfo.label}</span></div>` : ''}
     ${post.text ? `<p class="post-card__text">${escapeHtml(post.text)}</p>` : ''}
     ${media}
     <div class="post-card__actions">
@@ -134,25 +82,25 @@ function buildPostCard(post, element) {
   return card;
 }
 
-// ── 5. Like / Delete ─────────────────────────────────────────
+// ── 3. Like / Delete ─────────────────────────────────────────
 
 function toggleLike(element, postId) {
-  const posts = loadPosts(element.key);
+  const posts = loadElementPosts(element.key);
   const post = posts.find(p => p.id === postId);
   if (!post) return;
   post.liked = !post.liked;
   post.likes += post.liked ? 1 : -1;
-  savePosts(element.key, posts);
+  saveElementPosts(element.key, posts);
   renderFeed(element);
 }
 
 function deletePost(element, postId) {
-  const posts = loadPosts(element.key).filter(p => p.id !== postId);
-  savePosts(element.key, posts);
+  const posts = loadElementPosts(element.key).filter(p => p.id !== postId);
+  saveElementPosts(element.key, posts);
   renderFeed(element);
 }
 
-// ── 6. Composer ──────────────────────────────────────────────
+// ── 4. Composer ──────────────────────────────────────────────
 
 function initComposer(element) {
   const textInput = document.getElementById('composer-text');
@@ -160,7 +108,8 @@ function initComposer(element) {
   const attachBtn = document.getElementById('composer-attach');
   const preview = document.getElementById('composer-preview');
   const postBtn = document.getElementById('composer-post');
-  if (!textInput || !fileInput || !attachBtn || !preview || !postBtn) return;
+  const levelSelect = document.getElementById('composer-level');
+  if (!textInput || !fileInput || !attachBtn || !preview || !postBtn || !levelSelect) return;
 
   let pendingFile = null;
 
@@ -181,6 +130,12 @@ function initComposer(element) {
 
   postBtn.addEventListener('click', async () => {
     const text = textInput.value.trim();
+    const level = levelSelect.value;
+
+    if (!level) {
+      showToast('Choose a priority level first');
+      return;
+    }
     if (!text && !pendingFile) {
       showToast('Write something or attach a file first');
       return;
@@ -196,9 +151,11 @@ function initComposer(element) {
       mediaData = await readFileAsDataUrl(pendingFile);
     }
 
-    const posts = loadPosts(element.key);
+    const posts = loadElementPosts(element.key);
     posts.unshift({
       id: `${Date.now()}`,
+      element: element.key,
+      level,
       text,
       mediaType,
       mediaData,
@@ -206,9 +163,10 @@ function initComposer(element) {
       likes: 0,
       createdAt: new Date().toISOString(),
     });
-    savePosts(element.key, posts);
+    saveElementPosts(element.key, posts);
 
     textInput.value = '';
+    levelSelect.value = '';
     pendingFile = null;
     fileInput.value = '';
     preview.hidden = true;
@@ -218,7 +176,7 @@ function initComposer(element) {
   });
 }
 
-// ── 7. Boot ───────────────────────────────────────────────────
+// ── 5. Boot ───────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
   initPiSdk();

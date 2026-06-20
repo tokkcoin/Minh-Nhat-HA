@@ -38,3 +38,69 @@ async function initPiSdk() {
   if (statusEl) statusEl.textContent = '✅ Pi Browser detected (sandbox)';
   return true;
 }
+
+// ── 3. Shared Element / Priority-Level Metadata ───────────────
+// Used by journal.js (per-element pages) and main.js (unified feed)
+// so both speak the same post shape: { element, level, ... }.
+
+const ELEMENTS = {
+  metal: { key: 'metal', name: 'Metal', dimension: 'Money',     icon: '⛏️' },
+  wood:  { key: 'wood',  name: 'Wood',  dimension: 'Health',    icon: '🌳' },
+  water: { key: 'water', name: 'Water', dimension: 'Talent',    icon: '💧' },
+  fire:  { key: 'fire',  name: 'Fire',  dimension: 'Mood',      icon: '🔥' },
+  earth: { key: 'earth', name: 'Earth', dimension: 'Situation', icon: '🪨' },
+};
+
+const PRIORITY_LEVELS = {
+  'emergency-important':     { label: 'Emergency · Important',        color: 'var(--danger)' },
+  'emergency-unimportant':   { label: 'Emergency · Unimportant',      color: 'var(--metal)' },
+  'important-unemergency':   { label: 'Important · Not Emergency',    color: 'var(--water)' },
+  'unimportant-unemergency': { label: 'Unimportant · Not Emergency',  color: 'var(--text-muted)' },
+};
+
+// localStorage has ~5-10MB total quota shared by the whole origin;
+// this keeps a single attachment from blowing through it.
+const MAX_MEDIA_BYTES = 4 * 1024 * 1024;
+
+// ── 4. Shared Post Storage (per-element keys) ─────────────────
+
+function journalStorageKey(elementKey) {
+  return `lifebalance_journal_${elementKey}`;
+}
+
+function loadElementPosts(elementKey) {
+  try {
+    return JSON.parse(localStorage.getItem(journalStorageKey(elementKey))) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveElementPosts(elementKey, posts) {
+  localStorage.setItem(journalStorageKey(elementKey), JSON.stringify(posts));
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function timeAgo(iso) {
+  const diffSec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diffSec < 60) return 'just now';
+  const min = Math.floor(diffSec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  return `${Math.floor(hr / 24)}d ago`;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}

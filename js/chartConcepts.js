@@ -12,25 +12,15 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 const WEEK_COUNT = 8;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-const ELEMENTS = [
-  { key: 'metal', name: 'Metal' },
-  { key: 'wood', name: 'Wood' },
-  { key: 'water', name: 'Water' },
-  { key: 'fire', name: 'Fire' },
-  { key: 'earth', name: 'Earth' },
-];
+// ELEMENTS (object, keyed by element) comes from common.js — this file
+// only needs it as an ordered array.
+const ELEMENTS_LIST = Object.values(ELEMENTS);
 
 // ── 1. Data: real posts (localStorage) with demo fallback ──────
 
 function loadAllPosts() {
   const result = {};
-  ELEMENTS.forEach(el => {
-    try {
-      result[el.key] = JSON.parse(localStorage.getItem(`lifebalance_journal_${el.key}`)) || [];
-    } catch {
-      result[el.key] = [];
-    }
-  });
+  ELEMENTS_LIST.forEach(el => { result[el.key] = loadElementPosts(el.key); });
   return result;
 }
 
@@ -40,9 +30,9 @@ function buildWeeklySeriesFromPosts(allPosts) {
 
   const now = Date.now();
   const weekly = {};
-  ELEMENTS.forEach(el => { weekly[el.key] = Array(WEEK_COUNT).fill(0); });
+  ELEMENTS_LIST.forEach(el => { weekly[el.key] = Array(WEEK_COUNT).fill(0); });
 
-  ELEMENTS.forEach(el => {
+  ELEMENTS_LIST.forEach(el => {
     allPosts[el.key].forEach(post => {
       const age = now - new Date(post.createdAt).getTime();
       const weeksAgo = Math.floor(age / WEEK_MS);
@@ -83,12 +73,12 @@ function cumulative(arr) {
 
 function weeklyTotals(weekly) {
   const totals = Array(WEEK_COUNT).fill(0);
-  ELEMENTS.forEach(el => weekly[el.key].forEach((v, i) => { totals[i] += v; }));
+  ELEMENTS_LIST.forEach(el => weekly[el.key].forEach((v, i) => { totals[i] += v; }));
   return totals;
 }
 
 function allTimeTotalsRanked(weekly) {
-  return ELEMENTS
+  return ELEMENTS_LIST
     .map(el => ({ key: el.key, name: el.name, total: weekly[el.key].reduce((a, b) => a + b, 0) }))
     .sort((a, b) => b.total - a.total);
 }
@@ -157,10 +147,10 @@ function renderDesign1(mount, weekly, labels) {
   const PCT_ROWS = 4;
   const PCT_MAX = 100; // each element's line is indexed to its own all-time total = 100%
 
-  const maxBar = Math.max(1, ...ELEMENTS.flatMap(el => weekly[el.key]));
+  const maxBar = Math.max(1, ...ELEMENTS_LIST.flatMap(el => weekly[el.key]));
 
   const growthByEl = {};
-  ELEMENTS.forEach(el => {
+  ELEMENTS_LIST.forEach(el => {
     const cum = cumulative(weekly[el.key]);
     const base = Math.max(cum[WEEK_COUNT - 1], 1);
     growthByEl[el.key] = cum.map(v => (v / base) * 100);
@@ -182,13 +172,13 @@ function renderDesign1(mount, weekly, labels) {
   }
 
   const clusterW = plotW / WEEK_COUNT;
-  const barW = (clusterW * 0.7) / ELEMENTS.length;
+  const barW = (clusterW * 0.7) / ELEMENTS_LIST.length;
   const linePointsByEl = {};
-  ELEMENTS.forEach(el => { linePointsByEl[el.key] = []; });
+  ELEMENTS_LIST.forEach(el => { linePointsByEl[el.key] = []; });
 
   for (let i = 0; i < WEEK_COUNT; i++) {
     const clusterX = padL + i * clusterW + clusterW * 0.15;
-    ELEMENTS.forEach((el, j) => {
+    ELEMENTS_LIST.forEach((el, j) => {
       const value = weekly[el.key][i];
       const barH = (value / maxBar) * plotH;
       svg.appendChild(svgEl('rect', {
@@ -207,7 +197,7 @@ function renderDesign1(mount, weekly, labels) {
     })).textContent = labels[i];
   }
 
-  ELEMENTS.forEach(el => {
+  ELEMENTS_LIST.forEach(el => {
     svg.appendChild(svgEl('path', {
       d: smoothPath(linePointsByEl[el.key]), fill: 'none',
       stroke: `var(--${el.key})`, 'stroke-width': '2',
@@ -221,7 +211,7 @@ function renderDesign1(mount, weekly, labels) {
   mount.appendChild(svg);
 
   buildLegend(document.getElementById('legend-1'), [
-    ...ELEMENTS.map(el => ({ label: `${el.name} — bar = posts/week, line = growth %`, color: `var(--${el.key})`, shape: 'dot' })),
+    ...ELEMENTS_LIST.map(el => ({ label: `${el.name} — bar = posts/week, line = growth %`, color: `var(--${el.key})`, shape: 'dot' })),
   ]);
 }
 
@@ -235,8 +225,8 @@ function renderDesign2(mount, weekly, labels) {
   const totals = weeklyTotals(weekly);
   const maxStack = Math.max(1, ...totals);
   const cumByEl = {};
-  ELEMENTS.forEach(el => { cumByEl[el.key] = cumulative(weekly[el.key]); });
-  const maxCum = Math.max(1, ...ELEMENTS.map(el => cumByEl[el.key][WEEK_COUNT - 1]));
+  ELEMENTS_LIST.forEach(el => { cumByEl[el.key] = cumulative(weekly[el.key]); });
+  const maxCum = Math.max(1, ...ELEMENTS_LIST.map(el => cumByEl[el.key][WEEK_COUNT - 1]));
 
   const svg = svgEl('svg', { viewBox: `0 0 ${width} ${height}` });
   gridLines(svg, padL, padT, plotW, plotH);
@@ -246,7 +236,7 @@ function renderDesign2(mount, weekly, labels) {
   for (let i = 0; i < WEEK_COUNT; i++) {
     const x = padL + i * (plotW / WEEK_COUNT) + (plotW / WEEK_COUNT - barW) / 2;
     let stackedY = padT + plotH;
-    ELEMENTS.forEach(el => {
+    ELEMENTS_LIST.forEach(el => {
       const value = weekly[el.key][i];
       const segH = (value / maxStack) * plotH;
       stackedY -= segH;
@@ -261,7 +251,7 @@ function renderDesign2(mount, weekly, labels) {
     })).textContent = labels[i];
   }
 
-  ELEMENTS.forEach(el => {
+  ELEMENTS_LIST.forEach(el => {
     const points = cumByEl[el.key].map((v, i) => ({
       x: padL + i * (plotW / WEEK_COUNT) + (plotW / WEEK_COUNT) / 2,
       y: padT + plotH - (v / maxCum) * plotH,
@@ -276,7 +266,7 @@ function renderDesign2(mount, weekly, labels) {
   mount.appendChild(svg);
 
   buildLegend(document.getElementById('legend-2'), [
-    ...ELEMENTS.map(el => ({ label: `${el.name} (cumulative)`, color: `var(--${el.key})`, shape: 'line' })),
+    ...ELEMENTS_LIST.map(el => ({ label: `${el.name} (cumulative)`, color: `var(--${el.key})`, shape: 'line' })),
   ]);
 }
 
@@ -285,7 +275,7 @@ function renderDesign2(mount, weekly, labels) {
 function renderDesign3(mount, weekly) {
   mount.innerHTML = '';
 
-  ELEMENTS.forEach(el => {
+  ELEMENTS_LIST.forEach(el => {
     const card = document.createElement('div');
     card.className = `chart-mini-card chart-mini-card--${el.key}`;
 
@@ -406,8 +396,8 @@ function renderDesign5(mount, weekly, labels) {
   const totals = weeklyTotals(weekly);
   const maxBar = Math.max(1, ...totals);
   const cumByEl = {};
-  ELEMENTS.forEach(el => { cumByEl[el.key] = cumulative(weekly[el.key]); });
-  const maxCum = Math.max(1, ...ELEMENTS.map(el => cumByEl[el.key][WEEK_COUNT - 1]));
+  ELEMENTS_LIST.forEach(el => { cumByEl[el.key] = cumulative(weekly[el.key]); });
+  const maxCum = Math.max(1, ...ELEMENTS_LIST.map(el => cumByEl[el.key][WEEK_COUNT - 1]));
 
   const svg = svgEl('svg', { viewBox: `0 0 ${width} ${height}` });
 
@@ -435,7 +425,7 @@ function renderDesign5(mount, weekly, labels) {
     })).textContent = labels[i];
   });
 
-  ELEMENTS.forEach(el => {
+  ELEMENTS_LIST.forEach(el => {
     const points = cumByEl[el.key].map((v, i) => ({
       x: padL + i * colW + colW / 2,
       y: padT + plotH - (v / maxCum) * plotH,
@@ -455,7 +445,7 @@ function renderDesign5(mount, weekly, labels) {
   mount.appendChild(svg);
 
   buildLegend(document.getElementById('legend-5'), [
-    ...ELEMENTS.map(el => ({ label: `${el.name} (cumulative growth)`, color: `var(--${el.key})`, shape: 'line' })),
+    ...ELEMENTS_LIST.map(el => ({ label: `${el.name} (cumulative growth)`, color: `var(--${el.key})`, shape: 'line' })),
   ]);
 }
 

@@ -118,45 +118,64 @@
   ══════════════════════════════════════════════════ -->
   <main class="page-main" id="dashboard" role="main">
     <h2 class="page-title">Today's Balance</h2>
-    <p class="page-subtitle">Five dimensions, one you. Rate how each feels today.</p>
+    <p class="page-subtitle">One feed, five elements. Post below, then filter by element if you want focus.</p>
 
-    <div class="element-grid" role="list">
+    <div class="feed-wrap">
+      <div class="composer">
+        <textarea id="composer-text" placeholder="What's on your mind?" aria-label="Write a post"></textarea>
+        <input type="file" id="composer-file" accept="image/*,video/*,audio/*" hidden />
+        <div class="composer__meta">
+          <select id="composer-element" aria-label="Element">
+            <option value="">Element…</option>
+            <option value="metal">⛏️ Metal — Money</option>
+            <option value="wood">🌳 Wood — Health</option>
+            <option value="water">💧 Water — Talent</option>
+            <option value="fire">🔥 Fire — Mood</option>
+            <option value="earth">🪨 Earth — Situation</option>
+          </select>
+          <select id="composer-level" aria-label="Priority level">
+            <option value="">Priority…</option>
+            <option value="emergency-important">🔴 Emergency &amp; Important</option>
+            <option value="emergency-unimportant">🟠 Emergency &amp; Unimportant</option>
+            <option value="important-unemergency">🟡 Important &amp; Not Emergency</option>
+            <option value="unimportant-unemergency">⚪ Unimportant &amp; Not Emergency</option>
+          </select>
+        </div>
+        <div class="composer__row">
+          <button type="button" id="composer-attach" class="composer__attach">📎 Attach</button>
+          <span id="composer-preview" class="composer__preview" hidden></span>
+          <button type="button" id="composer-post" class="composer__post">Post</button>
+        </div>
+      </div>
 
-      <a class="element-card element-card--metal" href="journal.html?el=metal" role="listitem" aria-label="Metal — Money — open journal">
-        <div class="element-card__icon" aria-hidden="true">⛏️</div>
-        <h3 class="element-card__name">Metal</h3>
-        <p class="element-card__dimension">Money</p>
-        <span class="element-card__cta">Open journal →</span>
-      </a>
+      <div class="stories-row" role="tablist" aria-label="Filter feed by element">
+        <button type="button" class="story-chip story-chip--all active" data-filter="all" role="tab" aria-selected="true">
+          <span class="story-chip__icon" aria-hidden="true">🌐</span>
+          <span class="story-chip__label">All</span>
+        </button>
+        <button type="button" class="story-chip story-chip--metal" data-filter="metal" role="tab" aria-selected="false">
+          <span class="story-chip__icon" aria-hidden="true">⛏️</span>
+          <span class="story-chip__label">Metal</span>
+        </button>
+        <button type="button" class="story-chip story-chip--wood" data-filter="wood" role="tab" aria-selected="false">
+          <span class="story-chip__icon" aria-hidden="true">🌳</span>
+          <span class="story-chip__label">Wood</span>
+        </button>
+        <button type="button" class="story-chip story-chip--water" data-filter="water" role="tab" aria-selected="false">
+          <span class="story-chip__icon" aria-hidden="true">💧</span>
+          <span class="story-chip__label">Water</span>
+        </button>
+        <button type="button" class="story-chip story-chip--fire" data-filter="fire" role="tab" aria-selected="false">
+          <span class="story-chip__icon" aria-hidden="true">🔥</span>
+          <span class="story-chip__label">Fire</span>
+        </button>
+        <button type="button" class="story-chip story-chip--earth" data-filter="earth" role="tab" aria-selected="false">
+          <span class="story-chip__icon" aria-hidden="true">🪨</span>
+          <span class="story-chip__label">Earth</span>
+        </button>
+      </div>
 
-      <a class="element-card element-card--wood" href="journal.html?el=wood" role="listitem" aria-label="Wood — Health — open journal">
-        <div class="element-card__icon" aria-hidden="true">🌳</div>
-        <h3 class="element-card__name">Wood</h3>
-        <p class="element-card__dimension">Health</p>
-        <span class="element-card__cta">Open journal →</span>
-      </a>
-
-      <a class="element-card element-card--water" href="journal.html?el=water" role="listitem" aria-label="Water — Talent — open journal">
-        <div class="element-card__icon" aria-hidden="true">💧</div>
-        <h3 class="element-card__name">Water</h3>
-        <p class="element-card__dimension">Talent</p>
-        <span class="element-card__cta">Open journal →</span>
-      </a>
-
-      <a class="element-card element-card--fire" href="journal.html?el=fire" role="listitem" aria-label="Fire — Mood — open journal">
-        <div class="element-card__icon" aria-hidden="true">🔥</div>
-        <h3 class="element-card__name">Fire</h3>
-        <p class="element-card__dimension">Mood</p>
-        <span class="element-card__cta">Open journal →</span>
-      </a>
-
-      <a class="element-card element-card--earth" href="journal.html?el=earth" role="listitem" aria-label="Earth — Situation — open journal">
-        <div class="element-card__icon" aria-hidden="true">🪨</div>
-        <h3 class="element-card__name">Earth</h3>
-        <p class="element-card__dimension">Situation</p>
-        <span class="element-card__cta">Open journal →</span>
-      </a>
-
+      <div class="feed" id="feed" role="feed" aria-label="All journal entries"></div>
     </div>
   </main>
 
