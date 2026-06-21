@@ -89,6 +89,19 @@ function readFileAsDataUrl(file) {
   });
 }
 
+// iOS Safari / Pi Browser (WebKit) cannot play <video src="data:...">  at all
+// (long-standing WebKit bug — images as data URIs are fine, video is not).
+// Posts/stories still persist as data URI strings in localStorage; this just
+// converts to a Blob object URL at render time so video actually plays there.
+function dataUrlToObjectUrl(dataUrl) {
+  const [header, base64] = dataUrl.split(',');
+  const mime = header.match(/data:(.*?);base64/)?.[1] || '';
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return URL.createObjectURL(new Blob([bytes], { type: mime }));
+}
+
 function timeAgo(iso) {
   const diffSec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
   if (diffSec < 60) return 'just now';

@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-06-21 — Fixed: video stories/posts showed blank on iPhone Pi Browser
+
+- **Trigger**: user tested the new Stories feature on an actual iPhone in Pi Browser and reported the story viewer opened (✕/Delete buttons visible) but the photo/video itself never appeared — just a black box.
+- **Root cause**: iOS Safari/WebKit (which Pi Browser uses on iPhone) has a long-standing bug where `<video src="data:video/...;base64,...">` simply won't load — see `.claude/rules/tech-defaults.md`. Images as data URIs are unaffected; only video. This was a real bug, not just stories-specific — the same pattern existed in the regular journal feed's video posts (`js/journal.js`, `js/main.js`) and would have silently failed there too on iPhone.
+- **Fix**: added `dataUrlToObjectUrl()` to `js/common.js` — converts the stored data URI to a `Blob` + `URL.createObjectURL()` at render time, only for `<video>` elements (images keep using the data URI directly). Applied in three places: the story viewer, the story tray thumbnails, and both feed renderers' video post cards (`buildUnifiedPostCard` in `main.js`, `buildPostCard` in `journal.js`). Also added `error` listeners on story media so a genuine load failure shows a toast instead of staying silently blank.
+- **Why this didn't surface earlier**: WebFetch/desktop-browser testing can't catch this — Chrome/Firefox/desktop Safari all play data-URI video fine; it's iOS WebKit specifically. Worth remembering for any future media feature: test video playback on an actual Pi Browser/iPhone, not just desktop.
+
 ## 2026-06-18 — Project Initialized
 
 - **Concept**: Track personal balance across 5 life dimensions, mapped to the Five Elements (Wu Xing): Metal=Money, Wood=Health, Water=Talent/Skills, Fire=Mood, Earth=Situation/Circumstances.

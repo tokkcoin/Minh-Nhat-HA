@@ -49,7 +49,7 @@ function buildPostCard(post, element) {
   const media = post.mediaType === 'image'
     ? `<img class="post-card__media" src="${post.mediaData}" alt="">`
     : post.mediaType === 'video'
-      ? `<video class="post-card__media" src="${post.mediaData}" controls></video>`
+      ? `<video class="post-card__media" controls></video>`
       : post.mediaType === 'audio'
         ? `<audio class="post-card__media post-card__media--audio" src="${post.mediaData}" controls></audio>`
         : '';
@@ -75,6 +75,11 @@ function buildPostCard(post, element) {
       </button>
     </div>
   `;
+
+  if (post.mediaType === 'video') {
+    const videoEl = card.querySelector('.post-card__media');
+    if (videoEl) videoEl.src = dataUrlToObjectUrl(post.mediaData);
+  }
 
   card.querySelector('.post-card__like')?.addEventListener('click', () => toggleLike(element, post.id));
   card.querySelector('.post-card__delete')?.addEventListener('click', () => deletePost(element, post.id));

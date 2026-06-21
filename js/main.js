@@ -105,7 +105,7 @@ function buildUnifiedPostCard(post) {
   const media = post.mediaType === 'image'
     ? `<img class="post-card__media" src="${post.mediaData}" alt="">`
     : post.mediaType === 'video'
-      ? `<video class="post-card__media" src="${post.mediaData}" controls></video>`
+      ? `<video class="post-card__media" controls></video>`
       : post.mediaType === 'audio'
         ? `<audio class="post-card__media post-card__media--audio" src="${post.mediaData}" controls></audio>`
         : '';
@@ -134,6 +134,11 @@ function buildUnifiedPostCard(post) {
       </button>
     </div>
   `;
+
+  if (post.mediaType === 'video') {
+    const videoEl = card.querySelector('.post-card__media');
+    if (videoEl) videoEl.src = dataUrlToObjectUrl(post.mediaData);
+  }
 
   card.querySelector('.post-card__like')?.addEventListener('click', () => toggleFeedLike(post));
   card.querySelector('.post-card__delete')?.addEventListener('click', () => deleteFeedPost(post));
@@ -285,19 +290,39 @@ function renderStories() {
   loadStories().forEach(story => list.appendChild(buildStoryChip(story)));
 }
 
+function buildStoryThumbMedia(story) {
+  let media;
+  if (story.mediaType === 'image') {
+    media = document.createElement('img');
+    media.src = story.mediaData;
+    media.alt = '';
+  } else {
+    media = document.createElement('video');
+    media.src = dataUrlToObjectUrl(story.mediaData);
+    media.muted = true;
+    media.playsInline = true;
+  }
+  media.addEventListener('error', () => {
+    media.replaceWith(document.createTextNode(story.mediaType === 'image' ? '🖼️' : '🎬'));
+  });
+  return media;
+}
+
 function buildStoryChip(story) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'story-chip story-chip--user';
 
-  const thumb = story.mediaType === 'image'
-    ? `<img src="${story.mediaData}" alt="">`
-    : `<video src="${story.mediaData}" muted></video>`;
+  const icon = document.createElement('span');
+  icon.className = 'story-chip__icon story-chip__icon--thumb';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.appendChild(buildStoryThumbMedia(story));
 
-  btn.innerHTML = `
-    <span class="story-chip__icon story-chip__icon--thumb" aria-hidden="true">${thumb}</span>
-    <span class="story-chip__label">You</span>
-  `;
+  const label = document.createElement('span');
+  label.className = 'story-chip__label';
+  label.textContent = 'You';
+
+  btn.append(icon, label);
   btn.addEventListener('click', () => openStoryViewer(story));
   return btn;
 }
@@ -347,15 +372,35 @@ function initStoryCreate() {
   });
 }
 
+let currentStoryViewerObjectUrl = null;
+
 function openStoryViewer(story) {
   const overlay = document.getElementById('story-viewer');
   const mediaWrap = document.getElementById('story-viewer-media');
   const captionEl = document.getElementById('story-viewer-caption');
   if (!overlay || !mediaWrap) return;
 
-  mediaWrap.innerHTML = story.mediaType === 'image'
-    ? `<img src="${story.mediaData}" alt="">`
-    : `<video src="${story.mediaData}" controls autoplay></video>`;
+  mediaWrap.innerHTML = '';
+
+  let media;
+  if (story.mediaType === 'image') {
+    media = document.createElement('img');
+    media.src = story.mediaData;
+    media.alt = '';
+  } else {
+    media = document.createElement('video');
+    currentStoryViewerObjectUrl = dataUrlToObjectUrl(story.mediaData);
+    media.src = currentStoryViewerObjectUrl;
+    media.controls = true;
+    media.autoplay = true;
+    media.muted = true;       // autoplay is blocked by browsers unless muted
+    media.playsInline = true; // required on iOS/Pi Browser to play inline, not fullscreen
+  }
+  media.addEventListener('error', () => {
+    showToast("Couldn't load this story's photo/video — the file may be too large for this device.");
+  });
+  mediaWrap.appendChild(media);
+
   if (captionEl) captionEl.textContent = story.caption || '';
 
   overlay.dataset.storyId = story.id;
@@ -368,6 +413,10 @@ function closeStoryViewer() {
   overlay.hidden = true;
   const mediaWrap = document.getElementById('story-viewer-media');
   if (mediaWrap) mediaWrap.innerHTML = ''; // stop any playing video
+  if (currentStoryViewerObjectUrl) {
+    URL.revokeObjectURL(currentStoryViewerObjectUrl);
+    currentStoryViewerObjectUrl = null;
+  }
 }
 
 function deleteCurrentStory() {
