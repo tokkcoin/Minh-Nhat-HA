@@ -470,6 +470,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   justify-content: center;
   z-index: 10000;
 }
+.story-viewer[hidden] { display: none; }
 .story-viewer__inner {
   position: relative;
   max-width: 420px;

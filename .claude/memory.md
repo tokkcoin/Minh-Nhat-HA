@@ -121,6 +121,14 @@
 - **Storage**: single key `lifebalance_stories` (not per-element, unlike journal posts) — `{ id, mediaType: 'image'|'video', mediaData, caption, createdAt }`. See `.claude/rules/tech-defaults.md`.
 - **Reused rather than rebuilt**: the `.story-chip`/`.story-chip__icon` circle styling from the existing filter row (just added `--create`/`--user`/`--thumb` modifier classes), and the same `MAX_MEDIA_BYTES`/`readFileAsDataUrl`/`showToast` helpers from `common.js` already used by the journal composer.
 
+## 2026-06-21 — Fixed: black screen covering the whole app (Pi Browser + desktop)
+
+- **Trigger**: user reported the app showed a full black screen and was unusable, starting right after the "Create a Story" feature was added.
+- **Root cause**: `.story-viewer` in `css/style.css` (the full-screen story-viewer overlay, `background: rgba(0,0,0,.9)`) is styled with `display: flex` directly on the class, with no matching `.story-viewer[hidden] { display: none; }` rule. Author stylesheet rules always beat the browser's built-in `[hidden] { display: none }` default regardless of selector specificity, so the overlay rendered full-screen and black on every page load even though `index.html` has `hidden` on the element — `hidden` was never actually doing anything.
+- **Fix**: added `.story-viewer[hidden] { display: none; }` right after the `.story-viewer` rule in `css/style.css`.
+- **Second factor (Pi Browser specifically)**: `css/style.css` was never cache-busted with a `?v=` query param the way `js/common.js`/`js/main.js`/`js/journal.js` already are (see the 2026-06-21 video-fix entry above — Pi Browser caches aggressively). Bumped to `css/style.css?v=4` in both `index.html` and `journal.html` so the fix actually reaches devices with a cached old CSS.
+- **Lesson**: any full-screen/modal overlay toggled via the `hidden` attribute needs an explicit `[hidden] { display: none }` override the moment it also has a class rule setting `display`. And CSS needs the same cache-busting discipline as JS for Pi Browser — easy to forget since the JS fix only touched `?v=` on script tags last time.
+
 ## Open TODOs
 
 - [x] `PI_API_KEY` Vercel env var — confirmed working 2026-06-20/21. Note: the dashboard showed it saved with Production checked *before* it actually took effect; a plain "Redeploy" of the existing deployment didn't pick it up, but a fresh `git push` (new deployment from scratch) did. If this env-var pattern recurs, prefer triggering a brand-new deployment over trusting the Redeploy button.
