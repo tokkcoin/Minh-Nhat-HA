@@ -93,13 +93,19 @@ function readFileAsDataUrl(file) {
 // (long-standing WebKit bug — images as data URIs are fine, video is not).
 // Posts/stories still persist as data URI strings in localStorage; this just
 // converts to a Blob object URL at render time so video actually plays there.
+// Returns null (instead of throwing) if the stored data URI is malformed/
+// corrupted — callers must handle null rather than assume this always works.
 function dataUrlToObjectUrl(dataUrl) {
-  const [header, base64] = dataUrl.split(',');
-  const mime = header.match(/data:(.*?);base64/)?.[1] || '';
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return URL.createObjectURL(new Blob([bytes], { type: mime }));
+  try {
+    const [header, base64] = dataUrl.split(',');
+    const mime = header.match(/data:(.*?);base64/)?.[1] || '';
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return URL.createObjectURL(new Blob([bytes], { type: mime }));
+  } catch {
+    return null;
+  }
 }
 
 function timeAgo(iso) {
@@ -116,4 +122,15 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+// Runs a boot-time init/render function in isolation — a thrown error (e.g.
+// one corrupted post's media) must not stop later boot steps (e.g. wiring a
+// close button) from running. See .claude/memory.md, 2026-06-21.
+function runBootStep(fn) {
+  try {
+    fn();
+  } catch (err) {
+    console.warn(`Boot step "${fn.name}" failed:`, err);
+  }
 }

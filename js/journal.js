@@ -78,7 +78,9 @@ function buildPostCard(post, element) {
 
   if (post.mediaType === 'video') {
     const videoEl = card.querySelector('.post-card__media');
-    if (videoEl) videoEl.src = dataUrlToObjectUrl(post.mediaData);
+    const objectUrl = dataUrlToObjectUrl(post.mediaData);
+    if (videoEl && objectUrl) videoEl.src = objectUrl;
+    else if (videoEl) videoEl.replaceWith('⚠️ This video is corrupted and can\'t be played.');
   }
 
   card.querySelector('.post-card__like')?.addEventListener('click', () => toggleLike(element, post.id));
@@ -182,9 +184,10 @@ function initComposer(element) {
 }
 
 // ── 5. Boot ───────────────────────────────────────────────────
+// runBootStep (common.js) isolates each step so one failure can't cascade.
 
 document.addEventListener('DOMContentLoaded', () => {
-  initPiSdk();
+  runBootStep(initPiSdk);
 
   const element = getElementFromUrl();
   const notFound = document.getElementById('not-found');
@@ -196,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  applyTheme(element);
-  renderFeed(element);
-  initComposer(element);
+  runBootStep(() => applyTheme(element));
+  runBootStep(() => renderFeed(element));
+  runBootStep(() => initComposer(element));
 });

@@ -493,6 +493,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-radius: var(--radius-lg);
 }
 .story-viewer__caption { color: var(--text-primary); font-size: 14px; margin-top: var(--space-md); text-align: center; }
+.story-viewer__broken { color: var(--text-secondary); font-size: 14px; text-align: center; padding: var(--space-lg); }
 .story-viewer__close {
   position: absolute;
   top: -40px;

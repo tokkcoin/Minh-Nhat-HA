@@ -12,6 +12,13 @@
 - **Fix**: added `dataUrlToObjectUrl()` to `js/common.js` — converts the stored data URI to a `Blob` + `URL.createObjectURL()` at render time, only for `<video>` elements (images keep using the data URI directly). Applied in three places: the story viewer, the story tray thumbnails, and both feed renderers' video post cards (`buildUnifiedPostCard` in `main.js`, `buildPostCard` in `journal.js`). Also added `error` listeners on story media so a genuine load failure shows a toast instead of staying silently blank.
 - **Why this didn't surface earlier**: WebFetch/desktop-browser testing can't catch this — Chrome/Firefox/desktop Safari all play data-URI video fine; it's iOS WebKit specifically. Worth remembering for any future media feature: test video playback on an actual Pi Browser/iPhone, not just desktop.
 
+## 2026-06-21 — Boot steps isolated; close button bug traced to a cascading throw
+
+- **Trigger**: after the video data-URI fix, user still saw a blank story AND the viewer's ✕ close button stopped working entirely — clicking it did nothing.
+- **Root cause**: `dataUrlToObjectUrl()` (new in the previous fix) threw on the corrupted stored video's malformed base64 (`atob()` throws on invalid input). That throw happened inside `renderUnifiedFeed()`/`renderStories()`, which ran earlier in the same un-isolated `DOMContentLoaded` callback as `initStoryViewer()` — an uncaught throw stops the rest of that synchronous callback, so `initStoryViewer()` (which wires the ✕/Delete listeners) never ran. One corrupted post's media silently broke an unrelated button.
+- **Fix**: (1) `dataUrlToObjectUrl()` now returns `null` instead of throwing — every call site checks for `null` and shows a "corrupted, can't be played" message instead of assuming success. (2) Added `runBootStep(fn)` to `js/common.js`, wrapping every top-level call in both `main.js`'s and `journal.js`'s `DOMContentLoaded` handlers — each step now runs in its own try/catch so one failing step can never prevent later ones from running.
+- **Lesson**: any `DOMContentLoaded` handler with multiple sequential calls is a hidden single point of failure — the first uncaught throw silently cancels everything after it, with no console-visible symptom obvious to an end user (just "stuff stopped working"). Always isolate boot steps once a page has more than one independent feature initializing in the same handler.
+
 ## 2026-06-18 — Project Initialized
 
 - **Concept**: Track personal balance across 5 life dimensions, mapped to the Five Elements (Wu Xing): Metal=Money, Wood=Health, Water=Talent/Skills, Fire=Mood, Earth=Situation/Circumstances.

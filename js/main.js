@@ -137,7 +137,9 @@ function buildUnifiedPostCard(post) {
 
   if (post.mediaType === 'video') {
     const videoEl = card.querySelector('.post-card__media');
-    if (videoEl) videoEl.src = dataUrlToObjectUrl(post.mediaData);
+    const objectUrl = dataUrlToObjectUrl(post.mediaData);
+    if (videoEl && objectUrl) videoEl.src = objectUrl;
+    else if (videoEl) videoEl.replaceWith('⚠️ This video is corrupted and can\'t be played.');
   }
 
   card.querySelector('.post-card__like')?.addEventListener('click', () => toggleFeedLike(post));
@@ -291,21 +293,25 @@ function renderStories() {
 }
 
 function buildStoryThumbMedia(story) {
-  let media;
+  const fallback = () => document.createTextNode(story.mediaType === 'image' ? '🖼️' : '🎬');
+
   if (story.mediaType === 'image') {
-    media = document.createElement('img');
-    media.src = story.mediaData;
-    media.alt = '';
-  } else {
-    media = document.createElement('video');
-    media.src = dataUrlToObjectUrl(story.mediaData);
-    media.muted = true;
-    media.playsInline = true;
+    const img = document.createElement('img');
+    img.src = story.mediaData;
+    img.alt = '';
+    img.addEventListener('error', () => img.replaceWith(fallback()));
+    return img;
   }
-  media.addEventListener('error', () => {
-    media.replaceWith(document.createTextNode(story.mediaType === 'image' ? '🖼️' : '🎬'));
-  });
-  return media;
+
+  const objectUrl = dataUrlToObjectUrl(story.mediaData);
+  if (!objectUrl) return fallback();
+
+  const video = document.createElement('video');
+  video.src = objectUrl;
+  video.muted = true;
+  video.playsInline = true;
+  video.addEventListener('error', () => video.replaceWith(fallback()));
+  return video;
 }
 
 function buildStoryChip(story) {
@@ -381,25 +387,34 @@ function openStoryViewer(story) {
   if (!overlay || !mediaWrap) return;
 
   mediaWrap.innerHTML = '';
+  currentStoryViewerObjectUrl = null;
 
-  let media;
   if (story.mediaType === 'image') {
-    media = document.createElement('img');
+    const media = document.createElement('img');
     media.src = story.mediaData;
     media.alt = '';
+    media.addEventListener('error', () => {
+      showToast("Couldn't load this story's photo — it may be corrupted.");
+    });
+    mediaWrap.appendChild(media);
   } else {
-    media = document.createElement('video');
-    currentStoryViewerObjectUrl = dataUrlToObjectUrl(story.mediaData);
-    media.src = currentStoryViewerObjectUrl;
-    media.controls = true;
-    media.autoplay = true;
-    media.muted = true;       // autoplay is blocked by browsers unless muted
-    media.playsInline = true; // required on iOS/Pi Browser to play inline, not fullscreen
+    const objectUrl = dataUrlToObjectUrl(story.mediaData);
+    if (!objectUrl) {
+      mediaWrap.innerHTML = '<p class="story-viewer__broken">⚠️ This story\'s video is corrupted and can\'t be played. Delete it and post a new one.</p>';
+    } else {
+      currentStoryViewerObjectUrl = objectUrl;
+      const media = document.createElement('video');
+      media.src = objectUrl;
+      media.controls = true;
+      media.autoplay = true;
+      media.muted = true;       // autoplay is blocked by browsers unless muted
+      media.playsInline = true; // required on iOS/Pi Browser to play inline, not fullscreen
+      media.addEventListener('error', () => {
+        showToast("Couldn't load this story's video — the file may be too large for this device.");
+      });
+      mediaWrap.appendChild(media);
+    }
   }
-  media.addEventListener('error', () => {
-    showToast("Couldn't load this story's photo/video — the file may be too large for this device.");
-  });
-  mediaWrap.appendChild(media);
 
   if (captionEl) captionEl.textContent = story.caption || '';
 
@@ -438,14 +453,15 @@ function initStoryViewer() {
 }
 
 // ── 6. Boot ───────────────────────────────────────────────────
+// runBootStep (common.js) isolates each step so one failure can't cascade.
 
 document.addEventListener('DOMContentLoaded', () => {
-  initPiSdk();
-  initHowPreview();
-  initStoriesRow();
-  initUnifiedComposer();
-  renderUnifiedFeed();
-  initStoryCreate();
-  initStoryViewer();
-  renderStories();
+  runBootStep(initPiSdk);
+  runBootStep(initHowPreview);
+  runBootStep(initStoriesRow);
+  runBootStep(initUnifiedComposer);
+  runBootStep(renderUnifiedFeed);
+  runBootStep(initStoryCreate);
+  runBootStep(initStoryViewer);
+  runBootStep(renderStories);
 });
