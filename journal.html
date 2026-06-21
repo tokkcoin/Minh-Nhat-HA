@@ -52,49 +52,26 @@
     </section>
 
     <main class="journal" role="main">
-      <div class="tabs" role="tablist">
-        <button type="button" class="tab-btn active" data-tab="journal" role="tab" aria-selected="true">Journal</button>
-        <button type="button" class="tab-btn" data-tab="definition" role="tab" aria-selected="false">Definition</button>
+      <div class="composer">
+        <textarea id="composer-text" placeholder="How did today go?" aria-label="Write a journal entry"></textarea>
+        <input type="file" id="composer-file" accept="image/*,video/*,audio/*" hidden />
+        <div class="composer__meta">
+          <select id="composer-level" aria-label="Priority level">
+            <option value="">Priority…</option>
+            <option value="emergency-important">🔴 Emergency &amp; Important</option>
+            <option value="emergency-unimportant">🟠 Emergency &amp; Unimportant</option>
+            <option value="important-unemergency">🟡 Important &amp; Not Emergency</option>
+            <option value="unimportant-unemergency">⚪ Unimportant &amp; Not Emergency</option>
+          </select>
+        </div>
+        <div class="composer__row">
+          <button type="button" id="composer-attach" class="composer__attach">📎 Attach photo/video/audio</button>
+          <span id="composer-preview" class="composer__preview" hidden></span>
+          <button type="button" id="composer-post" class="composer__post">Post</button>
+        </div>
       </div>
 
-      <section id="tab-panel-journal" class="tab-panel">
-        <div class="composer">
-          <textarea id="composer-text" placeholder="How did today go?" aria-label="Write a journal entry"></textarea>
-          <input type="file" id="composer-file" accept="image/*,video/*,audio/*" hidden />
-          <div class="composer__meta">
-            <select id="composer-level" aria-label="Priority level">
-              <option value="">Priority…</option>
-              <option value="emergency-important">🔴 Emergency &amp; Important</option>
-              <option value="emergency-unimportant">🟠 Emergency &amp; Unimportant</option>
-              <option value="important-unemergency">🟡 Important &amp; Not Emergency</option>
-              <option value="unimportant-unemergency">⚪ Unimportant &amp; Not Emergency</option>
-            </select>
-          </div>
-          <div class="composer__row">
-            <button type="button" id="composer-attach" class="composer__attach">📎 Attach photo/video/audio</button>
-            <span id="composer-preview" class="composer__preview" hidden></span>
-            <button type="button" id="composer-post" class="composer__post">Post</button>
-          </div>
-        </div>
-
-        <div class="feed" id="feed" role="feed" aria-label="Journal entries"></div>
-      </section>
-
-      <section id="tab-panel-definition" class="tab-panel" hidden>
-        <p class="diagram-intro">Optional: map out what this element actually means to you — e.g. Wood → Health → Sleep / Exercise / Food → Yoga, Jogging, Swimming…</p>
-        <div class="diagram-toolbar" role="toolbar" aria-label="Diagram tools">
-          <button type="button" class="diagram-tool active" data-tool="select">↖ Select</button>
-          <button type="button" class="diagram-tool" data-tool="circle">⚪ Circle</button>
-          <button type="button" class="diagram-tool" data-tool="arrow">➜ Arrow</button>
-          <button type="button" class="diagram-tool" data-tool="text">📝 Text</button>
-          <button type="button" class="diagram-tool diagram-tool--danger" id="diagram-delete">🗑 Delete</button>
-          <button type="button" class="diagram-tool diagram-tool--danger" id="diagram-clear">Clear all</button>
-        </div>
-        <p class="diagram-hint" id="diagram-hint">Click a circle or text to select it; drag to move.</p>
-        <div class="diagram-canvas-wrap">
-          <svg id="diagram-canvas" class="diagram-canvas"></svg>
-        </div>
-      </section>
+      <div class="feed" id="feed" role="feed" aria-label="Journal entries"></div>
     </main>
   </div>
 
@@ -109,6 +86,5 @@
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <script src="js/common.js"></script>
   <script src="js/journal.js"></script>
-  <script src="js/diagram.js"></script>
 </body>
 </html>

@@ -585,62 +585,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .not-found { max-width: 500px; margin: var(--space-xl) auto; text-align: center; padding: 0 var(--space-lg); }
 .not-found p { color: var(--text-secondary); margin-bottom: var(--space-md); }
 
-/* Tabs (Journal / Definition) */
-.tabs { display: flex; gap: var(--space-sm); margin-bottom: var(--space-lg); }
-.tab-btn {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-muted);
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
-}
-.tab-btn.active { color: var(--text-primary); background: var(--bg-card-hover); }
-
-/* Definition diagram tool */
-.diagram-intro { font-size: 13px; color: var(--text-secondary); margin-bottom: var(--space-md); }
-.diagram-toolbar { display: flex; gap: var(--space-sm); margin-bottom: var(--space-sm); flex-wrap: wrap; }
-.diagram-tool {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 6px 12px;
-}
-.diagram-tool.active { color: var(--text-primary); border-color: var(--current-element, var(--text-primary)); background: var(--bg-card-hover); }
-.diagram-tool--danger:hover { color: var(--danger); border-color: var(--danger); }
-.diagram-hint { font-size: 12px; color: var(--text-muted); margin-bottom: var(--space-sm); }
-
-.diagram-canvas-wrap {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  background:
-    linear-gradient(var(--border) 1px, transparent 1px) 0 0 / 24px 24px,
-    linear-gradient(90deg, var(--border) 1px, transparent 1px) 0 0 / 24px 24px,
-    var(--bg-page);
-}
-.diagram-canvas { width: 100%; height: 480px; display: block; cursor: crosshair; }
-
-.diagram-node circle { fill: var(--bg-card); stroke: var(--current-element, var(--text-primary)); stroke-width: 2; }
-.diagram-node text {
-  fill: var(--text-primary);
-  font-size: 12px;
-  font-family: var(--font-body);
-  text-anchor: middle;
-  dominant-baseline: middle;
-  pointer-events: none;
-}
-.diagram-node.selected circle { stroke: var(--fire); stroke-width: 3; }
-.diagram-edge { stroke: var(--text-secondary); stroke-width: 2; }
-.diagram-text-node text {
-  fill: var(--text-secondary);
-  font-size: 12px;
-  font-family: var(--font-body);
-}
-.diagram-text-node.selected text { fill: var(--fire); }
-
 /* ── 12. Chart Concepts (design comparison) ── */
 .chart-note {
   max-width: 1100px;

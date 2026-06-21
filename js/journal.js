@@ -176,28 +176,7 @@ function initComposer(element) {
   });
 }
 
-// ── 5. Tabs (Journal / Definition) ────────────────────────────
-
-function initTabs() {
-  const tabBtns = document.querySelectorAll('.tab-btn[data-tab]');
-  if (!tabBtns.length) return;
-
-  tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      tabBtns.forEach(b => {
-        b.classList.remove('active');
-        b.setAttribute('aria-selected', 'false');
-      });
-      btn.classList.add('active');
-      btn.setAttribute('aria-selected', 'true');
-      document.querySelectorAll('.tab-panel').forEach(panel => {
-        panel.hidden = panel.id !== `tab-panel-${btn.dataset.tab}`;
-      });
-    });
-  });
-}
-
-// ── 6. Boot ───────────────────────────────────────────────────
+// ── 5. Boot ───────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
   initPiSdk();
@@ -215,6 +194,4 @@ document.addEventListener('DOMContentLoaded', () => {
   applyTheme(element);
   renderFeed(element);
   initComposer(element);
-  initTabs();
-  initDiagram?.(element);
 });
