@@ -76,8 +76,22 @@ function loadElementPosts(elementKey) {
   }
 }
 
+// localStorage.setItem throws (QuotaExceededError) once the origin's shared
+// ~5-10MB quota fills up — easy to hit once a few photo/video attachments
+// accumulate. Every save in this app must go through this so a full quota
+// fails loudly (a toast) instead of silently losing the user's post/story.
+function safeSetItem(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch {
+    showToast('Storage full — delete an old post/story or use a smaller file');
+    return false;
+  }
+}
+
 function saveElementPosts(elementKey, posts) {
-  localStorage.setItem(journalStorageKey(elementKey), JSON.stringify(posts));
+  return safeSetItem(journalStorageKey(elementKey), JSON.stringify(posts));
 }
 
 function readFileAsDataUrl(file) {

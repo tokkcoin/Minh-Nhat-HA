@@ -73,8 +73,9 @@ let activeFeedFilter = 'all';
 function loadAllPostsMerged() {
   const merged = [];
   Object.values(ELEMENTS).forEach(el => {
-    loadElementPosts(el.key).forEach(post => merged.push({ ...post, element: post.element || el.key }));
+    loadElementPosts(el.key).forEach(post => merged.push({ ...post, element: post.element || el.key, kind: 'post' }));
   });
+  loadStories().forEach(story => merged.push({ ...story, kind: 'story' }));
   merged.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   return merged;
 }
@@ -94,7 +95,7 @@ function renderUnifiedFeed() {
     return;
   }
 
-  filtered.forEach(post => feed.appendChild(buildUnifiedPostCard(post)));
+  filtered.forEach(item => feed.appendChild(item.kind === 'story' ? buildStoryFeedCard(item) : buildUnifiedPostCard(item)));
 }
 
 function buildUnifiedPostCard(post) {
@@ -162,6 +163,52 @@ function deleteFeedPost(post) {
   const posts = loadElementPosts(post.element).filter(p => p.id !== post.id);
   saveElementPosts(post.element, posts);
   renderUnifiedFeed();
+}
+
+function buildStoryFeedCard(story) {
+  const element = ELEMENTS[story.element];
+  const card = document.createElement('article');
+  card.className = 'post-card post-card--story';
+
+  card.innerHTML = `
+    <div class="post-card__head">
+      <span class="post-card__avatar">${element?.icon ?? '❔'}</span>
+      <div>
+        <strong class="post-card__author">You</strong>
+        <span class="post-card__time">${timeAgo(story.createdAt)} · Story</span>
+      </div>
+      <button class="post-card__delete" type="button" aria-label="Delete story">✕</button>
+    </div>
+    <div class="post-card__tags">
+      <span class="post-card__badge post-card__badge--${story.element}">${element?.icon ?? ''} ${element?.name ?? 'Unknown'}</span>
+    </div>
+    ${story.caption ? `<p class="post-card__text">${escapeHtml(story.caption)}</p>` : ''}
+    <div class="post-card__story-media"></div>
+  `;
+
+  const mediaWrap = card.querySelector('.post-card__story-media');
+  mediaWrap.appendChild(buildStoryThumbMedia(story));
+  if (story.mediaType === 'video') {
+    const playIcon = document.createElement('span');
+    playIcon.className = 'post-card__story-play';
+    playIcon.setAttribute('aria-hidden', 'true');
+    playIcon.textContent = '▶';
+    mediaWrap.appendChild(playIcon);
+  }
+  mediaWrap.addEventListener('click', () => openStoryViewer(story));
+
+  card.querySelector('.post-card__delete')?.addEventListener('click', evt => {
+    evt.stopPropagation();
+    deleteFeedStory(story);
+  });
+
+  return card;
+}
+
+function deleteFeedStory(story) {
+  saveStories(loadStories().filter(s => s.id !== story.id));
+  renderUnifiedFeed();
+  renderStories();
 }
 
 // ── 3. Stories-style element filter row ───────────────────────
@@ -253,7 +300,7 @@ function initUnifiedComposer() {
       likes: 0,
       createdAt: new Date().toISOString(),
     });
-    saveElementPosts(element, posts);
+    if (!saveElementPosts(element, posts)) return;
 
     textInput.value = '';
     elementSelect.value = '';
@@ -282,7 +329,7 @@ function loadStories() {
 }
 
 function saveStories(stories) {
-  localStorage.setItem(STORIES_KEY, JSON.stringify(stories));
+  return safeSetItem(STORIES_KEY, JSON.stringify(stories));
 }
 
 function renderStories() {
@@ -322,6 +369,7 @@ function buildStoryChip(story) {
   const icon = document.createElement('span');
   icon.className = 'story-chip__icon story-chip__icon--thumb';
   icon.setAttribute('aria-hidden', 'true');
+  if (story.element) icon.style.setProperty('--current-element', `var(--${story.element})`);
   icon.appendChild(buildStoryThumbMedia(story));
 
   const label = document.createElement('span');
@@ -350,47 +398,58 @@ function initStoryCreate() {
       return;
     }
 
-    const mediaType = file.type.startsWith('image/') ? 'image'
-      : file.type.startsWith('video/') ? 'video'
-      : null;
-    if (!mediaType) {
-      showToast('Stories need a photo or video');
-      fileInput.value = '';
-      return;
-    }
-
-    const mediaData = await readFileAsDataUrl(file);
-    const caption = (prompt('Add a caption (optional):', '') ?? '').trim();
-
-    const stories = loadStories();
-    stories.unshift({
-      id: `${Date.now()}`,
-      mediaType,
-      mediaData,
-      caption,
-      createdAt: new Date().toISOString(),
+    await openStoryEditor(file, story => {
+      const stories = loadStories();
+      stories.unshift(story);
+      if (!saveStories(stories)) return false;
+      renderStories();
+      renderUnifiedFeed();
+      showToast('Story posted!');
     });
-    saveStories(stories);
     fileInput.value = '';
-
-    renderStories();
-    showToast('Story posted!');
   });
 }
 
 let currentStoryViewerObjectUrl = null;
+let storyViewerMusicAudio = null;
 
 function openStoryViewer(story) {
   const overlay = document.getElementById('story-viewer');
   const mediaWrap = document.getElementById('story-viewer-media');
   const captionEl = document.getElementById('story-viewer-caption');
+  const badgeEl = document.getElementById('story-viewer-badge');
   if (!overlay || !mediaWrap) return;
 
   mediaWrap.innerHTML = '';
   currentStoryViewerObjectUrl = null;
 
+  if (storyViewerMusicAudio) {
+    storyViewerMusicAudio.pause();
+    storyViewerMusicAudio = null;
+  }
+  if (story.musicTrackId) {
+    const track = (window.STORY_MUSIC_TRACKS || []).find(t => t.id === story.musicTrackId);
+    if (track) {
+      storyViewerMusicAudio = new Audio(track.url);
+      storyViewerMusicAudio.volume = story.musicVolume ?? 0.8;
+      storyViewerMusicAudio.loop = true;
+      storyViewerMusicAudio.play().catch(() => {});
+    }
+  }
+
+  const element = ELEMENTS[story.element];
+  if (badgeEl) {
+    badgeEl.hidden = !element;
+    if (element) {
+      badgeEl.textContent = `${element.icon} ${element.name}`;
+      badgeEl.className = `post-card__badge post-card__badge--${story.element}`;
+    }
+  }
+
+  let media = null;
+
   if (story.mediaType === 'image') {
-    const media = document.createElement('img');
+    media = document.createElement('img');
     media.src = story.mediaData;
     media.alt = '';
     media.addEventListener('error', () => {
@@ -403,7 +462,7 @@ function openStoryViewer(story) {
       mediaWrap.innerHTML = '<p class="story-viewer__broken">⚠️ This story\'s video is corrupted and can\'t be played. Delete it and post a new one.</p>';
     } else {
       currentStoryViewerObjectUrl = objectUrl;
-      const media = document.createElement('video');
+      media = document.createElement('video');
       media.src = objectUrl;
       media.controls = true;
       media.autoplay = true;
@@ -413,8 +472,20 @@ function openStoryViewer(story) {
         showToast("Couldn't load this story's video — the file may be too large for this device.");
       });
       mediaWrap.appendChild(media);
+
+      if (story.trimStart != null && story.trimEnd != null) {
+        media.addEventListener('loadedmetadata', () => { media.currentTime = story.trimStart; });
+        applyTrimLoop(media, story);
+      }
     }
   }
+
+  if (media && story.filterKey) media.style.filter = FILTER_PRESETS[story.filterKey] || '';
+
+  const layersEl = document.createElement('div');
+  layersEl.className = 'story-editor__layers';
+  mediaWrap.appendChild(layersEl);
+  renderLayersReadOnly(layersEl, story.layers);
 
   if (captionEl) captionEl.textContent = story.caption || '';
 
@@ -431,6 +502,10 @@ function closeStoryViewer() {
   if (currentStoryViewerObjectUrl) {
     URL.revokeObjectURL(currentStoryViewerObjectUrl);
     currentStoryViewerObjectUrl = null;
+  }
+  if (storyViewerMusicAudio) {
+    storyViewerMusicAudio.pause();
+    storyViewerMusicAudio = null;
   }
 }
 

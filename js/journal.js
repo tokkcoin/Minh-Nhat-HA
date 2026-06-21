@@ -170,7 +170,7 @@ function initComposer(element) {
       likes: 0,
       createdAt: new Date().toISOString(),
     });
-    saveElementPosts(element.key, posts);
+    if (!saveElementPosts(element.key, posts)) return;
 
     textInput.value = '';
     levelSelect.value = '';

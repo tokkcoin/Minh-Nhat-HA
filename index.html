@@ -6,7 +6,7 @@
   <title>Life Balance — Five Elements Tracker</title>
   <meta name="description" content="Track your balance across Money, Health, Talent, Mood, and Situation through the Five Elements." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
-  <link rel="stylesheet" href="css/style.css?v=4" />
+  <link rel="stylesheet" href="css/style.css?v=8" />
 </head>
 <body>
 
@@ -195,8 +195,56 @@
     <div class="story-viewer__inner">
       <button type="button" id="story-viewer-close" class="story-viewer__close" aria-label="Close story">✕</button>
       <div id="story-viewer-media" class="story-viewer__media"></div>
+      <span id="story-viewer-badge" class="post-card__badge"></span>
       <p id="story-viewer-caption" class="story-viewer__caption"></p>
       <button type="button" id="story-viewer-delete" class="story-viewer__delete">🗑 Delete story</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       STORY EDITOR (full-screen overlay, opened from "+ Your Story")
+  ══════════════════════════════════════════════════ -->
+  <div id="story-editor" class="story-editor" hidden>
+    <div class="story-editor__inner">
+      <button type="button" id="story-editor-close" class="story-editor__close" aria-label="Cancel">✕</button>
+      <div id="story-editor-preview" class="story-editor__preview">
+        <div id="story-editor-layers" class="story-editor__layers"></div>
+      </div>
+      <div id="story-editor-trim" class="story-editor__trim" hidden>
+        <div id="story-editor-trim-track" class="story-editor__trim-track">
+          <div id="story-editor-trim-playhead" class="story-editor__trim-playhead"></div>
+          <div id="story-editor-trim-start" class="story-editor__trim-handle story-editor__trim-handle--start"></div>
+          <div id="story-editor-trim-end" class="story-editor__trim-handle story-editor__trim-handle--end"></div>
+        </div>
+      </div>
+      <div id="story-editor-toolbar" class="story-editor__toolbar">
+        <button type="button" id="story-editor-add-text" class="story-editor__tool-btn">Aa Text</button>
+        <button type="button" id="story-editor-add-sticker" class="story-editor__tool-btn">😊 Sticker</button>
+        <button type="button" id="story-editor-filters-toggle" class="story-editor__tool-btn">🎨 Filter</button>
+        <button type="button" id="story-editor-music-toggle" class="story-editor__tool-btn">🎵 Music</button>
+      </div>
+      <div id="story-editor-sticker-strip" class="story-editor__sticker-strip" hidden></div>
+      <div id="story-editor-filter-strip" class="story-editor__filter-strip" hidden></div>
+      <div id="story-editor-music-panel" class="story-editor__music-panel" hidden>
+        <div id="story-editor-music-list" class="story-editor__music-list"></div>
+        <div id="story-editor-music-controls" class="story-editor__music-controls" hidden>
+          <input type="range" id="story-editor-music-volume" min="0" max="1" step="0.05" value="0.8" aria-label="Music volume" />
+          <button type="button" id="story-editor-music-clear" class="story-editor__music-clear">Remove music</button>
+        </div>
+      </div>
+      <textarea id="story-editor-caption" class="story-editor__caption" placeholder="Add a caption (optional)…"></textarea>
+      <div class="story-editor__footer">
+        <select id="story-editor-element" aria-label="Element">
+          <option value="">Element…</option>
+          <option value="metal">⛏️ Metal — Money</option>
+          <option value="wood">🌳 Wood — Health</option>
+          <option value="water">💧 Water — Talent</option>
+          <option value="fire">🔥 Fire — Mood</option>
+          <option value="earth">🪨 Earth — Situation</option>
+        </select>
+        <button type="button" id="story-editor-cancel" class="story-editor__cancel">Cancel</button>
+        <button type="button" id="story-editor-post" class="story-editor__post">Post</button>
+      </div>
     </div>
   </div>
 
@@ -209,8 +257,10 @@
 
   <!-- Pi SDK must load before js/common.js -->
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-  <script src="js/common.js?v=3"></script>
-  <script src="js/main.js?v=3"></script>
+  <script src="js/common.js?v=4"></script>
+  <script src="data/storyMusic.js?v=1"></script>
+  <script src="js/storyEditor.js?v=4"></script>
+  <script src="js/main.js?v=9"></script>
   <script src="js/piAuth.js"></script>
 </body>
 </html>
