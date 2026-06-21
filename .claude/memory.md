@@ -99,6 +99,15 @@
   - Removed the now-dead `.element-grid`/`.element-card*` CSS (nothing references those classes anymore).
 - **Not done**: no "sign out"/account tie-in to posts (posts are still anonymous "You", unrelated to the new Pi sign-in feature above — these two features don't talk to each other yet).
 
+## 2026-06-21 — "Definition" mind-map tab on journal.html
+
+- **Trigger**: user wanted an optional way to break down what an element actually means to them (example given: Wood → Health → Sleep/Exercise/Food → Food splits into Main food/Soup/Drink, Exercise splits into Yoga/Jogging/Swimming), referencing a CAD-style circle-and-arrow mind-map screenshot. Asked for a simple "freeform"-style toolbar: draw a circle, name it, draw an arrow, write free text.
+- **Decisions confirmed with the user**: lives as a second tab ("Journal" / "Definition") on the existing per-element `journal.html` page (not a new page, not on `index.html`); one separate diagram per element; persists via `localStorage`.
+- **What was built**: `js/diagram.js` — hand-built inline SVG (`document.createElementNS`, same approach already used in `chart-concepts.html`, no drawing library). Toolbar: Select/move (click+drag, double-click to rename via `prompt()`), Circle (click empty canvas → `prompt()` for name), Arrow (click one circle then another to connect — arrows are computed from each node's *current* x/y every render, so they follow nodes when dragged, not stored as fixed coordinates), Text (click empty canvas → `prompt()` for content), Delete (removes the selected node/text; deleting a node also removes any edges touching it), Clear all (confirm-gated).
+- **Why `prompt()` instead of inline contenteditable text**: explicitly the simpler, more robust choice for "simple, easy for user" — inline SVG text editing is fiddly cross-browser; a native prompt is one line and just works.
+- **Storage**: `lifebalance_definition_<element>`, shape `{ nodes: [{id,x,y,r,label}], edges: [{id,fromId,toId}], texts: [{id,x,y,content}] }`. See `.claude/rules/tech-defaults.md`.
+- **Not built**: no resize/recolor of circles, no curved/multi-point arrows, no export/sharing of a diagram. Pure local mind-map, nothing fancier than the 4 requested tools plus the minimum select/delete needed to make it usable.
+
 ## Open TODOs
 
 - [x] `PI_API_KEY` Vercel env var — confirmed working 2026-06-20/21. Note: the dashboard showed it saved with Production checked *before* it actually took effect; a plain "Redeploy" of the existing deployment didn't pick it up, but a fresh `git push` (new deployment from scratch) did. If this env-var pattern recurs, prefer triggering a brand-new deployment over trusting the Redeploy button.

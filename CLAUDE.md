@@ -29,7 +29,8 @@ life-balance/
 ├── js/
 │   ├── common.js              # Shared helpers (showToast, initPiSdk) + shared post model (ELEMENTS, PRIORITY_LEVELS, loadElementPosts/saveElementPosts, timeAgo, escapeHtml, readFileAsDataUrl) — loaded on every page
 │   ├── main.js                 # index.html boot: How-it-works preview + unified composer/stories-row/feed
-│   ├── journal.js              # journal.html: per-element composer, feed, like/delete (uses common.js's shared post model)
+│   ├── journal.js              # journal.html: per-element composer, feed, like/delete (uses common.js's shared post model) + tab switching
+│   ├── diagram.js              # journal.html "Definition" tab: simple SVG mind-map (circle/arrow/text/select), one diagram per element
 │   ├── chartConcepts.js        # chart-concepts.html: builds weekly post-count series (real or demo) and renders the 5 chart designs
 │   ├── piPayment.js            # pi-test-payment.html: authenticate -> createPayment -> server approve/complete flow
 │   └── piAuth.js               # index.html only: Pi.authenticate (username scope) -> /api/verify-auth -> session cookie

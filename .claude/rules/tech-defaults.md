@@ -94,6 +94,7 @@ The per-element journal (`journal.html`, `js/journal.js`) is **single-user, sing
 - Photo/video/audio attachments are read via `FileReader.readAsDataURL()` and stored as a data URI string inside the post object — `localStorage` can only hold strings, not `Blob`/`File`.
 - `localStorage` has a small total quota (~5-10MB per origin). `js/journal.js` rejects any attachment over 4MB client-side (`MAX_MEDIA_BYTES`) with a toast rather than letting `setItem` throw `QuotaExceededError`. Don't remove this guard without replacing local storage with something that can actually hold media (the planned backend).
 - Post text is inserted via `innerHTML`, so it is always passed through an `escapeHtml()` helper first — never interpolate raw user text into a template string that becomes `innerHTML`.
+- The "Definition" mind-map tool (`journal.html`'s second tab, `js/diagram.js`) follows the same local-only pattern: one diagram per element, `localStorage` key `lifebalance_definition_<element>`, hand-built SVG (no drawing library — `document.createElementNS`, same approach as `chart-concepts.html`'s charts). Node/text labels are set via `textContent`, never `innerHTML`, so no escaping helper is needed there.
 
 ---
 
