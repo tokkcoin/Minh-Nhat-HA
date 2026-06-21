@@ -149,6 +149,13 @@
 - **Self-hosted, not hotlinked**: there's no Pixabay API key configured for this project, and hotlinking sourced URLs (from NCS, Pixabay, or anywhere) isn't something to fabricate or scrape per this assistant's own constraints. Instead, added `audio/` (with `audio/README.md` documenting the workflow) as a place for the user to manually download real Pixabay tracks and drop the files in; `data/storyMusic.js` entries then point to a relative local path (`audio/<file>.mp3`) instead of an external CDN URL. Updated `data/storyMusic.js`'s header comment to match.
 - **Still open**: user needs to actually download tracks from pixabay.com/music and add entries — `STORY_MUSIC_TRACKS` is still empty. When real tracks are added, no `privacy-policy.html` update is needed for this *specific* path (self-hosted files = no new third-party network request), unlike the original CDN-URL plan.
 
+## 2026-06-21 — First 9 real music tracks added to the picker
+
+- User downloaded 9 royalty-free MP3s (filenames match Pixabay's "no copyright music" naming convention, e.g. `alexgrohl-no-copyright-music-bounce-on-it-184234.mp3`) into `audio/NCS/` (their own folder name — not literal NCS-brand files; the dropped-NCS decision above still stands) and asked to wire them in.
+- `data/storyMusic.js`'s `STORY_MUSIC_TRACKS` now has 9 real entries, `id`/`title`/`artist` derived from each filename, `url` pointing at the self-hosted `audio/NCS/<file>.mp3` path. `durationSec` omitted (no `ffprobe`/`ffmpeg` available in this environment to measure real duration — left out rather than guessed, since the picker UI doesn't currently render it anyway).
+- One duplicate file was found (`nastelbom-no-copyright-music-473269 (1).mp3`, identical byte size to the non-`(1)` copy, presumably an accidental double download) — only one entry was added for it; the duplicate file itself was left in place (not deleted) and is noted in `audio/README.md` for the user to clean up whenever convenient.
+- Bumped `data/storyMusic.js?v=2` in `index.html`.
+
 ## Open TODOs
 
 - [x] `PI_API_KEY` Vercel env var — confirmed working 2026-06-20/21. Note: the dashboard showed it saved with Production checked *before* it actually took effect; a plain "Redeploy" of the existing deployment didn't pick it up, but a fresh `git push` (new deployment from scratch) did. If this env-var pattern recurs, prefer triggering a brand-new deployment over trusting the Redeploy button.
