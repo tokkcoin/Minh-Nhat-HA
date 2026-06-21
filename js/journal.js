@@ -3,7 +3,7 @@
    Per-element journal: composer, feed, like, delete.
    Shared post storage / metadata (ELEMENTS, PRIORITY_LEVELS,
    loadElementPosts, saveElementPosts, timeAgo, escapeHtml,
-   readFileAsDataUrl, MAX_MEDIA_BYTES) lives in common.js — both
+   uploadMediaToCloudinary, maxBytesForFile) lives in common.js — both
    this page and the unified feed on index.html use the same shapes.
    ============================================================ */
 
@@ -125,8 +125,8 @@ function initComposer(element) {
   fileInput.addEventListener('change', () => {
     const file = fileInput.files?.[0];
     if (!file) return;
-    if (file.size > MAX_MEDIA_BYTES) {
-      showToast('File too large for local demo storage (max 4MB)');
+    if (file.size > maxBytesForFile(file)) {
+      showToast('File too large (max 10MB images / 100MB video & audio)');
       fileInput.value = '';
       return;
     }
@@ -155,7 +155,16 @@ function initComposer(element) {
         : pendingFile.type.startsWith('video/') ? 'video'
         : pendingFile.type.startsWith('audio/') ? 'audio'
         : null;
-      mediaData = await readFileAsDataUrl(pendingFile);
+      postBtn.disabled = true;
+      showToast('Uploading...');
+      try {
+        mediaData = await uploadMediaToCloudinary(pendingFile);
+      } catch {
+        showToast("Upload failed — check your connection and try again");
+        postBtn.disabled = false;
+        return;
+      }
+      postBtn.disabled = false;
     }
 
     const posts = loadElementPosts(element.key);

@@ -37,29 +37,30 @@
     <p>Life Balance ("the app") is a personal Five Elements tracker. This page explains what happens to your data when you use it.</p>
 
     <h2>What data the app collects</h2>
-    <p>The app itself does not operate a server and does not collect, transmit, or store any of your data on infrastructure run by the developer. Specifically:</p>
+    <p>The app does not operate its own database and does not use accounts, cookies, analytics, or advertising trackers. Specifically:</p>
     <ul>
-      <li>Journal entries you write, and any photo, video, or audio you attach to them, are saved only in your own browser's local storage (<code>localStorage</code>) on your device.</li>
-      <li>Nothing you post is uploaded, synced, or sent anywhere — not to the developer, not to other users, not to any cloud service.</li>
-      <li>The app does not use accounts, cookies, analytics, or advertising trackers.</li>
+      <li>Journal entries you write are saved only in your own browser's local storage (<code>localStorage</code>) on your device — not uploaded, synced, or sent anywhere.</li>
+      <li>Any photo, video, or audio you attach to a post or story is uploaded directly from your browser to <strong>Cloudinary</strong>, a third-party media hosting service, and stored there. Only the resulting media address is saved on your device alongside your post; the developer's own server never receives or stores the file.</li>
     </ul>
 
     <h2>Third-party resources</h2>
-    <p>Loading the app's pages requests a small number of resources from third parties, which is true of essentially any website:</p>
+    <p>Loading the app's pages, and posting media, requests resources from a small number of third parties:</p>
     <ul>
       <li><strong>Google Fonts</strong> (fonts.googleapis.com) — for the Inter and Fraunces typefaces.</li>
       <li><strong>Pi Network SDK</strong> (sdk.minepi.com) — loaded when the app runs inside the Pi Browser, used to detect that environment.</li>
+      <li><strong>Cloudinary</strong> (cloudinary.com) — stores any photo/video/audio you attach to a post or story, as described above. Cloudinary's own privacy policy governs how it processes that file.</li>
     </ul>
-    <p>These requests are subject to those providers' own privacy policies. The app does not pass any of your journal content to them.</p>
+    <p>These requests are subject to those providers' own privacy policies. The app does not pass your journal text, or any data beyond the attached file itself, to them.</p>
 
     <h2>Pi Network integration</h2>
     <p>The app uses the Pi SDK to detect whether it's running inside Pi Browser, and on one dedicated setup page, to process a Pi payment via <code>Pi.authenticate()</code> and <code>Pi.createPayment()</code>. When you make a payment, the app's server relays only the payment identifier and blockchain transaction ID to Pi Network's own Payments API to approve and complete it — the server does not store this information itself; it is forwarded to Pi Network, whose own privacy policy governs how Pi Network processes it. The app does not otherwise collect, log, or retain any Pi account or payment data.</p>
 
     <h2>Your data, your control</h2>
-    <p>Since everything lives in your browser, you're always in control of it:</p>
+    <p>Your post text and records always live in your own browser, and you're always in control of them:</p>
     <ul>
-      <li>Delete an individual post any time using the ✕ button on that post.</li>
+      <li>Delete an individual post any time using the ✕ button on that post — this removes it from your browser immediately.</li>
       <li>Clear everything at once by clearing this site's data in your browser's settings (e.g. "Clear browsing data" → site data for this domain).</li>
+      <li>Note: deleting a post removes its record from your browser, but the underlying media file on Cloudinary is not automatically deleted at this time. Contact the developer (below) if you need a specific file removed from Cloudinary.</li>
     </ul>
 
     <h2>Children's privacy</h2>

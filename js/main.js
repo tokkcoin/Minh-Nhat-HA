@@ -3,7 +3,7 @@
    index.html boot: "How it works" live preview + the unified
    multi-element feed that replaced the old 5-card dashboard.
    Shared helpers/metadata (ELEMENTS, PRIORITY_LEVELS, post storage,
-   timeAgo, escapeHtml, readFileAsDataUrl) live in common.js.
+   timeAgo, escapeHtml, uploadMediaToCloudinary) live in common.js.
    ============================================================ */
 
 'use strict';
@@ -250,8 +250,8 @@ function initUnifiedComposer() {
   fileInput.addEventListener('change', () => {
     const file = fileInput.files?.[0];
     if (!file) return;
-    if (file.size > MAX_MEDIA_BYTES) {
-      showToast('File too large for local demo storage (max 4MB)');
+    if (file.size > maxBytesForFile(file)) {
+      showToast('File too large (max 10MB images / 100MB video & audio)');
       fileInput.value = '';
       return;
     }
@@ -285,7 +285,16 @@ function initUnifiedComposer() {
         : pendingFile.type.startsWith('video/') ? 'video'
         : pendingFile.type.startsWith('audio/') ? 'audio'
         : null;
-      mediaData = await readFileAsDataUrl(pendingFile);
+      postBtn.disabled = true;
+      showToast('Uploading...');
+      try {
+        mediaData = await uploadMediaToCloudinary(pendingFile);
+      } catch {
+        showToast("Upload failed — check your connection and try again");
+        postBtn.disabled = false;
+        return;
+      }
+      postBtn.disabled = false;
     }
 
     const posts = loadElementPosts(element);
@@ -392,8 +401,8 @@ function initStoryCreate() {
     const file = fileInput.files?.[0];
     if (!file) return;
 
-    if (file.size > MAX_MEDIA_BYTES) {
-      showToast('File too large for local demo storage (max 4MB)');
+    if (file.size > maxBytesForFile(file)) {
+      showToast('File too large (max 10MB images / 100MB video)');
       fileInput.value = '';
       return;
     }

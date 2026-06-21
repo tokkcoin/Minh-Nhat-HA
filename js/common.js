@@ -58,9 +58,15 @@ const PRIORITY_LEVELS = {
   'unimportant-unemergency': { label: 'Unimportant · Not Emergency',  color: 'var(--text-muted)' },
 };
 
-// localStorage has ~5-10MB total quota shared by the whole origin;
-// this keeps a single attachment from blowing through it.
-const MAX_MEDIA_BYTES = 4 * 1024 * 1024;
+// Attachments now upload to Cloudinary (see uploadMediaToCloudinary below)
+// instead of living in localStorage as base64, so the real ceiling is
+// Cloudinary's own free-plan per-file cap, not localStorage's ~5-10MB quota.
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;  // Cloudinary free plan: 10MB for images
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // Cloudinary free plan: 100MB for video/audio
+
+function maxBytesForFile(file) {
+  return file.type.startsWith('image/') ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
+}
 
 // ── 4. Shared Post Storage (per-element keys) ─────────────────
 
@@ -94,13 +100,28 @@ function saveElementPosts(elementKey, posts) {
   return safeSetItem(journalStorageKey(elementKey), JSON.stringify(posts));
 }
 
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+// Uploads a file straight from the browser to Cloudinary (the file itself
+// never passes through our Vercel functions — only the tiny signature
+// request does, see api/cloudinary-sign.js). Throws on failure; callers
+// must catch and show a toast rather than assume this always succeeds.
+async function uploadMediaToCloudinary(file) {
+  const signRes = await fetch('/api/cloudinary-sign', { method: 'POST' });
+  if (!signRes.ok) throw new Error('Could not get upload signature');
+  const { cloudName, apiKey, timestamp, signature } = await signRes.json();
+
+  const form = new FormData();
+  form.append('file', file);
+  form.append('api_key', apiKey);
+  form.append('timestamp', timestamp);
+  form.append('signature', signature);
+
+  const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+    method: 'POST',
+    body: form,
   });
+  if (!uploadRes.ok) throw new Error('Cloudinary upload failed');
+  const data = await uploadRes.json();
+  return data.secure_url;
 }
 
 // iOS Safari / Pi Browser (WebKit) cannot play <video src="data:...">  at all
@@ -110,6 +131,10 @@ function readFileAsDataUrl(file) {
 // Returns null (instead of throwing) if the stored data URI is malformed/
 // corrupted — callers must handle null rather than assume this always works.
 function dataUrlToObjectUrl(dataUrl) {
+  if (!dataUrl) return null;
+  // Cloudinary (or any other) real URL — not a data: URI, so the iOS
+  // data-URI video bug doesn't apply; use it directly, no conversion.
+  if (!dataUrl.startsWith('data:')) return dataUrl;
   try {
     const [header, base64] = dataUrl.split(',');
     const mime = header.match(/data:(.*?);base64/)?.[1] || '';

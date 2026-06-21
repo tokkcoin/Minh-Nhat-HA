@@ -27,7 +27,7 @@ life-balance/
 ├── CLAUDE.md                # Root-level AI context
 ├── css/style.css            # All styles
 ├── js/
-│   ├── common.js              # Shared helpers (showToast, initPiSdk) + shared post model (ELEMENTS, PRIORITY_LEVELS, loadElementPosts/saveElementPosts, timeAgo, escapeHtml, readFileAsDataUrl) — loaded on every page
+│   ├── common.js              # Shared helpers (showToast, initPiSdk) + shared post model (ELEMENTS, PRIORITY_LEVELS, loadElementPosts/saveElementPosts, timeAgo, escapeHtml, uploadMediaToCloudinary, maxBytesForFile) — loaded on every page
 │   ├── main.js                 # index.html boot: How-it-works preview + unified composer/feed + Stories tray (create/view/delete)
 │   ├── journal.js              # journal.html: per-element composer, feed, like/delete (uses common.js's shared post model)
 │   ├── chartConcepts.js        # chart-concepts.html: builds weekly post-count series (real or demo) and renders the 5 chart designs
@@ -36,7 +36,8 @@ life-balance/
 ├── api/                     # Vercel serverless functions — deliberate, scoped exception to the static/no-backend rule (see tech-defaults.md)
 │   ├── approve-payment.js     # POST: server-side U2A payment approval (uses PI_API_KEY env var)
 │   ├── complete-payment.js    # POST: server-side U2A payment completion (uses PI_API_KEY env var)
-│   └── verify-auth.js         # POST: validates a Pi accessToken via GET /v2/me, issues a signed session cookie (uses SESSION_SECRET env var)
+│   ├── verify-auth.js         # POST: validates a Pi accessToken via GET /v2/me, issues a signed session cookie (uses SESSION_SECRET env var)
+│   └── cloudinary-sign.js     # POST: issues a signed upload signature for direct browser->Cloudinary uploads (uses CLOUDINARY_API_KEY/_SECRET/_CLOUD_NAME env vars)
 ├── data/                    # Script-loaded static data files (see .claude/agents/researcher.md) — NOT user content
 └── .claude/                 # Claude Configuration Folder
     ├── CLAUDE.md           # Project identity & guidelines

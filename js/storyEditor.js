@@ -9,13 +9,16 @@
    layer on top of the ORIGINAL unedited mediaData; nothing is
    re-encoded (no canvas/MediaRecorder), which is what keeps this
    safe to run on Pi Browser's mobile WebKit.
-   Depends on common.js (ELEMENTS, readFileAsDataUrl, dataUrlToObjectUrl,
-   showToast) loaded before this file. main.js calls openStoryEditor()
-   instead of saving a story immediately; this file never touches
-   localStorage itself — it only hands a finished story object back
-   via the onCommit callback main.js supplies. main.js's openStoryViewer()
-   reuses FILTER_PRESETS, applyTrimLoop() and renderLayersReadOnly()
-   from here so the editor and the viewer never duplicate this logic.
+   Depends on common.js (ELEMENTS, uploadMediaToCloudinary, showToast)
+   loaded before this file. main.js calls openStoryEditor() instead of
+   saving a story immediately; this file never touches localStorage
+   itself — it only hands a finished story object back via the onCommit
+   callback main.js supplies. Editing previews the raw File via a plain
+   blob: object URL; the file is only uploaded to Cloudinary at commit
+   time (commitStoryFromEditor), so discarded edits never cost an upload.
+   main.js's openStoryViewer() reuses FILTER_PRESETS, applyTrimLoop() and
+   renderLayersReadOnly() from here so the editor and the viewer never
+   duplicate this logic.
    ============================================================ */
 
 'use strict';
@@ -52,9 +55,8 @@ async function openStoryEditor(file, onCommit) {
     return;
   }
 
-  const mediaData = await readFileAsDataUrl(file);
   storyEditorState = {
-    mediaType, mediaData, onCommit,
+    mediaType, file, onCommit,
     mediaEl: null,
     duration: null,
     trimStart: null,
@@ -112,21 +114,20 @@ function renderStoryEditorPreview() {
   if (!preview || !storyEditorState) return;
   preview.innerHTML = '<div id="story-editor-layers" class="story-editor__layers"></div>';
 
+  // Edits happen on the original File before it's ever uploaded, so the
+  // preview is a plain blob: object URL — no base64/data-URI round trip,
+  // no Cloudinary upload yet (that only happens on commit, see below).
+  const objectUrl = URL.createObjectURL(storyEditorState.file);
+  storyEditorObjectUrl = objectUrl;
+
   if (storyEditorState.mediaType === 'image') {
     const img = document.createElement('img');
-    img.src = storyEditorState.mediaData;
+    img.src = objectUrl;
     img.alt = '';
     preview.appendChild(img);
     storyEditorState.mediaEl = img;
     return;
   }
-
-  const objectUrl = dataUrlToObjectUrl(storyEditorState.mediaData);
-  if (!objectUrl) {
-    preview.innerHTML = '<p class="story-viewer__broken">⚠️ This video is corrupted and can\'t be edited.</p>';
-    return;
-  }
-  storyEditorObjectUrl = objectUrl;
 
   const video = document.createElement('video');
   video.src = objectUrl;
@@ -466,7 +467,7 @@ function setMusicVolume(volume) {
 
 // ── 8. Commit ────────────────────────────────────────────────
 
-function commitStoryFromEditor() {
+async function commitStoryFromEditor() {
   if (!storyEditorState) return;
 
   const elementEl = document.getElementById('story-editor-element');
@@ -478,22 +479,38 @@ function commitStoryFromEditor() {
     return;
   }
 
+  // Capture everything needed before the upload `await` — storyEditorState
+  // is cleared by closeStoryEditor() and must not be read after a yield.
+  const { file, mediaType, trimStart, trimEnd, filterKey, layers, musicTrackId, musicVolume, onCommit } = storyEditorState;
+  const postBtn = document.getElementById('story-editor-post');
+  if (postBtn) postBtn.disabled = true;
+  showToast('Uploading...');
+
+  let mediaData;
+  try {
+    mediaData = await uploadMediaToCloudinary(file);
+  } catch {
+    showToast('Upload failed — check your connection and try again');
+    if (postBtn) postBtn.disabled = false;
+    return;
+  }
+  if (postBtn) postBtn.disabled = false;
+
   const story = {
     id: `${Date.now()}`,
-    mediaType: storyEditorState.mediaType,
-    mediaData: storyEditorState.mediaData,
+    mediaType,
+    mediaData,
     caption: (captionEl?.value ?? '').trim(),
     createdAt: new Date().toISOString(),
     element,
-    trimStart: storyEditorState.trimStart,
-    trimEnd: storyEditorState.trimEnd,
-    filterKey: storyEditorState.filterKey,
-    layers: storyEditorState.layers,
-    musicTrackId: storyEditorState.musicTrackId,
-    musicVolume: storyEditorState.musicVolume,
+    trimStart,
+    trimEnd,
+    filterKey,
+    layers,
+    musicTrackId,
+    musicVolume,
   };
 
-  const onCommit = storyEditorState.onCommit;
   const result = onCommit?.(story);
   if (result !== false) closeStoryEditor();
 }
