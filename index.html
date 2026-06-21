@@ -148,6 +148,15 @@
         </div>
       </div>
 
+      <div class="stories-tray" aria-label="Stories">
+        <button type="button" class="story-chip story-chip--create" id="story-create-btn">
+          <span class="story-chip__icon story-chip__icon--create" aria-hidden="true">➕</span>
+          <span class="story-chip__label">Your Story</span>
+        </button>
+        <div id="stories-list" class="stories-list"></div>
+      </div>
+      <input type="file" id="story-file-input" accept="image/*,video/*" hidden />
+
       <div class="stories-row" role="tablist" aria-label="Filter feed by element">
         <button type="button" class="story-chip story-chip--all active" data-filter="all" role="tab" aria-selected="true">
           <span class="story-chip__icon" aria-hidden="true">🌐</span>
@@ -178,6 +187,18 @@
       <div class="feed" id="feed" role="feed" aria-label="All journal entries"></div>
     </div>
   </main>
+
+  <!-- ══════════════════════════════════════════════════
+       STORY VIEWER (full-screen overlay)
+  ══════════════════════════════════════════════════ -->
+  <div id="story-viewer" class="story-viewer" hidden>
+    <div class="story-viewer__inner">
+      <button type="button" id="story-viewer-close" class="story-viewer__close" aria-label="Close story">✕</button>
+      <div id="story-viewer-media" class="story-viewer__media"></div>
+      <p id="story-viewer-caption" class="story-viewer__caption"></p>
+      <button type="button" id="story-viewer-delete" class="story-viewer__delete">🗑 Delete story</button>
+    </div>
+  </div>
 
   <!-- ══════════════════════════════════════════════════
        FOOTER

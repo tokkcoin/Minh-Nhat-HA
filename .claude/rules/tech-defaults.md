@@ -94,6 +94,7 @@ The per-element journal (`journal.html`, `js/journal.js`) is **single-user, sing
 - Photo/video/audio attachments are read via `FileReader.readAsDataURL()` and stored as a data URI string inside the post object — `localStorage` can only hold strings, not `Blob`/`File`.
 - `localStorage` has a small total quota (~5-10MB per origin). `js/journal.js` rejects any attachment over 4MB client-side (`MAX_MEDIA_BYTES`) with a toast rather than letting `setItem` throw `QuotaExceededError`. Don't remove this guard without replacing local storage with something that can actually hold media (the planned backend).
 - Post text is inserted via `innerHTML`, so it is always passed through an `escapeHtml()` helper first — never interpolate raw user text into a template string that becomes `innerHTML`.
+- **Stories** (the "Your Story" tray on `index.html`, `js/main.js`) follow the same pattern but live under one single key, `lifebalance_stories` (not per-element — stories aren't tied to an element). No expiry logic — a story stays until the user deletes it via the viewer overlay. Captions come from `prompt()`, not a form field, and are stored as plain trusted-by-the-app strings set via `textContent` in the viewer (never `innerHTML`), so no `escapeHtml()` is needed there either.
 
 ---
 

@@ -260,7 +260,135 @@ function initUnifiedComposer() {
   });
 }
 
-// ── 5. Boot ───────────────────────────────────────────────────
+// ── 5. Stories (separate from the element filter row above) ───
+// Single-user "Your Story" tray: photo/video + optional caption,
+// no expiry (stays until deleted) — see .claude/memory.md, 2026-06-21.
+
+const STORIES_KEY = 'lifebalance_stories';
+
+function loadStories() {
+  try {
+    return JSON.parse(localStorage.getItem(STORIES_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveStories(stories) {
+  localStorage.setItem(STORIES_KEY, JSON.stringify(stories));
+}
+
+function renderStories() {
+  const list = document.getElementById('stories-list');
+  if (!list) return;
+  list.innerHTML = '';
+  loadStories().forEach(story => list.appendChild(buildStoryChip(story)));
+}
+
+function buildStoryChip(story) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'story-chip story-chip--user';
+
+  const thumb = story.mediaType === 'image'
+    ? `<img src="${story.mediaData}" alt="">`
+    : `<video src="${story.mediaData}" muted></video>`;
+
+  btn.innerHTML = `
+    <span class="story-chip__icon story-chip__icon--thumb" aria-hidden="true">${thumb}</span>
+    <span class="story-chip__label">You</span>
+  `;
+  btn.addEventListener('click', () => openStoryViewer(story));
+  return btn;
+}
+
+function initStoryCreate() {
+  const createBtn = document.getElementById('story-create-btn');
+  const fileInput = document.getElementById('story-file-input');
+  if (!createBtn || !fileInput) return;
+
+  createBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+
+    if (file.size > MAX_MEDIA_BYTES) {
+      showToast('File too large for local demo storage (max 4MB)');
+      fileInput.value = '';
+      return;
+    }
+
+    const mediaType = file.type.startsWith('image/') ? 'image'
+      : file.type.startsWith('video/') ? 'video'
+      : null;
+    if (!mediaType) {
+      showToast('Stories need a photo or video');
+      fileInput.value = '';
+      return;
+    }
+
+    const mediaData = await readFileAsDataUrl(file);
+    const caption = (prompt('Add a caption (optional):', '') ?? '').trim();
+
+    const stories = loadStories();
+    stories.unshift({
+      id: `${Date.now()}`,
+      mediaType,
+      mediaData,
+      caption,
+      createdAt: new Date().toISOString(),
+    });
+    saveStories(stories);
+    fileInput.value = '';
+
+    renderStories();
+    showToast('Story posted!');
+  });
+}
+
+function openStoryViewer(story) {
+  const overlay = document.getElementById('story-viewer');
+  const mediaWrap = document.getElementById('story-viewer-media');
+  const captionEl = document.getElementById('story-viewer-caption');
+  if (!overlay || !mediaWrap) return;
+
+  mediaWrap.innerHTML = story.mediaType === 'image'
+    ? `<img src="${story.mediaData}" alt="">`
+    : `<video src="${story.mediaData}" controls autoplay></video>`;
+  if (captionEl) captionEl.textContent = story.caption || '';
+
+  overlay.dataset.storyId = story.id;
+  overlay.hidden = false;
+}
+
+function closeStoryViewer() {
+  const overlay = document.getElementById('story-viewer');
+  if (!overlay) return;
+  overlay.hidden = true;
+  const mediaWrap = document.getElementById('story-viewer-media');
+  if (mediaWrap) mediaWrap.innerHTML = ''; // stop any playing video
+}
+
+function deleteCurrentStory() {
+  const overlay = document.getElementById('story-viewer');
+  const id = overlay?.dataset.storyId;
+  if (!id) return;
+  saveStories(loadStories().filter(s => s.id !== id));
+  closeStoryViewer();
+  renderStories();
+  showToast('Story deleted');
+}
+
+function initStoryViewer() {
+  document.getElementById('story-viewer-close')?.addEventListener('click', closeStoryViewer);
+  document.getElementById('story-viewer-delete')?.addEventListener('click', deleteCurrentStory);
+  document.getElementById('story-viewer')?.addEventListener('click', evt => {
+    if (evt.target.id === 'story-viewer') closeStoryViewer();
+  });
+}
+
+// ── 6. Boot ───────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
   initPiSdk();
@@ -268,4 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initStoriesRow();
   initUnifiedComposer();
   renderUnifiedFeed();
+  initStoryCreate();
+  initStoryViewer();
+  renderStories();
 });

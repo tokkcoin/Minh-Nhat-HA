@@ -99,6 +99,14 @@
   - Removed the now-dead `.element-grid`/`.element-card*` CSS (nothing references those classes anymore).
 - **Not done**: no "sign out"/account tie-in to posts (posts are still anonymous "You", unrelated to the new Pi sign-in feature above — these two features don't talk to each other yet).
 
+## 2026-06-21 — "Create a Story" (Facebook-style), separate from the element filter row
+
+- **Trigger**: user asked for a Facebook-style "create a story" feature. The existing `.stories-row` (All/Metal/Wood/Water/Fire/Earth chips at the top of the unified feed) already borrowed Stories' visual language but was repurposed as a feed *filter*, not actual stories — needed to resolve that overlap before building.
+- **Decisions confirmed with the user**: (1) stories are a separate "+ Create Story" bubble in a new tray above the existing filter row, not tied to any element, so the filter chips keep their current click-to-filter behavior unchanged; (2) no auto-expiry — a story stays until manually deleted, unlike real Instagram/Facebook's 24h expiry; (3) a story requires a photo or video (no text-only stories), with an optional caption.
+- **What was built**: a new `.stories-tray` in `index.html` (the "+ Your Story" create bubble, plus a `#stories-list` container that JS fills with one circular thumbnail per existing story) and a full-screen `#story-viewer` overlay (close ✕, delete 🗑, click-the-backdrop-to-close). All logic lives in `js/main.js` (`loadStories`/`saveStories`/`renderStories`/`buildStoryChip`/`openStoryViewer`/`closeStoryViewer`/`deleteCurrentStory`/`initStoryCreate`/`initStoryViewer`).
+- **Storage**: single key `lifebalance_stories` (not per-element, unlike journal posts) — `{ id, mediaType: 'image'|'video', mediaData, caption, createdAt }`. See `.claude/rules/tech-defaults.md`.
+- **Reused rather than rebuilt**: the `.story-chip`/`.story-chip__icon` circle styling from the existing filter row (just added `--create`/`--user`/`--thumb` modifier classes), and the same `MAX_MEDIA_BYTES`/`readFileAsDataUrl`/`showToast` helpers from `common.js` already used by the journal composer.
+
 ## Open TODOs
 
 - [x] `PI_API_KEY` Vercel env var — confirmed working 2026-06-20/21. Note: the dashboard showed it saved with Production checked *before* it actually took effect; a plain "Redeploy" of the existing deployment didn't pick it up, but a fresh `git push` (new deployment from scratch) did. If this env-var pattern recurs, prefer triggering a brand-new deployment over trusting the Redeploy button.
