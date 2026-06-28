@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tài chính — Life Balance</title>
+  <meta name="description" content="Metal element — allocate and rebalance your capital across 4 pools, with live Pi Network price tracking." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
+  <link rel="stylesheet" href="css/style.css?v=20" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════════
+       TOAST NOTIFICATION
+  ══════════════════════════════════════════════════ -->
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ══════════════════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════════════════ -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="logo">
+        <div class="logo-mark">LB</div>
+        <div class="logo-text">
+          <strong>Life Balance</strong>
+          <span>Five Elements Tracker</span>
+        </div>
+      </div>
+      <span class="pi-status" id="pi-status">Checking Pi Browser…</span>
+    </div>
+  </header>
+
+  <a class="journal-back" href="index.html"><span class="journal-back__arrow" aria-hidden="true">←</span> Home</a>
+
+  <!-- ══════════════════════════════════════════════════
+       ELEMENT HERO
+  ══════════════════════════════════════════════════ -->
+  <section class="journal-hero" style="--current-element: var(--metal); --current-element-tint: var(--metal-tint);">
+    <div class="journal-hero__icon">⛏️</div>
+    <h1 class="journal-hero__title">Metal Element</h1>
+    <p class="journal-hero__dimension">Money — allocation &amp; rebalance</p>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       FINANCE — REBALANCE ENGINE
+  ══════════════════════════════════════════════════ -->
+  <section class="finance-section" id="finance">
+    <h2 class="finance-section__title">⛏️ Cân bằng tài chính</h2>
+    <p class="finance-section__subtitle">Phân bổ vốn theo công thức của bạn. Giá Pi Network trong quỹ Đầu tư cập nhật theo thời gian thực; hệ thống cảnh báo khi lãi/lỗ vượt 5% và đề nghị cân bằng lại.</p>
+
+    <div class="finance-inputs">
+      <div class="finance-field">
+        <label for="finance-total-capital">Tổng vốn hiện tại (đ)</label>
+        <input type="number" id="finance-total-capital" min="0" step="1000000" placeholder="100000000" />
+      </div>
+      <div class="finance-field">
+        <label for="finance-salary">Lương hàng tháng (đ)</label>
+        <input type="number" id="finance-salary" min="0" step="100000" placeholder="0" />
+      </div>
+      <div class="finance-field">
+        <label for="finance-income">Thu nhập tháng này (đ)</label>
+        <input type="number" id="finance-income" min="0" step="100000" placeholder="0" />
+      </div>
+      <div class="finance-field">
+        <label for="finance-expense">Chi tiêu tháng này (đ)</label>
+        <input type="number" id="finance-expense" min="0" step="100000" placeholder="0" />
+      </div>
+      <button type="button" id="finance-apply-total" class="btn btn-primary finance-inputs__save">Áp dụng vào 4 quỹ</button>
+    </div>
+
+    <div class="finance-config">
+      <span class="finance-config__label">Công thức phân bổ:</span>
+      <div class="finance-config__field"><input type="number" id="finance-cfg-invest" min="0" max="100" aria-label="% Đầu tư" /><label>% Đầu tư</label></div>
+      <div class="finance-config__field"><input type="number" id="finance-cfg-savings" min="0" max="100" aria-label="% Tiết kiệm" /><label>% Tiết kiệm</label></div>
+      <div class="finance-config__field"><input type="number" id="finance-cfg-selfdev" min="0" max="100" aria-label="% Phát triển bản thân" /><label>% Bản thân</label></div>
+      <div class="finance-config__field"><input type="number" id="finance-cfg-emergency" min="0" max="100" aria-label="% Khẩn cấp" /><label>% Khẩn cấp</label></div>
+      <button type="button" id="finance-cfg-save" class="btn btn-text finance-config__save">Lưu công thức</button>
+      <span id="finance-cfg-sum-hint" class="finance-config__hint"></span>
+    </div>
+
+    <div id="finance-pools" class="finance-pools" aria-live="polite"></div>
+
+    <h2 class="finance-section__title" style="margin-top: var(--space-xl);">📝 Thực tế (tự nhập)</h2>
+    <p class="finance-section__subtitle">Nhập số liệu thực tế để so sánh với mục tiêu phía trên. Nhấn ✏️ trên mỗi thẻ để thêm danh mục con và số tiền.</p>
+    <div id="finance-actual-pools" class="finance-pools" aria-live="polite"></div>
+
+    <h2 class="finance-section__title" style="margin-top: var(--space-xl);">📊 Biểu đồ phân bổ</h2>
+    <p class="finance-section__subtitle">So sánh tỷ trọng giữa mục tiêu và thực tế, tính theo tổng vốn hiện tại.</p>
+    <div class="finance-charts">
+      <div class="finance-chart">
+        <h3 class="finance-chart__title">Mục tiêu</h3>
+        <p id="finance-chart-target-total" class="finance-chart__total"></p>
+        <div id="finance-chart-target-pie" class="finance-chart__pie" aria-hidden="true"></div>
+        <ul id="finance-chart-target-legend" class="finance-chart__legend"></ul>
+      </div>
+      <div class="finance-chart">
+        <h3 class="finance-chart__title">Thực tế</h3>
+        <p id="finance-chart-actual-total" class="finance-chart__total"></p>
+        <div id="finance-chart-actual-pie" class="finance-chart__pie" aria-hidden="true"></div>
+        <ul id="finance-chart-actual-legend" class="finance-chart__legend"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       FINANCE — SUB-ITEM EDITOR MODAL
+  ══════════════════════════════════════════════════ -->
+  <div id="finance-subitem-modal" class="finance-modal" hidden>
+    <div class="finance-modal__inner">
+      <button type="button" id="finance-modal-close" class="finance-modal__close" aria-label="Đóng">✕</button>
+      <h3 id="finance-modal-title" class="finance-modal__title"></h3>
+      <div id="finance-modal-items" class="finance-modal__items"></div>
+      <div class="finance-modal__add-row">
+        <input type="text" id="finance-modal-new-label" placeholder="Tên danh mục con" />
+        <div class="finance-modal__add-row-bottom">
+          <input type="number" id="finance-modal-new-amount" min="0" placeholder="Số tiền (đ)" />
+          <input type="date" id="finance-modal-new-date" aria-label="Ngày" />
+          <button type="button" id="finance-modal-add-btn" class="btn btn-primary">Thêm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════════════ -->
+  <footer class="site-footer" role="contentinfo">
+    <p>&copy; 2026 <strong>Life Balance</strong> — built for Pi Network App Studio.</p>
+  </footer>
+
+  <!-- Pi SDK must load before js/common.js -->
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script src="js/common.js?v=5"></script>
+  <script src="js/financeRebalance.js?v=5"></script>
+</body>
+</html>

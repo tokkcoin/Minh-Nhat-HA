@@ -245,24 +245,43 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border: 1px solid var(--border);
   box-shadow: 0 0 60px rgba(255,107,91,.08), 0 0 0 1px rgba(255,255,255,.02) inset;
 }
+.hero-orbit {
+  position: absolute;
+  inset: 0;
+  animation: hero-orbit-spin 26s linear infinite;
+}
 .hero-orb__node {
   position: absolute;
-  width: 56px; height: 56px;
+  width: 76px; height: 76px;
   border-radius: 50%;
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 34px;
   transform: translate(-50%, -50%);
-  box-shadow: var(--shadow-sm);
+  animation: hero-orbit-counter-spin 26s linear infinite, hero-node-pulse 2.4s ease-in-out infinite;
 }
-.hero-orb__node--metal { top: 8%;  left: 50%; border-color: var(--metal); box-shadow: 0 0 16px var(--metal-tint); }
-.hero-orb__node--wood  { top: 37%; left: 90%; border-color: var(--wood);  box-shadow: 0 0 16px var(--wood-tint); }
-.hero-orb__node--water { top: 84%; left: 75%; border-color: var(--water); box-shadow: 0 0 16px var(--water-tint); }
-.hero-orb__node--fire  { top: 84%; left: 25%; border-color: var(--fire);  box-shadow: 0 0 16px var(--fire-tint); }
-.hero-orb__node--earth { top: 37%; left: 10%; border-color: var(--earth); box-shadow: 0 0 16px var(--earth-tint); }
+.hero-orb__node--metal { top: 8%;  left: 50%; border-color: var(--metal); --node-glow: var(--metal-tint); }
+.hero-orb__node--wood  { top: 37%; left: 90%; border-color: var(--wood);  --node-glow: var(--wood-tint); }
+.hero-orb__node--water { top: 84%; left: 75%; border-color: var(--water); --node-glow: var(--water-tint); }
+.hero-orb__node--fire  { top: 84%; left: 25%; border-color: var(--fire);  --node-glow: var(--fire-tint); }
+.hero-orb__node--earth { top: 37%; left: 10%; border-color: var(--earth); --node-glow: var(--earth-tint); }
+
+@keyframes hero-orbit-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes hero-orbit-counter-spin {
+  0%   { transform: translate(-50%, -50%) rotate(0deg)    scale(1); }
+  50%  { transform: translate(-50%, -50%) rotate(-180deg) scale(1.1); }
+  100% { transform: translate(-50%, -50%) rotate(-360deg) scale(1); }
+}
+@keyframes hero-node-pulse {
+  0%, 100% { box-shadow: 0 0 16px var(--node-glow); }
+  50%      { box-shadow: 0 0 32px var(--node-glow); }
+}
 
 /* ── 7. Elements Showcase (trust-bar equivalent) ── */
 .showcase {
@@ -525,12 +544,18 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .journal-back {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--text-secondary);
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 8px 18px 8px 14px;
   margin: var(--space-lg) 0 0 var(--space-lg);
 }
-.journal-back:hover { color: var(--text-primary); }
+.journal-back__arrow { font-size: 20px; line-height: 1; }
+.journal-back:hover { background: var(--bg-page); border-color: var(--text-muted); }
 
 .journal-hero {
   max-width: 700px;
@@ -1021,12 +1046,546 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .pay-status { margin-top: var(--space-md); font-size: 13px; color: var(--text-secondary); }
 
-/* ── 16. Responsive ── */
+/* ── 16. Finance Rebalance (Metal / Money allocation engine) ── */
+.finance-section {
+  max-width: 1100px;
+  margin: 0 auto var(--space-xl);
+  padding: 0 var(--space-lg);
+}
+.finance-section__title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.finance-section__subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: var(--space-md); max-width: 720px; }
+
+.finance-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
+}
+.finance-field { display: flex; align-items: center; gap: 6px; flex: 1 1 180px; }
+.finance-field label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.finance-field input {
+  width: 100%;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 4px 8px;
+  font-size: 13px;
+  font-family: var(--font-body);
+}
+.finance-inputs__save { flex: 0 0 auto; padding: 6px 16px; font-size: 13px; }
+
+.finance-config {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.finance-config__label { font-size: 12px; color: var(--text-muted); }
+.finance-config__field { display: flex; align-items: center; gap: 4px; }
+.finance-config__field input {
+  width: 56px;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 4px 6px;
+  font-size: 13px;
+}
+.finance-config__field label { font-size: 12px; color: var(--text-secondary); }
+.finance-config__hint { font-size: 12px; color: var(--danger); }
+
+.finance-pools {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+}
+.finance-pool {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-md);
+}
+.finance-pool--invest    { border-top-color: var(--metal); }
+.finance-pool--savings   { border-top-color: var(--water); }
+.finance-pool--selfDev   { border-top-color: var(--wood); }
+.finance-pool--emergency { border-top-color: var(--fire); }
+.finance-pool__head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: var(--space-sm); }
+.finance-pool__icon { font-size: 16px; }
+.finance-pool__label { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.finance-pool__value { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-sm); }
+
+.finance-pool__bar-track {
+  width: 100%;
+  height: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-page);
+  overflow: hidden;
+  margin-bottom: var(--space-sm);
+}
+.finance-pool__bar-fill { height: 100%; background: var(--text-muted); transition: width 1.2s ease; }
+.finance-pool__bar-fill--invest    { background: var(--metal); }
+.finance-pool__bar-fill--savings   { background: var(--water); }
+.finance-pool__bar-fill--selfDev   { background: var(--wood); }
+.finance-pool__bar-fill--emergency { background: var(--fire); }
+
+.finance-pool__meta { display: flex; flex-wrap: wrap; gap: var(--space-sm); font-size: 12px; color: var(--text-secondary); }
+.finance-pool__return--up { color: var(--success); }
+.finance-pool__return--down { color: var(--danger); }
+
+.finance-pool__badge--warning {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--danger);
+  background: rgba(231,76,60,.12);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+}
+
+.finance-pool__rebalance-btn {
+  margin-top: var(--space-sm);
+  width: 100%;
+  background: var(--danger);
+  color: #fff;
+  font-weight: 600;
+  font-size: 12px;
+  border-radius: var(--radius-md);
+  padding: 8px;
+  transition: opacity var(--transition);
+}
+.finance-pool__rebalance-btn:hover { opacity: .85; }
+
+.finance-pool__edit-btn {
+  margin-left: auto;
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  opacity: .7;
+}
+.finance-pool__edit-btn:hover { opacity: 1; background: var(--bg-page); }
+
+.finance-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: var(--space-md);
+}
+.finance-modal[hidden] { display: none; }
+.finance-modal__inner {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-md);
+}
+.finance-modal__close {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+.finance-modal__close:hover { color: var(--text-primary); }
+.finance-modal__title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-sm); padding-right: var(--space-lg); }
+.finance-modal__items { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--space-md); max-height: 240px; overflow-y: auto; }
+.finance-modal__empty { font-size: 13px; color: var(--text-muted); }
+.finance-modal__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-page);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+}
+.finance-modal__item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.finance-modal__item-label { font-size: 13px; color: var(--text-primary); }
+.finance-modal__item-date { font-size: 11px; color: var(--text-muted); }
+.finance-modal__item-amount { font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
+.finance-modal__item-edit, .finance-modal__item-delete { font-size: 13px; opacity: .7; }
+.finance-modal__item-edit:hover, .finance-modal__item-delete:hover { opacity: 1; }
+.finance-modal__add-row { display: flex; flex-direction: column; gap: 6px; }
+.finance-modal__add-row-bottom { display: flex; gap: 6px; }
+.finance-modal__add-row input {
+  flex: 1;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 6px 8px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  min-width: 0;
+}
+.finance-modal__add-row-bottom input[type="date"] { flex: 0 0 130px; color-scheme: dark; }
+.finance-modal__add-row .btn { padding: 6px 14px; font-size: 13px; flex: 0 0 auto; }
+
+.finance-charts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-lg);
+}
+.finance-chart {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-md);
+  text-align: center;
+}
+.finance-chart__title { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+.finance-chart__total { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-sm); }
+.finance-chart__pie {
+  width: 160px; height: 160px;
+  margin: 0 auto var(--space-md);
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 1.2s ease;
+}
+.finance-chart__legend { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.finance-chart__legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+.finance-chart__legend-dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+.finance-chart__legend-label { flex: 1; color: var(--text-primary); }
+.finance-chart__legend-empty { font-size: 12px; color: var(--text-muted); }
+
+/* ── 17. Health Quest System (Wood element) — Main/Side/Daily/Weekly/Monthly, XP + level ── */
+.quest-section {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg) var(--space-xl);
+}
+
+.quest-xp-bar { margin-bottom: var(--space-lg); }
+.quest-xp-bar__top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.quest-xp-bar__level { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.quest-xp-bar__xp { font-size: 12px; color: var(--text-muted); }
+
+.quest-add-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--space-lg); }
+.quest-add-row__top { display: flex; align-items: center; gap: 6px; }
+.quest-add-row__bottom { display: flex; flex-wrap: wrap; gap: 6px; }
+.quest-add-row input[type="text"] {
+  flex: 1 1 200px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: var(--font-body);
+}
+.quest-add-row select,
+.quest-add-row input[type="number"] {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: var(--font-body);
+}
+.quest-add-row input[type="number"] { width: 70px; }
+.quest-add-row__image-btn {
+  flex: 0 0 auto;
+  font-size: 16px;
+  padding: 7px 9px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.quest-add-row__image-btn:hover { background: var(--bg-page); }
+.quest-add-row__image-preview {
+  flex: 0 0 auto;
+  width: 36px; height: 36px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+.quest-add-row__image-remove { flex: 0 0 auto; font-size: 12px; opacity: .7; }
+.quest-add-row__image-remove:hover { opacity: 1; }
+
+.quest-thumb {
+  flex: 0 0 auto;
+  width: 28px; height: 28px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.quest-seed-btn { display: block; font-size: 12px; margin: 0 0 var(--space-lg); text-align: left; }
+
+.quest-group { margin-bottom: var(--space-lg); }
+.quest-group__title { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-sm); }
+.quest-group__list { display: flex; flex-direction: column; gap: 6px; }
+
+.quest-xp-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--wood);
+  background: var(--wood-tint);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+.health-task {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+.health-task--done { border-color: var(--wood); background: var(--wood-tint); }
+.health-task__check { display: flex; align-items: center; gap: 8px; flex: 1; cursor: pointer; min-width: 0; }
+.health-task__text { font-size: 13px; color: var(--text-primary); }
+.health-task--done .health-task__text { color: var(--text-secondary); text-decoration: line-through; }
+.quest-select-check { flex: 0 0 auto; width: 15px; height: 15px; accent-color: var(--danger); }
+
+.quest-bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  background: var(--bg-card);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: var(--space-md);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.quest-bulk-bar__delete {
+  background: var(--danger);
+  color: #fff;
+  font-weight: 600;
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+}
+.quest-bulk-bar__delete:hover { opacity: .85; }
+
+/* ── 18. Element Placeholder Pages (mood — scaffold, more to come) ── */
+.element-placeholder {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--space-xl) var(--space-lg) calc(var(--space-xl) * 2);
+  text-align: center;
+}
+.element-placeholder__badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--current-element, var(--text-secondary));
+  background: var(--current-element-tint, var(--bg-card));
+  border-radius: var(--radius-xl);
+  padding: 4px 14px;
+  margin-bottom: var(--space-md);
+}
+.element-placeholder__text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+/* ── 19. Skill Talents (Water element) — icon-based skill badges + star level ── */
+.skill-section { max-width: 700px; margin: 0 auto; padding: 0 var(--space-lg) var(--space-xl); }
+
+.skill-add-form {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+.skill-add-form input[type="text"] {
+  width: 100%;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  margin-bottom: var(--space-sm);
+}
+.skill-icon-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: var(--space-sm);
+}
+.skill-icon-picker__btn {
+  width: 32px; height: 32px;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-page);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.skill-icon-picker__btn:hover { border-color: var(--water); }
+.skill-icon-picker__btn--selected { border-color: var(--water); background: var(--water-tint); }
+
+.skill-level-picker { display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-md); }
+.skill-level-picker__stars { display: flex; gap: 2px; }
+.skill-level-picker__star { font-size: 18px; line-height: 1; opacity: .35; }
+.skill-level-picker__star--filled { opacity: 1; }
+
+.skill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--space-md);
+}
+.skill-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-md);
+  text-align: center;
+}
+.skill-card__icon {
+  position: relative;
+  font-size: 32px;
+  width: 56px; height: 56px;
+  margin: 0 auto var(--space-sm);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--water-tint);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform var(--transition);
+}
+.skill-card__icon:hover { transform: scale(1.08); box-shadow: 0 0 0 3px var(--water-tint); }
+.skill-card__file-badge {
+  position: absolute;
+  bottom: -2px; right: -2px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--water);
+  border-radius: 50%;
+  width: 18px; height: 18px;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--bg-card);
+}
+.skill-card__name { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; word-break: break-word; }
+.skill-card__stars { display: flex; justify-content: center; gap: 2px; margin-bottom: var(--space-sm); }
+.skill-card__star { font-size: 14px; cursor: pointer; opacity: .35; }
+.skill-card__star--filled { opacity: 1; }
+.skill-card__actions { display: flex; justify-content: center; gap: var(--space-sm); }
+.skill-card__actions button { font-size: 13px; opacity: .7; }
+.skill-card__actions button:hover { opacity: 1; }
+.skill-empty { color: var(--text-muted); font-size: 13px; text-align: center; padding: var(--space-lg) 0; }
+
+.skill-detail__label { display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: var(--space-md) 0 6px; }
+.skill-detail__notes {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: var(--font-body);
+}
+.skill-detail__images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 6px;
+  margin-bottom: var(--space-sm);
+}
+.skill-detail__image { position: relative; aspect-ratio: 1; }
+.skill-detail__image img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-sm); }
+.skill-detail__image-delete {
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 18px; height: 18px;
+  font-size: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.6);
+  color: #fff;
+  border-radius: 50%;
+}
+
+/* ── 20. Strategic Formation (Earth element) — Tiền tuyến/Trung quân/Hậu phương goal board ── */
+.formation-section { max-width: 700px; margin: 0 auto; padding: 0 var(--space-lg) var(--space-xl); }
+
+.formation-add-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--space-lg); }
+.formation-add-row input[type="text"] {
+  flex: 1 1 200px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: var(--font-body);
+}
+.formation-add-row select {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: var(--font-body);
+}
+
+.formation-zone {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--earth);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+.formation-zone--frontline { border-left-color: var(--danger); }
+.formation-zone--rear { border-left-color: var(--text-muted); }
+.formation-zone__title { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-sm); }
+.formation-zone__hint { font-size: 11px; font-weight: 400; color: var(--text-muted); }
+.formation-zone__list { display: flex; flex-direction: column; gap: 6px; }
+.formation-empty { font-size: 12px; color: var(--text-muted); }
+
+.formation-unit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+.formation-unit__name { flex: 1; font-size: 13px; color: var(--text-primary); min-width: 0; word-break: break-word; }
+.formation-unit__actions { display: flex; gap: 6px; flex: 0 0 auto; }
+.formation-unit__actions button { font-size: 12px; opacity: .7; }
+.formation-unit__actions button:hover { opacity: 1; }
+.formation-unit__actions button:disabled { opacity: .25; cursor: default; }
+
+/* ── 21. Responsive ── */
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; text-align: center; }
   .hero-subtitle { margin-left: auto; margin-right: auto; }
   .hero-actions { justify-content: center; }
   .how-steps { grid-template-columns: 1fr; }
+  .finance-pools { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 768px) {
   .hero-title { font-size: 40px; }
@@ -1035,4 +1594,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 @media (max-width: 420px) {
   .hero-title { font-size: 32px; }
   .chart-mini-grid { grid-template-columns: 1fr; }
+  .finance-pools { grid-template-columns: 1fr; }
+  .finance-charts { grid-template-columns: 1fr; }
 }

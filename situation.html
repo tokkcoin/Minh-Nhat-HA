@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vị thế — Life Balance</title>
+  <meta name="description" content="Earth element — tactical position / situation building, coming soon." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
+  <link rel="stylesheet" href="css/style.css?v=20" />
+</head>
+<body>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="logo">
+        <div class="logo-mark">LB</div>
+        <div class="logo-text">
+          <strong>Life Balance</strong>
+          <span>Five Elements Tracker</span>
+        </div>
+      </div>
+      <span class="pi-status" id="pi-status">Checking Pi Browser…</span>
+    </div>
+  </header>
+
+  <a class="journal-back" href="index.html"><span class="journal-back__arrow" aria-hidden="true">←</span> Home</a>
+
+  <section class="journal-hero" style="--current-element: var(--earth); --current-element-tint: var(--earth-tint);">
+    <div class="journal-hero__icon">🪨</div>
+    <h1 class="journal-hero__title">Earth Element</h1>
+    <p class="journal-hero__dimension">Situation — xây dựng vị thế chiến thuật</p>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       DÀN TRẬN CHIẾN LƯỢC — Thiên thời / Địa lợi / Nhân hoà
+  ══════════════════════════════════════════════════ -->
+  <section class="formation-section" id="formation">
+    <form class="formation-add-row" id="formation-add-form">
+      <input type="text" id="formation-new-name" placeholder="Thêm mục tiêu/ưu tiên…" />
+      <select id="formation-new-zone" aria-label="Tuyến">
+        <option value="frontline">🌤️ Thiên thời</option>
+        <option value="middle" selected>🏞️ Địa lợi</option>
+        <option value="rear">🤝 Nhân hoà</option>
+      </select>
+      <button type="submit" id="formation-add-btn" class="btn btn-primary">Thêm</button>
+    </form>
+
+    <div id="formation-zones"></div>
+  </section>
+
+  <footer class="site-footer" role="contentinfo">
+    <p>&copy; 2026 <strong>Life Balance</strong> — built for Pi Network App Studio.</p>
+  </footer>
+
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script src="js/common.js?v=5"></script>
+  <script src="js/situation.js?v=3"></script>
+</body>
+</html>

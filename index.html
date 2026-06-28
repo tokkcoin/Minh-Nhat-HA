@@ -6,7 +6,7 @@
   <title>Life Balance — Five Elements Tracker</title>
   <meta name="description" content="Track your balance across Money, Health, Talent, Mood, and Situation through the Five Elements." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
-  <link rel="stylesheet" href="css/style.css?v=8" />
+  <link rel="stylesheet" href="css/style.css?v=20" />
 </head>
 <body>
 
@@ -48,13 +48,15 @@
         <a class="btn-text" href="#how-it-works">How it works</a>
       </div>
     </div>
-    <div class="hero-graphic" aria-hidden="true">
-      <div class="hero-orb"></div>
-      <div class="hero-orb__node hero-orb__node--metal">⛏️</div>
-      <div class="hero-orb__node hero-orb__node--wood">🌳</div>
-      <div class="hero-orb__node hero-orb__node--water">💧</div>
-      <div class="hero-orb__node hero-orb__node--fire">🔥</div>
-      <div class="hero-orb__node hero-orb__node--earth">🪨</div>
+    <div class="hero-graphic">
+      <div class="hero-orb" aria-hidden="true"></div>
+      <div class="hero-orbit">
+        <a class="hero-orb__node hero-orb__node--metal" href="finance.html" aria-label="Metal — Money">⛏️</a>
+        <a class="hero-orb__node hero-orb__node--wood" href="health.html" aria-label="Wood — Health">🌳</a>
+        <a class="hero-orb__node hero-orb__node--water" href="skills.html" aria-label="Water — Talent">💧</a>
+        <a class="hero-orb__node hero-orb__node--fire" href="mood.html" aria-label="Fire — Mood">🔥</a>
+        <a class="hero-orb__node hero-orb__node--earth" href="situation.html" aria-label="Earth — Situation">🪨</a>
+      </div>
     </div>
   </section>
 
@@ -260,7 +262,7 @@
   <script src="js/common.js?v=5"></script>
   <script src="data/storyMusic.js?v=2"></script>
   <script src="js/storyEditor.js?v=5"></script>
-  <script src="js/main.js?v=10"></script>
+  <script src="js/main.js?v=11"></script>
   <script src="js/piAuth.js"></script>
 </body>
 </html>

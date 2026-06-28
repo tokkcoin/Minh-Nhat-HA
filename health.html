@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sức khoẻ — Life Balance</title>
+  <meta name="description" content="Wood element — health tracking, coming soon." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
+  <link rel="stylesheet" href="css/style.css?v=20" />
+</head>
+<body>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="logo">
+        <div class="logo-mark">LB</div>
+        <div class="logo-text">
+          <strong>Life Balance</strong>
+          <span>Five Elements Tracker</span>
+        </div>
+      </div>
+      <span class="pi-status" id="pi-status">Checking Pi Browser…</span>
+    </div>
+  </header>
+
+  <a class="journal-back" href="index.html"><span class="journal-back__arrow" aria-hidden="true">←</span> Home</a>
+
+  <section class="journal-hero" style="--current-element: var(--wood); --current-element-tint: var(--wood-tint);">
+    <div class="journal-hero__icon">🌳</div>
+    <h1 class="journal-hero__title">Wood Element</h1>
+    <p class="journal-hero__dimension">Health — quản lý sức khoẻ</p>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════
+       QUEST SYSTEM — Cấp độ / XP + 5 nhóm nhiệm vụ
+  ══════════════════════════════════════════════════ -->
+  <section class="quest-section" id="quests">
+    <div class="quest-xp-bar">
+      <div class="quest-xp-bar__top">
+        <span class="quest-xp-bar__level">⚔️ Cấp <span id="quest-level">1</span></span>
+        <span class="quest-xp-bar__xp"><span id="quest-xp-current">0</span> / <span id="quest-xp-needed">100</span> XP</span>
+      </div>
+      <div class="finance-pool__bar-track">
+        <div id="quest-xp-fill" class="finance-pool__bar-fill" style="background:var(--wood); width:0%"></div>
+      </div>
+    </div>
+
+    <div class="quest-add-row">
+      <div class="quest-add-row__top">
+        <input type="text" id="quest-new-title" placeholder="Thêm nhiệm vụ mới…" />
+        <button type="button" id="quest-new-image-btn" class="quest-add-row__image-btn" aria-label="Thêm ảnh">📷</button>
+        <img id="quest-new-image-preview" class="quest-add-row__image-preview" hidden alt="" />
+        <button type="button" id="quest-new-image-remove" class="quest-add-row__image-remove" hidden aria-label="Bỏ ảnh">✕</button>
+        <input type="file" id="quest-new-image-file" accept="image/*" hidden />
+      </div>
+      <div class="quest-add-row__bottom">
+        <select id="quest-new-category" aria-label="Loại nhiệm vụ">
+          <option value="daily">📅 Hàng ngày</option>
+          <option value="weekly">🗓️ Hàng tuần</option>
+          <option value="monthly">📆 Hàng tháng</option>
+          <option value="side">⚔️ Phụ</option>
+          <option value="main">🏆 Chính</option>
+        </select>
+        <input type="number" id="quest-new-xp" min="0" value="10" aria-label="XP" />
+        <button type="button" id="quest-add-btn" class="btn btn-primary">Thêm</button>
+      </div>
+    </div>
+
+    <button type="button" id="quest-seed-btn" class="btn-text quest-seed-btn">🌱 Tạo 50 nhiệm vụ mẫu (10 mỗi loại — sức khoẻ, ăn uống, thể thao, nghỉ ngơi, giấc ngủ)</button>
+
+    <div id="quest-bulk-bar" class="quest-bulk-bar" hidden>
+      <span id="quest-bulk-count">0 nhiệm vụ đã chọn</span>
+      <button type="button" id="quest-bulk-delete-btn" class="quest-bulk-bar__delete">🗑 Xoá đã chọn</button>
+      <button type="button" id="quest-bulk-clear-btn" class="btn-text">Bỏ chọn</button>
+    </div>
+
+    <div id="quest-groups"></div>
+  </section>
+
+  <footer class="site-footer" role="contentinfo">
+    <p>&copy; 2026 <strong>Life Balance</strong> — built for Pi Network App Studio.</p>
+  </footer>
+
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script src="js/common.js?v=5"></script>
+  <script src="js/health.js?v=7"></script>
+</body>
+</html>
