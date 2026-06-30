@@ -46,12 +46,6 @@ let timerBaseSeconds  = 0;
 let timerSessionStart = null;
 let timerIntervalId   = null;
 
-// Audio recorder
-let micStream         = null;
-let mediaRecorder     = null;
-let recordingChunks   = [];
-let recTimerInterval  = null;
-let recStartTime      = 0;
 
 // ── 3. Storage ──────────────────────────────────────────────
 
@@ -90,12 +84,6 @@ function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
   const h = Math.floor(m / 60);
   return h ? `${h}h ${m % 60}m` : `${m} phút`;
-}
-
-function formatRecDuration(seconds) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
 }
 
 function renderStarRow(count) {
@@ -311,7 +299,6 @@ function openSkillDetail(skillId) {
   document.getElementById('skill-detail-notes').value = skill.notes || '';
   renderSkillDetailLinks(skill);
   renderSkillDetailImages(skill);
-  resetRecorderUI();
   updateTimerDisplay();
   if (modal) modal.hidden = false;
   document.body.style.overflow = 'hidden'; // prevent background scroll
@@ -319,7 +306,6 @@ function openSkillDetail(skillId) {
 }
 
 function closeSkillDetail() {
-  stopRecordingIfActive();
   pauseTimerSession();
   saveSkillNotes();
   skillDetailEditingId = null;
@@ -423,91 +409,6 @@ function handleDeleteSkillImage(imageId) {
   renderSkills();
 }
 
-// ── 11. Audio recording ────────────────────────────────────
-
-function resetRecorderUI() {
-  document.getElementById('skill-rec-active').hidden   = true;
-  document.getElementById('skill-rec-start').hidden    = false;
-  document.getElementById('skill-rec-playback').hidden = true;
-  document.getElementById('skill-rec-playback').innerHTML = '';
-}
-
-function stopRecordingIfActive() {
-  if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-  if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
-  clearInterval(recTimerInterval);
-}
-
-async function startRecording() {
-  if (!navigator.mediaDevices?.getUserMedia) {
-    showToast('Trình duyệt không hỗ trợ ghi âm');
-    return;
-  }
-  try {
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  } catch {
-    showToast('Không thể truy cập microphone — hãy cấp quyền');
-    return;
-  }
-
-  const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-    ? 'audio/webm;codecs=opus'
-    : 'audio/webm';
-
-  recordingChunks = [];
-  mediaRecorder = new MediaRecorder(micStream, { mimeType });
-  mediaRecorder.addEventListener('dataavailable', e => { if (e.data.size > 0) recordingChunks.push(e.data); });
-  mediaRecorder.addEventListener('stop', handleRecordingStop);
-  mediaRecorder.start();
-
-  recStartTime = Date.now();
-  document.getElementById('skill-rec-start').hidden  = true;
-  document.getElementById('skill-rec-active').hidden = false;
-  document.getElementById('skill-rec-duration').textContent = '0:00';
-
-  recTimerInterval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - recStartTime) / 1000);
-    document.getElementById('skill-rec-duration').textContent = formatRecDuration(elapsed);
-  }, 1000);
-}
-
-function stopRecording() {
-  if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-  clearInterval(recTimerInterval);
-  if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
-}
-
-function handleRecordingStop() {
-  const blob = new Blob(recordingChunks, { type: mediaRecorder?.mimeType || 'audio/webm' });
-  recordingChunks = [];
-  mediaRecorder = null;
-
-  const url  = URL.createObjectURL(blob);
-  const skill = loadSkills().find(s => s.id === skillDetailEditingId);
-  const name  = skill ? skill.name.replace(/[^a-zA-Z0-9À-ɏ]/g, '_') : 'recording';
-  const ts    = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '-');
-  const filename = `${name}_${ts}.webm`;
-
-  // Auto-download to device
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-
-  // Show playback controls in the folder for the current session
-  const playback = document.getElementById('skill-rec-playback');
-  playback.innerHTML = `
-    <p class="skill-folder__empty-hint" style="margin-bottom:6px">🎵 Bản ghi âm vừa lưu xuống máy:</p>
-    <audio controls src="${url}" style="width:100%"></audio>`;
-  playback.hidden = false;
-
-  document.getElementById('skill-rec-active').hidden = true;
-  document.getElementById('skill-rec-start').hidden  = false;
-
-  showToast(`Đã lưu ${filename} xuống máy ✓`, 4000);
-}
 
 // ── 12. Boot ────────────────────────────────────────────────
 
@@ -536,10 +437,6 @@ function initSkillsTracker() {
     imgInput.value = '';
     if (file) handleUploadSkillImage(file);
   });
-
-  // Audio recording
-  document.getElementById('skill-rec-start')?.addEventListener('click', startRecording);
-  document.getElementById('skill-rec-stop')?.addEventListener('click', stopRecording);
 
   // Star info modal
   document.getElementById('skill-info-open')?.addEventListener('click', () => {

@@ -1500,6 +1500,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .skill-empty { color: var(--text-muted); font-size: 13px; text-align: center; padding: var(--space-lg) 0; }
 
 /* ── Skill folder — full-screen overlay ── */
+/* display:flex overrides the native [hidden] display:none — fix it explicitly */
+.skill-folder[hidden] { display: none; }
 .skill-folder {
   position: fixed;
   inset: 0;

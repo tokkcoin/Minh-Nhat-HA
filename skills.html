@@ -6,7 +6,7 @@
   <title>Kỹ năng — Life Balance</title>
   <meta name="description" content="Water element — talent and skill building." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
-  <link rel="stylesheet" href="css/style.css?v=24" />
+  <link rel="stylesheet" href="css/style.css?v=25" />
 </head>
 <body>
 
@@ -25,7 +25,7 @@
     </div>
   </header>
 
-  <a class="journal-back" href="index.html"><span class="journal-back__arrow" aria-hidden="true">←</span> Home</a>
+  <a class="journal-back" href="index.html" onclick="sessionStorage.setItem('activeTab','home')"><span class="journal-back__arrow" aria-hidden="true">←</span> Home</a>
 
   <section class="journal-hero" style="--current-element: var(--water); --current-element-tint: var(--water-tint);">
     <button type="button" id="skill-info-open" class="journal-hero__icon journal-hero__icon--btn" aria-label="Xem cách tính cấp độ kỹ năng">💧</button>
@@ -65,23 +65,9 @@
         <div class="skill-folder__section-label">🔗 Liên kết</div>
         <div class="skill-detail__links" id="skill-detail-links"></div>
         <div class="skill-detail__link-add">
-          <input type="url" id="skill-link-url" placeholder="https://..." class="skill-detail__link-input" autocapitalize="none" autocorrect="off" />
+          <input type="text" id="skill-link-url" placeholder="https://..." class="skill-detail__link-input" autocapitalize="none" autocorrect="off" inputmode="url" />
           <input type="text" id="skill-link-label" placeholder="Tên (tuỳ chọn)" class="skill-detail__link-input skill-detail__link-label-input" />
           <button type="button" id="skill-link-add-btn" class="skill-folder__add-btn">+ Thêm link</button>
-        </div>
-      </div>
-
-      <!-- Audio recorder -->
-      <div class="skill-folder__section">
-        <div class="skill-folder__section-label">🎙 Ghi âm luyện tập</div>
-        <div class="skill-recorder" id="skill-recorder">
-          <button type="button" id="skill-rec-start" class="skill-recorder__btn">🎙 Bắt đầu ghi âm</button>
-          <div id="skill-rec-active" class="skill-recorder__active" hidden>
-            <span class="skill-recorder__pulse" aria-hidden="true"></span>
-            <span id="skill-rec-duration" class="skill-recorder__duration">0:00</span>
-            <button type="button" id="skill-rec-stop" class="skill-recorder__stop-btn">⏹ Dừng &amp; Lưu xuống máy</button>
-          </div>
-          <div id="skill-rec-playback" class="skill-recorder__playback" hidden></div>
         </div>
       </div>
 
@@ -124,6 +110,6 @@
 
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <script src="js/common.js?v=5"></script>
-  <script src="js/skills.js?v=6"></script>
+  <script src="js/skills.js?v=7"></script>
 </body>
 </html>
