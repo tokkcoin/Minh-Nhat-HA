@@ -102,65 +102,132 @@ async function writeHandleBlob(handle, blob) {
   await writable.close();
 }
 
-async function exportViaFilePicker(blob) {
-  // Desktop Chromium — user picks save location, we keep the handle.
-  const handle = await window.showSaveFilePicker({
-    suggestedName: backupFilename(),
-    types: [{ description: 'JSON Backup', accept: { 'application/json': ['.json'] } }],
-  });
-  await writeHandleBlob(handle, blob);
-  backupFileHandle = handle;
-  startAutoSave();
-  return true;
-}
-
-async function exportViaShare(blob) {
-  // Mobile / Pi Browser — opens native share sheet.
+async function tryShareFile(blob) {
+  // Share a File object — works on mobile browsers that support file sharing.
   const file = new File([blob], backupFilename(), { type: 'application/json' });
   if (!navigator.canShare?.({ files: [file] })) return false;
   await navigator.share({ files: [file], title: 'Life Balance Backup' });
   return true;
 }
 
-function exportViaDownload(blob) {
-  // Universal fallback — saves to Downloads folder.
-  const url = URL.createObjectURL(blob);
-  const a   = document.createElement('a');
-  a.href     = url;
-  a.download = backupFilename();
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+async function tryShareText(jsonText) {
+  // Share raw text — supported on almost all mobile browsers even when
+  // file sharing is unavailable. User can paste into email/Notes/Drive.
+  if (!navigator.share) return false;
+  await navigator.share({ text: jsonText, title: 'Life Balance Backup' });
+  return true;
+}
+
+function tryOctetStream(jsonText) {
+  // Triggers Android's system download manager via an application/octet-stream
+  // data URI — more reliable in WebViews than blob: + <a download>.
+  try {
+    const uri = 'data:application/octet-stream;charset=utf-8,'
+      + encodeURIComponent(jsonText);
+    const a   = document.createElement('a');
+    a.href     = uri;
+    a.download = backupFilename();
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    return true;
+  } catch { return false; }
+}
+
+function showExportResult(jsonText) {
+  // Reliable last resort: show the backup text in-app so the user can
+  // copy it to clipboard and paste anywhere (Notes, email, Drive, etc.).
+  const existing = document.getElementById('backup-result-panel');
+  if (existing) existing.remove();
+
+  const panel = document.createElement('div');
+  panel.id        = 'backup-result-panel';
+  panel.className = 'backup-result-panel';
+  panel.innerHTML = `
+    <div class="backup-result-panel__hd">
+      <strong>📋 Dữ liệu đã sẵn sàng</strong>
+      <button type="button" class="backup-result-panel__close">✕</button>
+    </div>
+    <p class="backup-result-panel__hint">Nhấn <b>Sao chép</b> rồi dán vào Google Drive, email, hoặc Notes để lưu lại.</p>
+    <textarea class="backup-result-panel__text" readonly rows="5">${escapeHtmlAttr(jsonText)}</textarea>
+    <div class="backup-result-panel__actions">
+      <button type="button" class="btn btn-primary backup-result-panel__copy">📋 Sao chép toàn bộ</button>
+      <button type="button" class="backup-result-panel__share">📤 Chia sẻ</button>
+    </div>`;
+
+  const section = document.querySelector('.backup-panel__section');
+  section?.after(panel);
+
+  panel.querySelector('.backup-result-panel__close').addEventListener('click', () => panel.remove());
+  panel.querySelector('.backup-result-panel__copy').addEventListener('click', () => {
+    navigator.clipboard?.writeText(jsonText).then(() => showToast('✅ Đã sao chép — dán vào nơi muốn lưu!'))
+      .catch(() => {
+        panel.querySelector('.backup-result-panel__text').select();
+        document.execCommand('copy');
+        showToast('✅ Đã sao chép!');
+      });
+  });
+  panel.querySelector('.backup-result-panel__share').addEventListener('click', () => {
+    tryShareText(jsonText).catch(() => {});
+  });
+}
+
+function escapeHtmlAttr(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 async function exportBackup() {
   const btn = document.getElementById('backup-export-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Đang xuất…'; }
   try {
-    const payload = await buildPayload();
-    const blob    = payloadToBlob(payload);
+    const payload  = await buildPayload();
+    const jsonText = JSON.stringify(payload, null, 2);
+    const blob     = new Blob([jsonText], { type: 'application/json' });
+
+    // Always save a local snapshot first — guaranteed even if all export methods fail.
+    await saveSnapshotToIdb(payload);
+    startAutoSave();
+    lastAutoSaveTime = new Date();
 
     if (window.showSaveFilePicker) {
+      // Desktop: user picks exact file location; handle kept for auto-save.
       try {
-        await exportViaFilePicker(blob);
+        const handle = await window.showSaveFilePicker({
+          suggestedName: backupFilename(),
+          types: [{ description: 'JSON Backup', accept: { 'application/json': ['.json'] } }],
+        });
+        await writeHandleBlob(handle, blob);
+        backupFileHandle = handle;
         showToast('✅ File đã được lưu — tự động sao lưu mỗi 5 phút');
+        updateBackupInfo();
+        if (btn) { btn.disabled = false; btn.textContent = '📥 Xuất / Chia sẻ dữ liệu'; }
+        return;
       } catch (e) {
-        if (e.name === 'AbortError') { /* user cancelled picker — do nothing */ }
-        else throw e;
+        if (e.name === 'AbortError') {
+          if (btn) { btn.disabled = false; btn.textContent = '📥 Xuất / Chia sẻ dữ liệu'; }
+          return; // user cancelled — nothing to do
+        }
+        // Other error: fall through to mobile strategies
       }
-    } else if (await exportViaShare(blob).catch(() => false)) {
-      // Share sheet opened — also start IndexedDB auto-save as background safety
-      await saveSnapshotToIdb(payload);
-      startAutoSave();
-      showToast('✅ Đã chia sẻ file — tự động sao lưu cục bộ mỗi 5 phút');
-    } else {
-      exportViaDownload(blob);
-      await saveSnapshotToIdb(payload);
-      startAutoSave();
-      showToast('✅ File đã tải về thư mục Downloads — tự động sao lưu mỗi 5 phút');
     }
-    lastAutoSaveTime = new Date();
+
+    // Mobile strategy 1: share as file (opens native share sheet)
+    const sharedFile = await tryShareFile(blob).catch(() => false);
+    if (sharedFile) {
+      showToast('✅ Đã mở khay chia sẻ — lưu vào Drive/email để giữ file');
+      updateBackupInfo();
+      if (btn) { btn.disabled = false; btn.textContent = '📥 Xuất / Chia sẻ dữ liệu'; }
+      return;
+    }
+
+    // Mobile strategy 2: octet-stream data URI (triggers download manager on Android)
+    const downloaded = tryOctetStream(jsonText);
+    if (downloaded) {
+      showToast('✅ Đang tải xuống — kiểm tra thư mục Downloads');
+    }
+
+    // Always show the copy panel so user always has the data, regardless of download success.
+    showExportResult(jsonText);
     updateBackupInfo();
   } catch (e) {
     showToast('Xuất thất bại — thử lại');
