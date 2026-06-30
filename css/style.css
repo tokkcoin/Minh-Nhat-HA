@@ -1499,6 +1499,67 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .skill-card__actions button:hover { opacity: 1; }
 .skill-empty { color: var(--text-muted); font-size: 13px; text-align: center; padding: var(--space-lg) 0; }
 
+/* ── Skill folder — full-screen overlay ── */
+.skill-folder {
+  position: fixed;
+  inset: 0;
+  z-index: 8000;
+  background: var(--bg-page);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.skill-folder__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 12px var(--space-md);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+.skill-folder__back {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  color: var(--water);
+  padding: 4px;
+}
+.skill-folder__title { flex: 1; font-size: 15px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.skill-folder__timer-chip { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: 0 0 auto; }
+.skill-folder__timer { font-size: 12px; font-weight: 700; color: var(--water); }
+.skill-folder__stars { display: flex; gap: 1px; font-size: 11px; }
+
+.skill-folder__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  -webkit-overflow-scrolling: touch;
+}
+.skill-folder__section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+}
+.skill-folder__section-label { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: var(--space-sm); }
+.skill-folder__add-btn { font-size: 13px; color: var(--water); font-weight: 500; margin-top: var(--space-sm); display: block; }
+.skill-folder__add-btn:hover { opacity: .8; }
+.skill-folder__empty-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+
+/* Audio recorder */
+.skill-recorder { display: flex; flex-direction: column; gap: var(--space-sm); }
+.skill-recorder__btn { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--water); background: var(--water-tint); border: 1px solid var(--water); border-radius: var(--radius-md); padding: 8px 16px; }
+.skill-recorder__active { display: flex; align-items: center; gap: var(--space-sm); }
+.skill-recorder__pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--danger); animation: rec-pulse 1s ease-in-out infinite; flex: 0 0 auto; }
+@keyframes rec-pulse { 0%,100%{ opacity: 1; transform: scale(1); } 50%{ opacity: .4; transform: scale(.8); } }
+.skill-recorder__duration { font-size: 14px; font-weight: 700; color: var(--danger); min-width: 40px; }
+.skill-recorder__stop-btn { font-size: 13px; font-weight: 600; color: #fff; background: var(--danger); border-radius: var(--radius-sm); padding: 6px 12px; }
+.skill-recorder__playback { display: flex; flex-direction: column; gap: 4px; }
+
 /* skill card — time & master additions */
 .skill-card__star { font-size: 14px; opacity: .35; }
 .skill-card__star--filled { opacity: 1; }

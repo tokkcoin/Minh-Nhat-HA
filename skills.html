@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kỹ năng — Life Balance</title>
-  <meta name="description" content="Water element — talent and skill building, coming soon." />
+  <meta name="description" content="Water element — talent and skill building." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
-  <link rel="stylesheet" href="css/style.css?v=23" />
+  <link rel="stylesheet" href="css/style.css?v=24" />
 </head>
 <body>
 
@@ -28,72 +28,87 @@
   <a class="journal-back" href="index.html"><span class="journal-back__arrow" aria-hidden="true">←</span> Home</a>
 
   <section class="journal-hero" style="--current-element: var(--water); --current-element-tint: var(--water-tint);">
-    <!-- Clicking the 💧 icon opens the star-progression info modal -->
     <button type="button" id="skill-info-open" class="journal-hero__icon journal-hero__icon--btn" aria-label="Xem cách tính cấp độ kỹ năng">💧</button>
     <h1 class="journal-hero__title">Water Element</h1>
     <p class="journal-hero__dimension">Talent — xây dựng kỹ năng <span class="skill-hero-hint">Nhấn 💧 để xem cách tính sao</span></p>
   </section>
 
-  <!-- ══════════════════════════════════════════════════
-       SKILL TALENTS — icon badges + time-tracked star level
-  ══════════════════════════════════════════════════ -->
   <section class="skill-section" id="skills">
-    <!-- add/edit form — star picker removed; stars are now auto-computed from tracked time -->
     <form class="skill-add-form" id="skill-add-form">
       <input type="text" id="skill-new-name" placeholder="Tên kỹ năng (vd: Guitar, Lập trình…)" />
       <div class="skill-icon-picker" id="skill-icon-picker"></div>
       <button type="submit" id="skill-add-btn" class="btn btn-primary">Thêm kỹ năng</button>
     </form>
-
     <div class="skill-grid" id="skill-grid"></div>
   </section>
 
   <!-- ══════════════════════════════════════════════════
-       SKILL FOLDER MODAL — timer + links + notes + images
+       SKILL FOLDER — full-screen overlay
   ══════════════════════════════════════════════════ -->
-  <div id="skill-detail-modal" class="finance-modal" hidden>
-    <div class="finance-modal__inner skill-detail-inner">
-      <button type="button" id="skill-detail-close" class="finance-modal__close" aria-label="Đóng">✕</button>
-      <h3 id="skill-detail-title" class="finance-modal__title"></h3>
+  <div id="skill-detail-modal" class="skill-folder" hidden>
 
-      <!-- Live timer display -->
-      <div class="skill-detail__timer-row">
-        <span id="skill-detail-timer" class="skill-detail__timer">⏱ 0 phút</span>
-        <span id="skill-detail-stars" class="skill-detail__stars-inline"></span>
+    <div class="skill-folder__header">
+      <button type="button" id="skill-detail-close" class="skill-folder__back" aria-label="Đóng">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="20" height="20" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </button>
+      <h2 id="skill-detail-title" class="skill-folder__title"></h2>
+      <div class="skill-folder__timer-chip">
+        <span id="skill-detail-timer" class="skill-folder__timer">⏱ 0 phút</span>
+        <span id="skill-detail-stars" class="skill-folder__stars"></span>
+      </div>
+    </div>
+
+    <div class="skill-folder__body">
+
+      <!-- Links -->
+      <div class="skill-folder__section">
+        <div class="skill-folder__section-label">🔗 Liên kết</div>
+        <div class="skill-detail__links" id="skill-detail-links"></div>
+        <div class="skill-detail__link-add">
+          <input type="url" id="skill-link-url" placeholder="https://..." class="skill-detail__link-input" autocapitalize="none" autocorrect="off" />
+          <input type="text" id="skill-link-label" placeholder="Tên (tuỳ chọn)" class="skill-detail__link-input skill-detail__link-label-input" />
+          <button type="button" id="skill-link-add-btn" class="skill-folder__add-btn">+ Thêm link</button>
+        </div>
       </div>
 
-      <!-- Links section -->
-      <label class="skill-detail__label">🔗 Liên kết</label>
-      <div class="skill-detail__links" id="skill-detail-links"></div>
-      <div class="skill-detail__link-add">
-        <input type="url" id="skill-link-url" placeholder="https://..." class="skill-detail__link-input" />
-        <input type="text" id="skill-link-label" placeholder="Tên (tuỳ chọn)" class="skill-detail__link-input skill-detail__link-label-input" />
-        <button type="button" id="skill-link-add-btn" class="btn-text">+ Thêm link</button>
+      <!-- Audio recorder -->
+      <div class="skill-folder__section">
+        <div class="skill-folder__section-label">🎙 Ghi âm luyện tập</div>
+        <div class="skill-recorder" id="skill-recorder">
+          <button type="button" id="skill-rec-start" class="skill-recorder__btn">🎙 Bắt đầu ghi âm</button>
+          <div id="skill-rec-active" class="skill-recorder__active" hidden>
+            <span class="skill-recorder__pulse" aria-hidden="true"></span>
+            <span id="skill-rec-duration" class="skill-recorder__duration">0:00</span>
+            <button type="button" id="skill-rec-stop" class="skill-recorder__stop-btn">⏹ Dừng &amp; Lưu xuống máy</button>
+          </div>
+          <div id="skill-rec-playback" class="skill-recorder__playback" hidden></div>
+        </div>
       </div>
 
       <!-- Notes -->
-      <label class="skill-detail__label" for="skill-detail-notes">📝 Ghi chú</label>
-      <textarea id="skill-detail-notes" class="skill-detail__notes" placeholder="Ghi chú, tiến độ, cảm nhận…"></textarea>
+      <div class="skill-folder__section">
+        <div class="skill-folder__section-label">📝 Ghi chú</div>
+        <textarea id="skill-detail-notes" class="skill-detail__notes" placeholder="Ghi chú, tiến độ, cảm nhận…"></textarea>
+      </div>
 
       <!-- Images -->
-      <label class="skill-detail__label">🖼️ Hình ảnh</label>
-      <div class="skill-detail__images" id="skill-detail-images"></div>
-      <input type="file" id="skill-detail-image-file" accept="image/*" hidden />
-      <button type="button" id="skill-detail-upload-btn" class="btn-text">📷 Thêm ảnh</button>
+      <div class="skill-folder__section">
+        <div class="skill-folder__section-label">🖼️ Hình ảnh</div>
+        <div class="skill-detail__images" id="skill-detail-images"></div>
+        <input type="file" id="skill-detail-image-file" accept="image/*" hidden />
+        <button type="button" id="skill-detail-upload-btn" class="skill-folder__add-btn">📷 Thêm ảnh</button>
+      </div>
+
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════
-       STAR PROGRESSION INFO MODAL (opened by tapping 💧)
-  ══════════════════════════════════════════════════ -->
+  <!-- Star info modal -->
   <div id="skill-info-modal" class="finance-modal" hidden>
     <div class="finance-modal__inner">
       <button type="button" id="skill-info-close" class="finance-modal__close" aria-label="Đóng">✕</button>
       <h3 class="finance-modal__title">💧 Cách tính cấp độ kỹ năng</h3>
       <table class="skill-info-table">
-        <thead>
-          <tr><th>Giờ tích lũy</th><th>Cấp độ</th><th>Danh hiệu</th></tr>
-        </thead>
+        <thead><tr><th>Giờ tích lũy</th><th>Cấp độ</th><th>Danh hiệu</th></tr></thead>
         <tbody>
           <tr><td>0 – 4h 59m</td><td>☆☆☆☆☆</td><td>Chưa bắt đầu</td></tr>
           <tr><td>5h – 34h 59m</td><td>⭐☆☆☆☆</td><td>Người mới</td></tr>
@@ -103,12 +118,12 @@
           <tr class="skill-info-table__master"><td>500h trở lên</td><td>⭐⭐⭐⭐⭐</td><td>🏆 Master</td></tr>
         </tbody>
       </table>
-      <p class="skill-info-note">Thời gian tích lũy khi bạn mở kỹ năng và tab đang hiển thị. Tự động dừng khi thoát ứng dụng hoặc chuyển sang trang khác.</p>
+      <p class="skill-info-note">Thời gian tích lũy khi bạn mở kỹ năng và tab đang hiển thị. Tự động dừng khi thoát ứng dụng.</p>
     </div>
   </div>
 
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <script src="js/common.js?v=5"></script>
-  <script src="js/skills.js?v=5"></script>
+  <script src="js/skills.js?v=6"></script>
 </body>
 </html>
