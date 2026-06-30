@@ -132,19 +132,26 @@ async function uploadMediaToCloudinary(file) {
 // full-size camera photos. Each store is a flat key→Blob map.
 
 let localImageDbPromise = null;
+// All object stores that currently exist in version 2 of the DB.
+// Add a name here (and bump the version number below) whenever a new
+// store is needed — existing stores are never dropped on upgrade.
+const LOCAL_IMAGE_DB_STORES = ['expense_photos', 'backup_snapshots'];
+const LOCAL_IMAGE_DB_VER    = 2;
 
-function openLocalImageDb(storeNames) {
+function openLocalImageDb(_storeNames) {
+  // _storeNames kept for call-site compatibility but we always open with
+  // the full known store list so every caller can access any store.
   if (!localImageDbPromise) {
     localImageDbPromise = new Promise((resolve, reject) => {
-      const req = indexedDB.open('lifebalance_images', 1);
+      const req = indexedDB.open('lifebalance_images', LOCAL_IMAGE_DB_VER);
       req.onupgradeneeded = () => {
         const db = req.result;
-        storeNames.forEach(name => {
+        LOCAL_IMAGE_DB_STORES.forEach(name => {
           if (!db.objectStoreNames.contains(name)) db.createObjectStore(name);
         });
       };
       req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      req.onerror   = () => reject(req.error);
     });
   }
   return localImageDbPromise;
