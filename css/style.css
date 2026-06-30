@@ -1499,6 +1499,43 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .skill-card__actions button:hover { opacity: 1; }
 .skill-empty { color: var(--text-muted); font-size: 13px; text-align: center; padding: var(--space-lg) 0; }
 
+/* skill card — time & master additions */
+.skill-card__star { font-size: 14px; opacity: .35; }
+.skill-card__star--filled { opacity: 1; }
+.skill-card__time { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.skill-card--master { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), var(--shadow-sm); }
+.skill-card__master { font-size: 11px; font-weight: 700; color: var(--accent); margin-top: 2px; }
+
+/* 💧 hero icon clickable */
+.journal-hero__icon--btn { background: none; border: none; cursor: pointer; font-size: inherit; padding: 0; }
+.skill-hero-hint { font-size: 11px; color: var(--water); margin-left: var(--space-sm); }
+
+/* folder modal — wider for links + timer */
+.skill-detail-inner { max-width: 460px; }
+
+/* timer row */
+.skill-detail__timer-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); background: var(--bg-page); border-radius: var(--radius-sm); padding: 6px 10px; margin-bottom: var(--space-sm); }
+.skill-detail__timer { font-size: 13px; font-weight: 700; color: var(--water); }
+.skill-detail__stars-inline { display: flex; gap: 2px; font-size: 13px; }
+
+/* links section */
+.skill-detail__links { display: flex; flex-direction: column; gap: 4px; margin-bottom: var(--space-sm); }
+.skill-detail__link-item { display: flex; align-items: center; gap: 6px; background: var(--bg-page); border-radius: var(--radius-sm); padding: 6px 8px; }
+.skill-detail__link-url { flex: 1; font-size: 12px; color: var(--water); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.skill-detail__link-url:hover { opacity: .8; }
+.skill-detail__link-delete { flex: 0 0 auto; font-size: 11px; opacity: .6; }
+.skill-detail__link-delete:hover { opacity: 1; }
+.skill-detail__link-add { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: var(--space-sm); }
+.skill-detail__link-input { flex: 1 1 120px; background: var(--bg-page); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); padding: 6px 8px; font-size: 12px; font-family: var(--font-body); }
+.skill-detail__link-label-input { max-width: 110px; }
+
+/* star info modal table */
+.skill-info-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: var(--space-md) 0; }
+.skill-info-table th { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.skill-info-table td { padding: 8px; border-bottom: 1px solid var(--border); color: var(--text-primary); }
+.skill-info-table__master td { color: var(--accent); font-weight: 700; }
+.skill-info-note { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-top: var(--space-sm); }
+
 .skill-detail__label { display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: var(--space-md) 0 6px; }
 .skill-detail__notes {
   width: 100%;
