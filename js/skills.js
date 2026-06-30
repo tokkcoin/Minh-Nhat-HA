@@ -310,18 +310,17 @@ function openSkillDetail(skillId) {
 
   const modal = document.getElementById('skill-detail-modal');
   document.getElementById('skill-detail-title').textContent = `${skill.icon} ${skill.name}`;
-  document.getElementById('skill-detail-notes').value = skill.notes || '';
+  renderNotePreview(skill);
   renderSkillDetailLinks(skill);
   renderSkillDetailImages(skill);
   updateTimerDisplay();
   if (modal) modal.hidden = false;
-  document.body.style.overflow = 'hidden'; // prevent background scroll
+  document.body.style.overflow = 'hidden';
   startTimerSession();
 }
 
 function closeSkillDetail() {
   stopTimerSession();
-  saveSkillNotes();
   skillDetailEditingId = null;
   sessionStorage.removeItem('resumeSkillId');
   const modal = document.getElementById('skill-detail-modal');
@@ -329,15 +328,187 @@ function closeSkillDetail() {
   document.body.style.overflow = '';
 }
 
-function saveSkillNotes() {
+// ── 9b. Full-screen Note Editor ───────────────────────────
+
+let noteAutoSaveTimer = null;
+
+function stripHtml(html) {
+  const d = document.createElement('div');
+  d.innerHTML = html;
+  return d.textContent || d.innerText || '';
+}
+
+function renderNotePreview(skill) {
+  const preview = document.getElementById('skill-note-preview');
+  if (!preview) return;
+  const content = skill.notes || '';
+  if (!content || stripHtml(content).trim() === '') {
+    preview.innerHTML = '<span style="color:var(--text-muted);font-size:13px">Chưa có ghi chú — nhấn để thêm.</span>';
+  } else {
+    // Show up to 5 lines of formatted preview
+    preview.innerHTML = content;
+  }
+}
+
+function openNoteEditor() {
   if (!skillDetailEditingId) return;
-  const notesEl = document.getElementById('skill-detail-notes');
-  if (!notesEl) return;
+  const skill = loadSkills().find(s => s.id === skillDetailEditingId);
+  if (!skill) return;
+
+  const body = document.getElementById('note-editor-body');
+  if (body) {
+    body.innerHTML = skill.notes || '';
+    body.focus();
+  }
+  updateNoteCount();
+  updateToolbarState();
+
+  const editor = document.getElementById('skill-note-editor');
+  if (editor) editor.hidden = false;
+}
+
+function closeNoteEditor() {
+  saveNoteContent();
+  const editor = document.getElementById('skill-note-editor');
+  if (editor) editor.hidden = true;
+  // Refresh preview with saved content
+  const skill = loadSkills().find(s => s.id === skillDetailEditingId);
+  if (skill) renderNotePreview(skill);
+}
+
+function saveNoteContent() {
+  if (!skillDetailEditingId) return;
+  const body = document.getElementById('note-editor-body');
+  if (!body) return;
+  const html = body.innerHTML;
   const skills = loadSkills();
   const skill = skills.find(s => s.id === skillDetailEditingId);
-  if (!skill || skill.notes === notesEl.value) return;
-  skill.notes = notesEl.value;
+  if (!skill || skill.notes === html) return;
+  skill.notes = html;
   saveSkills(skills);
+}
+
+function autoSaveNote() {
+  clearTimeout(noteAutoSaveTimer);
+  noteAutoSaveTimer = setTimeout(saveNoteContent, 600);
+  updateNoteCount();
+  updateToolbarState();
+}
+
+function updateNoteCount() {
+  const body = document.getElementById('note-editor-body');
+  const countEl = document.getElementById('note-editor-count');
+  if (!body || !countEl) return;
+  const chars = stripHtml(body.innerHTML).length;
+  countEl.textContent = chars ? `${chars} ký tự` : '';
+}
+
+function updateToolbarState() {
+  const cmds = ['bold', 'italic', 'underline', 'strikeThrough',
+                 'insertUnorderedList', 'insertOrderedList'];
+  cmds.forEach(cmd => {
+    const btn = document.querySelector(`.note-editor__btn[data-cmd="${cmd}"]`);
+    if (!btn) return;
+    try {
+      btn.classList.toggle('note-editor__btn--active', document.queryCommandState(cmd));
+    } catch { /* ignore */ }
+  });
+  // Heading button active state
+  try {
+    const block = document.queryCommandValue('formatBlock').toLowerCase();
+    document.querySelector('.note-editor__btn[data-val="h2"]')
+      ?.classList.toggle('note-editor__btn--active', block === 'h2');
+  } catch { /* ignore */ }
+}
+
+function insertChecklistItem() {
+  const body = document.getElementById('note-editor-body');
+  if (!body) return;
+  body.focus();
+  // Insert a checklist line at cursor position
+  const item = document.createElement('div');
+  item.className = 'note-cl';
+  item.innerHTML = '<span class="note-cl-box" contenteditable="false">☐</span><span class="note-cl-text">&nbsp;</span>';
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount) {
+    const range = sel.getRangeAt(0);
+    let node = range.startContainer;
+    // Find block-level ancestor within the editor
+    while (node && node.parentNode !== body) node = node.parentNode;
+    if (node && node.parentNode === body) {
+      body.insertBefore(item, node.nextSibling);
+    } else {
+      body.appendChild(item);
+    }
+  } else {
+    body.appendChild(item);
+  }
+  // Move cursor into the text span
+  const textSpan = item.querySelector('.note-cl-text');
+  if (textSpan && sel) {
+    const range = document.createRange();
+    range.setStart(textSpan, 0);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+  saveNoteContent();
+}
+
+function initNoteEditor() {
+  document.getElementById('note-editor-close')?.addEventListener('click', closeNoteEditor);
+  document.getElementById('note-open-btn')?.addEventListener('click', openNoteEditor);
+  document.getElementById('skill-note-preview')?.addEventListener('click', openNoteEditor);
+
+  // Toolbar — execCommand buttons
+  document.querySelectorAll('.note-editor__btn[data-cmd]').forEach(btn => {
+    btn.addEventListener('mousedown', e => {
+      e.preventDefault(); // don't lose editor focus
+      const val = btn.dataset.val || null;
+      document.execCommand(btn.dataset.cmd, false, val);
+      updateToolbarState();
+    });
+  });
+
+  // Checklist button
+  document.getElementById('note-checklist-btn')?.addEventListener('mousedown', e => {
+    e.preventDefault();
+    insertChecklistItem();
+  });
+
+  // Checklist toggle on click (event delegation)
+  document.getElementById('note-editor-body')?.addEventListener('click', e => {
+    if (e.target.classList.contains('note-cl-box')) {
+      const item = e.target.closest('.note-cl');
+      if (!item) return;
+      const isDone = item.classList.toggle('note-cl--done');
+      e.target.textContent = isDone ? '☑' : '☐';
+      saveNoteContent();
+    }
+  });
+
+  // Auto-save + toolbar state update
+  document.getElementById('note-editor-body')?.addEventListener('input', autoSaveNote);
+  document.addEventListener('selectionchange', () => {
+    const editor = document.getElementById('skill-note-editor');
+    if (!editor?.hidden) updateToolbarState();
+  });
+
+  // Keyboard: Enter in a checklist item creates another checklist item
+  document.getElementById('note-editor-body')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+      const node = sel.getRangeAt(0).startContainer;
+      const clItem = node.nodeType === 3
+        ? node.parentElement?.closest('.note-cl')
+        : node.closest?.('.note-cl');
+      if (clItem) {
+        e.preventDefault();
+        insertChecklistItem();
+      }
+    }
+  });
 }
 
 function handleAddSkillLink() {
@@ -435,7 +606,9 @@ function initSkillsTracker() {
 
   // Folder open/close
   document.getElementById('skill-detail-close')?.addEventListener('click', closeSkillDetail);
-  document.getElementById('skill-detail-notes')?.addEventListener('blur', saveSkillNotes);
+
+  // Note editor
+  initNoteEditor();
 
   // Links
   document.getElementById('skill-link-add-btn')?.addEventListener('click', handleAddSkillLink);

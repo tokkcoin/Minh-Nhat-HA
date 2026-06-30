@@ -6,7 +6,7 @@
   <title>Kỹ năng — Life Balance</title>
   <meta name="description" content="Water element — talent and skill building." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
-  <link rel="stylesheet" href="css/style.css?v=25" />
+  <link rel="stylesheet" href="css/style.css?v=26" />
 </head>
 <body>
 
@@ -71,10 +71,13 @@
         </div>
       </div>
 
-      <!-- Notes -->
-      <div class="skill-folder__section">
-        <div class="skill-folder__section-label">📝 Ghi chú</div>
-        <textarea id="skill-detail-notes" class="skill-detail__notes" placeholder="Ghi chú, tiến độ, cảm nhận…"></textarea>
+      <!-- Notes — preview only; tap to open full-screen editor -->
+      <div class="skill-folder__section skill-folder__section--note" id="skill-note-section">
+        <div class="skill-folder__section-label">
+          📝 Ghi chú
+          <button type="button" id="note-open-btn" class="note-open-btn">✏️ Mở rộng</button>
+        </div>
+        <div class="skill-note-preview" id="skill-note-preview" role="button" tabindex="0" aria-label="Mở ghi chú"></div>
       </div>
 
       <!-- Images -->
@@ -86,6 +89,41 @@
       </div>
 
     </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       FULL-SCREEN NOTE EDITOR (iPhone Notes style)
+  ══════════════════════════════════════════════════ -->
+  <div id="skill-note-editor" class="note-editor" hidden>
+
+    <div class="note-editor__header">
+      <button type="button" id="note-editor-close" class="note-editor__back">← Xong</button>
+      <span class="note-editor__title">Ghi chú</span>
+      <span id="note-editor-count" class="note-editor__count"></span>
+    </div>
+
+    <div class="note-editor__toolbar" id="note-editor-toolbar">
+      <button type="button" class="note-editor__btn" data-cmd="bold" aria-label="Đậm"><b>B</b></button>
+      <button type="button" class="note-editor__btn" data-cmd="italic" aria-label="Nghiêng"><i>I</i></button>
+      <button type="button" class="note-editor__btn" data-cmd="underline" aria-label="Gạch dưới"><u>U</u></button>
+      <button type="button" class="note-editor__btn" data-cmd="strikeThrough" aria-label="Gạch ngang"><s>S</s></button>
+      <div class="note-editor__sep"></div>
+      <button type="button" class="note-editor__btn" data-cmd="formatBlock" data-val="h2" aria-label="Tiêu đề">H</button>
+      <button type="button" class="note-editor__btn" data-cmd="formatBlock" data-val="p" aria-label="Văn bản">Aa</button>
+      <div class="note-editor__sep"></div>
+      <button type="button" class="note-editor__btn" data-cmd="insertUnorderedList" aria-label="Danh sách chấm">•≡</button>
+      <button type="button" class="note-editor__btn" data-cmd="insertOrderedList" aria-label="Danh sách số">1≡</button>
+      <button type="button" class="note-editor__btn" id="note-checklist-btn" aria-label="Danh sách tích">☑</button>
+      <div class="note-editor__sep"></div>
+      <button type="button" class="note-editor__btn" data-cmd="removeFormat" aria-label="Xoá định dạng" title="Xoá định dạng">✕</button>
+    </div>
+
+    <div class="note-editor__body"
+         id="note-editor-body"
+         contenteditable="true"
+         spellcheck="false"
+         data-placeholder="Bắt đầu viết ghi chú…"></div>
+
   </div>
 
   <!-- Star info modal -->
@@ -110,6 +148,6 @@
 
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <script src="js/common.js?v=5"></script>
-  <script src="js/skills.js?v=9"></script>
+  <script src="js/skills.js?v=10"></script>
 </body>
 </html>
