@@ -1520,6 +1520,19 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-bottom: 1px solid var(--border);
   flex: 0 0 auto;
 }
+.skill-folder__stop-btn {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  background: rgba(231,76,60,.1);
+  border-radius: var(--radius-sm);
+}
+.skill-folder__stop-icon { font-size: 15px; line-height: 1; }
 .skill-folder__back {
   flex: 0 0 auto;
   display: flex;
@@ -1565,7 +1578,16 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 /* skill card — time & master additions */
 .skill-card__star { font-size: 14px; opacity: .35; }
 .skill-card__star--filled { opacity: 1; }
-.skill-card__time { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+/* time display between icon and stars */
+.skill-card__clock {
+  display: flex; align-items: center; justify-content: center;
+  gap: 3px; margin: 3px 0;
+  font-size: 11px; color: var(--text-muted);
+}
+.skill-card__clock-icon { font-size: 12px; }
+.skill-card__clock--running .skill-card__clock-icon { animation: clock-pulse .9s ease-in-out infinite; }
+.skill-card__clock--running .skill-card__clock-time { color: var(--water); font-weight: 700; }
+@keyframes clock-pulse { 0%,100%{ opacity:1 } 50%{ opacity:.4 } }
 .skill-card--master { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), var(--shadow-sm); }
 .skill-card__master { font-size: 11px; font-weight: 700; color: var(--accent); margin-top: 2px; }
 

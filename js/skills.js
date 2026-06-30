@@ -150,11 +150,19 @@ function stopTimerSession() {
 function updateTimerDisplay() {
   const timerEl = document.getElementById('skill-detail-timer');
   const starsEl = document.getElementById('skill-detail-stars');
-  if (!timerEl) return;
   const sessionSec = timerSessionStart ? Math.floor((Date.now() - timerSessionStart) / 1000) : 0;
   const total = timerBaseSeconds + sessionSec;
-  timerEl.textContent = `⏱ ${formatTime(total)}`;
+  const timeStr = formatTime(total);
+
+  // Update folder header
+  if (timerEl) timerEl.textContent = `⏱ ${timeStr}`;
   if (starsEl) starsEl.innerHTML = renderStarRow(computeStars(total));
+
+  // Update the live time on the skill card (no full re-render needed)
+  if (skillDetailEditingId) {
+    const cardTimeEl = document.querySelector(`[data-skill-time="${skillDetailEditingId}"]`);
+    if (cardTimeEl) cardTimeEl.textContent = timeStr;
+  }
 }
 
 // ── 6. Icon picker ─────────────────────────────────────────
@@ -176,6 +184,7 @@ function renderSkillCard(skill) {
   const stars    = computeStars(skill.totalSeconds || 0);
   const isMaster = stars >= 5;
   const badge    = (skill.images?.length || 0) + (skill.links?.length || 0);
+  const isActive = skill.id === skillDetailEditingId;
   return `
     <div class="skill-card ${isMaster ? 'skill-card--master' : ''}">
       <div class="skill-card__icon" data-skill-detail="${skill.id}" role="button" tabindex="0" aria-label="Mở ${escapeHtml(skill.name)}">
@@ -183,8 +192,11 @@ function renderSkillCard(skill) {
         ${badge ? `<span class="skill-card__file-badge">${badge}</span>` : ''}
       </div>
       <div class="skill-card__name">${escapeHtml(skill.name)}</div>
+      <div class="skill-card__clock ${isActive ? 'skill-card__clock--running' : ''}">
+        <span class="skill-card__clock-icon">⏱</span>
+        <span class="skill-card__clock-time" data-skill-time="${skill.id}">${formatTime(skill.totalSeconds || 0)}</span>
+      </div>
       <div class="skill-card__stars">${renderStarRow(stars)}</div>
-      <div class="skill-card__time">${formatTime(skill.totalSeconds || 0)}</div>
       ${isMaster ? '<div class="skill-card__master">🏆 Master</div>' : ''}
       <div class="skill-card__actions">
         <button type="button" data-skill-edit="${skill.id}" aria-label="Sửa">✏️</button>
