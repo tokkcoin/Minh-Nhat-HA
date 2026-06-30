@@ -1531,7 +1531,48 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-radius: 50%;
 }
 
-/* ── 20. Strategic Formation (Earth element) — Tiền tuyến/Trung quân/Hậu phương goal board ── */
+/* ── 20. Daily Panel (home hero — aggregated daily tasks from all elements) ── */
+.daily-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  justify-content: center;
+  height: 100%;
+}
+.daily-panel__header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-xs); }
+.daily-panel__title-row { display: flex; align-items: center; gap: 8px; }
+.daily-panel__icon { font-size: 16px; }
+.daily-panel__title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.daily-panel__count { font-size: 11px; font-weight: 700; color: #fff; background: var(--primary); border-radius: var(--radius-xl); padding: 2px 7px; }
+.daily-panel__link { font-size: 12px; color: var(--wood); white-space: nowrap; flex: 0 0 auto; }
+.daily-panel__link:hover { opacity: .8; }
+
+.daily-panel__list { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
+.daily-panel__task {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.daily-panel__task:hover { background: rgba(255,255,255,.09); }
+.daily-panel__check { flex: 0 0 auto; accent-color: var(--primary); width: 15px; height: 15px; }
+.daily-panel__text { flex: 1; font-size: 13px; color: var(--text-primary); min-width: 0; word-break: break-word; }
+.daily-panel__el { font-size: 14px; flex: 0 0 auto; }
+.daily-panel__xp { font-size: 10px; font-weight: 700; color: var(--wood); background: var(--wood-tint); border-radius: var(--radius-sm); padding: 2px 5px; white-space: nowrap; }
+
+.daily-panel__empty { font-size: 13px; color: var(--text-muted); text-align: center; padding: var(--space-lg) 0; line-height: 1.6; }
+.daily-panel__done { font-size: 13px; color: var(--success); text-align: center; padding: var(--space-md) 0; font-weight: 600; }
+.daily-panel__no-tasks {
+  font-size: 13px; color: var(--text-muted); text-align: center; padding: var(--space-md) 0; line-height: 1.7;
+}
+.daily-panel__no-tasks a { color: var(--wood); }
+
+/* ── 21. Strategic Formation (Earth element) — Thiên thời / Địa lợi / Nhân hoà goal board ── */
 .formation-section { max-width: 700px; margin: 0 auto; padding: 0 var(--space-lg) var(--space-xl); }
 
 .formation-add-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--space-lg); }
@@ -1585,7 +1626,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .formation-unit__actions button:hover { opacity: 1; }
 .formation-unit__actions button:disabled { opacity: .25; cursor: default; }
 
-/* ── 21. Bottom Navigation Bar ── */
+/* ── 22. Bottom Navigation Bar ── */
 body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 
 .bottom-nav {
@@ -1647,7 +1688,7 @@ body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 .connect-placeholder__title { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-sm); }
 .connect-placeholder__text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; margin-bottom: var(--space-md); }
 
-/* ── 22. Responsive ── */
+/* ── 23. Responsive ── */
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; text-align: center; }
   .hero-subtitle { margin-left: auto; margin-right: auto; }

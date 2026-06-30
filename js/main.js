@@ -561,12 +561,97 @@ function initBottomNav() {
   switchTab(saved);
 }
 
-// ── 7. Boot ───────────────────────────────────────────────────
+// ── 7. Daily Panel ───────────────────────────────────────────
+// Aggregates "daily" category quests from each element's storage key.
+// Currently sourced from health.js (Wood). As other elements gain daily
+// tasks they can be added here by extending DAILY_SOURCES.
+
+const DAILY_SOURCES = [
+  { key: 'lifebalance_health_quests', element: '🌳', filter: q => q.category === 'daily' },
+  // Future: add metal/water/fire/earth sources here once they exist
+];
+
+function homeTodayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function loadAllDailyTasks() {
+  const today = homeTodayKey();
+  const tasks = [];
+  for (const src of DAILY_SOURCES) {
+    try {
+      const all = JSON.parse(localStorage.getItem(src.key)) || [];
+      all.filter(src.filter).forEach(q => {
+        tasks.push({ id: q.id, storageKey: src.key, element: src.element, title: q.title, xp: q.xp, done: q.completedPeriods.includes(today) });
+      });
+    } catch { /* ignore bad data */ }
+  }
+  return tasks;
+}
+
+function toggleDailyTask(storageKey, taskId) {
+  try {
+    const today = homeTodayKey();
+    const all = JSON.parse(localStorage.getItem(storageKey)) || [];
+    const item = all.find(q => q.id === taskId);
+    if (!item) return;
+    const has = item.completedPeriods.includes(today);
+    item.completedPeriods = has ? item.completedPeriods.filter(k => k !== today) : [...item.completedPeriods, today];
+    safeSetItem(storageKey, JSON.stringify(all));
+  } catch { /* ignore */ }
+}
+
+function renderDailyPanel() {
+  const listEl = document.getElementById('daily-panel-list');
+  const countEl = document.getElementById('daily-panel-count');
+  if (!listEl) return;
+
+  const all = loadAllDailyTasks();
+  const pending = all.filter(t => !t.done);
+
+  if (countEl) countEl.textContent = pending.length ? `${pending.length} còn lại` : '';
+
+  if (!all.length) {
+    listEl.innerHTML = `<p class="daily-panel__no-tasks">Chưa có nhiệm vụ hàng ngày nào.<br><a href="health.html">🌳 Thêm nhiệm vụ ở trang Mộc →</a></p>`;
+    return;
+  }
+  if (!pending.length) {
+    listEl.innerHTML = `<p class="daily-panel__done">🎉 Tất cả nhiệm vụ hôm nay đã hoàn thành!</p>`;
+    return;
+  }
+
+  listEl.innerHTML = pending.map(t => `
+    <label class="daily-panel__task">
+      <input type="checkbox" class="daily-panel__check" data-daily-key="${t.storageKey}" data-daily-id="${t.id}" />
+      <span class="daily-panel__el">${t.element}</span>
+      <span class="daily-panel__text">${escapeHtml(t.title)}</span>
+      ${t.xp ? `<span class="daily-panel__xp">+${t.xp} XP</span>` : ''}
+    </label>`).join('');
+
+  listEl.querySelectorAll('[data-daily-id]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      toggleDailyTask(cb.dataset.dailyKey, cb.dataset.dailyId);
+      renderDailyPanel();
+    });
+  });
+}
+
+function initDailyPanel() {
+  renderDailyPanel();
+  // Sync when health.html (or any element tab) completes a task
+  window.addEventListener('storage', e => {
+    if (DAILY_SOURCES.some(s => s.key === e.key)) renderDailyPanel();
+  });
+}
+
+// ── 8. Boot ───────────────────────────────────────────────────
 // runBootStep (common.js) isolates each step so one failure can't cascade.
 
 document.addEventListener('DOMContentLoaded', () => {
   runBootStep(initPiSdk);
   runBootStep(initBottomNav);
+  runBootStep(initDailyPanel);
   runBootStep(initHowPreview);
   runBootStep(initStoriesRow);
   runBootStep(initUnifiedComposer);

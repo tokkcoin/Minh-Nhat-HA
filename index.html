@@ -37,13 +37,17 @@
   <div id="tab-home" class="tab-content">
 
     <section class="hero">
-      <div>
-        <span class="hero-badge">✨ Five Elements, one dashboard</span>
-        <h1 class="hero-title">Balance<br>for <em>your life</em></h1>
-        <p class="hero-subtitle">Track Money, Health, Talent, Mood, and Situation through the Five Elements. One check-in, five dimensions, daily clarity.</p>
-        <div class="hero-actions">
-          <button type="button" id="hero-get-started" class="btn btn-primary">Get started</button>
-          <a class="btn-text" href="#how-it-works">How it works</a>
+      <div class="daily-panel">
+        <div class="daily-panel__header">
+          <div class="daily-panel__title-row">
+            <span class="daily-panel__icon">📋</span>
+            <h2 class="daily-panel__title">Nhiệm vụ hôm nay</h2>
+            <span class="daily-panel__count" id="daily-panel-count"></span>
+          </div>
+          <a class="daily-panel__link" href="health.html">🌳 Xem tất cả</a>
+        </div>
+        <div class="daily-panel__list" id="daily-panel-list">
+          <p class="daily-panel__empty">Đang tải…</p>
         </div>
       </div>
       <div class="hero-graphic">
@@ -295,7 +299,7 @@
   <script src="js/common.js?v=5"></script>
   <script src="data/storyMusic.js?v=2"></script>
   <script src="js/storyEditor.js?v=5"></script>
-  <script src="js/main.js?v=12"></script>
+  <script src="js/main.js?v=13"></script>
   <script src="js/piAuth.js"></script>
 </body>
 </html>
