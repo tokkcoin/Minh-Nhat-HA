@@ -124,6 +124,62 @@ async function uploadMediaToCloudinary(file) {
   return data.secure_url;
 }
 
+// ── Local On-Device Image Storage (IndexedDB) ─────────────────
+// For attachments that should stay on the user's phone instead of
+// going to Cloudinary (e.g. expense receipt photos). IndexedDB's
+// quota is typically hundreds of MB to GBs (device free-space based),
+// unlike localStorage's shared ~5-10MB ceiling — safe for several
+// full-size camera photos. Each store is a flat key→Blob map.
+
+let localImageDbPromise = null;
+
+function openLocalImageDb(storeNames) {
+  if (!localImageDbPromise) {
+    localImageDbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open('lifebalance_images', 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        storeNames.forEach(name => {
+          if (!db.objectStoreNames.contains(name)) db.createObjectStore(name);
+        });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  return localImageDbPromise;
+}
+
+async function saveLocalImage(storeName, key, blob) {
+  const db = await openLocalImageDb([storeName]);
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).put(blob, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function loadLocalImage(storeName, key) {
+  const db = await openLocalImageDb([storeName]);
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readonly');
+    const req = tx.objectStore(storeName).get(key);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function deleteLocalImage(storeName, key) {
+  const db = await openLocalImageDb([storeName]);
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
 // iOS Safari / Pi Browser (WebKit) cannot play <video src="data:...">  at all
 // (long-standing WebKit bug — images as data URIs are fine, video is not).
 // Posts/stories still persist as data URI strings in localStorage; this just

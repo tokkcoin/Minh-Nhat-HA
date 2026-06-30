@@ -6,7 +6,7 @@
   <title>Tài chính — Life Balance</title>
   <meta name="description" content="Metal element — allocate and rebalance your capital across 4 pools, with live Pi Network price tracking." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
-  <link rel="stylesheet" href="css/style.css?v=28" />
+  <link rel="stylesheet" href="css/style.css?v=30" />
 </head>
 <body>
 
@@ -151,6 +151,7 @@
           <tr>
             <th class="expense-table__col-label">Danh mục</th>
             <th class="expense-table__col-amount">Số tiền (đ)</th>
+            <th class="expense-table__col-photo">Ảnh</th>
             <th class="expense-table__col-del"></th>
           </tr>
         </thead>
@@ -162,9 +163,10 @@
               <input type="number" id="expense-total-override" class="expense-table__total-input" min="0" step="1000" placeholder="Tự động" aria-label="Tổng chi tiêu" />
             </td>
             <td></td>
+            <td></td>
           </tr>
           <tr>
-            <td colspan="3" class="expense-table__auto-sum">
+            <td colspan="4" class="expense-table__auto-sum">
               Tự động: <span id="expense-auto-sum">0</span>đ — nhập vào ô Tổng để ghi đè, để trống = dùng tự động
             </td>
           </tr>
@@ -174,11 +176,17 @@
       <button type="button" id="expense-add-row" class="expense-add-btn">+ Thêm danh mục</button>
     </div>
 
+    <input type="file" id="expense-photo-file" accept="image/*" capture="environment" hidden />
+  </div>
+
+  <!-- Photo lightbox — tap anywhere to close -->
+  <div id="expense-photo-lightbox" class="expense-photo-lightbox" hidden>
+    <img id="expense-photo-lightbox-img" src="" alt="" />
   </div>
 
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-  <script src="js/common.js?v=5"></script>
+  <script src="js/common.js?v=6"></script>
   <script src="js/financeRebalance.js?v=5"></script>
-  <script src="js/expenseSheet.js?v=1"></script>
+  <script src="js/expenseSheet.js?v=3"></script>
 </body>
 </html>

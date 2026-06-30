@@ -1880,9 +1880,10 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-bottom: 2px solid var(--border);
   white-space: nowrap;
 }
-.expense-table__col-label { width: 50%; }
-.expense-table__col-amount { width: 40%; }
-.expense-table__col-del { width: 10%; }
+.expense-table__col-label { width: 38%; }
+.expense-table__col-amount { width: 32%; }
+.expense-table__col-photo { width: 18%; text-align: center; }
+.expense-table__col-del { width: 12%; }
 
 .expense-row td { border-bottom: 1px solid var(--border); }
 .expense-cell-label,
@@ -1904,6 +1905,50 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .expense-delete-row { font-size: 14px; opacity: .5; padding: 4px 8px; }
 .expense-delete-row:hover { opacity: 1; }
 .expense-empty { text-align: center; color: var(--text-muted); padding: var(--space-lg); font-size: 13px; }
+
+/* Per-row photo cell */
+.expense-photo-cell { display: flex; align-items: center; justify-content: center; position: relative; }
+.expense-photo-btn {
+  font-size: 16px;
+  padding: 6px 10px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+}
+.expense-photo-btn:hover { border-color: var(--primary); color: var(--primary); }
+.expense-row-photo {
+  width: 36px; height: 36px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.expense-photo-remove {
+  position: absolute;
+  top: -6px; right: -6px;
+  width: 16px; height: 16px;
+  line-height: 16px;
+  font-size: 9px;
+  text-align: center;
+  color: #fff;
+  background: var(--danger);
+  border-radius: 50%;
+}
+.expense-photo-loading { font-size: 16px; opacity: .6; }
+
+/* Full-screen photo lightbox — local on-device images only */
+.expense-photo-lightbox[hidden] { display: none; }
+.expense-photo-lightbox {
+  position: fixed; inset: 0;
+  z-index: 9500;
+  background: rgba(0,0,0,.88);
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--space-lg);
+}
+.expense-photo-lightbox img {
+  max-width: 100%; max-height: 100%;
+  border-radius: var(--radius-md);
+  object-fit: contain;
+}
 
 /* Total row */
 .expense-table__total-row td { border-top: 2px solid var(--border); padding-top: 8px; }
