@@ -252,15 +252,16 @@ function handleDeleteSkill(skillId) {
 // ── 9. Skill folder ─────────────────────────────────────────
 
 function openLink(url) {
-  // Save active skill session so the page can auto-reopen the folder
-  // if Pi Browser navigates the current WebView instead of a new tab.
+  // Save skill ID so the folder auto-reopens if Pi Browser navigates the
+  // current WebView (no new tab) — handled in initSkillsTracker on load.
   if (skillDetailEditingId) sessionStorage.setItem('resumeSkillId', skillDetailEditingId);
-  pauseTimerSession(); // save time before potentially navigating away
+  // Do NOT manually pause the timer here. Let visibilitychange handle it:
+  //   tab hidden  → pauseTimerSession()
+  //   tab visible → handleTabVisible() → startTimerSession()
+  // Manual pause+setTimeout to restart was racing the visibility events
+  // and leaving the timer permanently stopped on return.
   const w = window.open(url, '_blank', 'noopener,noreferrer');
   if (!w) window.location.href = url;
-  // Re-start timer immediately in case we did NOT navigate away
-  // (window.open succeeded and opened a new tab, keeping this page alive).
-  setTimeout(() => { if (skillDetailEditingId) startTimerSession(); }, 500);
 }
 
 function renderSkillDetailLinks(skill) {
