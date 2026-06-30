@@ -1828,7 +1828,113 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .formation-unit__actions button:hover { opacity: 1; }
 .formation-unit__actions button:disabled { opacity: .25; cursor: default; }
 
-/* ── 22. Bottom Navigation Bar ── */
+/* ── 22. Expense Sheet (Metal element — monthly expense spreadsheet) ── */
+.expense-sheet-trigger {
+  margin-left: 6px;
+  font-size: 14px;
+  color: var(--metal, #aaa);
+  opacity: .8;
+  vertical-align: middle;
+}
+.expense-sheet-trigger:hover { opacity: 1; }
+
+.expense-sheet[hidden] { display: none; }
+.expense-sheet {
+  position: fixed; inset: 0;
+  z-index: 8500;
+  background: var(--bg-page);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.expense-sheet__header {
+  display: flex; align-items: center; gap: var(--space-sm);
+  padding: 12px var(--space-md);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+.expense-sheet__back { color: var(--primary); font-size: 14px; font-weight: 600; flex: 0 0 auto; }
+.expense-sheet__title { flex: 1; font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.expense-sheet__total-chip {
+  font-size: 13px; font-weight: 700;
+  color: #fff; background: var(--primary);
+  border-radius: var(--radius-xl);
+  padding: 3px 10px; flex: 0 0 auto;
+}
+
+.expense-sheet__body {
+  flex: 1; overflow-y: auto; overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--space-md);
+}
+
+.expense-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px;
+}
+.expense-table th {
+  text-align: left;
+  padding: 6px 8px;
+  font-size: 11px; font-weight: 700;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+.expense-table__col-label { width: 50%; }
+.expense-table__col-amount { width: 40%; }
+.expense-table__col-del { width: 10%; }
+
+.expense-row td { border-bottom: 1px solid var(--border); }
+.expense-cell-label,
+.expense-cell-amount {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-body);
+  padding: 8px;
+}
+.expense-cell-label:focus,
+.expense-cell-amount:focus {
+  outline: none;
+  background: var(--primary-xlight, rgba(0,184,169,.06));
+}
+.expense-cell-amount { text-align: right; }
+.expense-delete-row { font-size: 14px; opacity: .5; padding: 4px 8px; }
+.expense-delete-row:hover { opacity: 1; }
+.expense-empty { text-align: center; color: var(--text-muted); padding: var(--space-lg); font-size: 13px; }
+
+/* Total row */
+.expense-table__total-row td { border-top: 2px solid var(--border); padding-top: 8px; }
+.expense-table__total-label { font-weight: 700; color: var(--text-primary); padding: 8px; }
+.expense-table__total-input {
+  width: 100%;
+  background: var(--primary-xlight, rgba(0,184,169,.06));
+  border: 1.5px solid var(--primary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 14px; font-weight: 700;
+  font-family: var(--font-body);
+  padding: 6px 8px;
+  text-align: right;
+}
+.expense-table__auto-sum { font-size: 11px; color: var(--text-muted); padding: 4px 8px 8px; }
+
+.expense-add-btn {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-md);
+  padding: 10px;
+  font-size: 14px; font-weight: 600;
+  color: var(--primary);
+  border: 1.5px dashed var(--primary);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+.expense-add-btn:hover { background: var(--primary-xlight, rgba(0,184,169,.06)); }
+
+/* ── 23. Bottom Navigation Bar ── */
 body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 
 .bottom-nav {
@@ -1890,7 +1996,7 @@ body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 .connect-placeholder__title { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-sm); }
 .connect-placeholder__text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; margin-bottom: var(--space-md); }
 
-/* ── 23. Responsive ── */
+/* ── 24. Responsive ── */
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; text-align: center; }
   .hero-subtitle { margin-left: auto; margin-right: auto; }

@@ -6,7 +6,7 @@
   <title>Tài chính — Life Balance</title>
   <meta name="description" content="Metal element — allocate and rebalance your capital across 4 pools, with live Pi Network price tracking." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
-  <link rel="stylesheet" href="css/style.css?v=27" />
+  <link rel="stylesheet" href="css/style.css?v=28" />
 </head>
 <body>
 
@@ -63,7 +63,10 @@
         <input type="number" id="finance-income" min="0" step="100000" placeholder="0" />
       </div>
       <div class="finance-field">
-        <label for="finance-expense">Chi tiêu tháng này (đ)</label>
+        <label for="finance-expense">
+          Chi tiêu tháng này (đ)
+          <button type="button" id="expense-sheet-open" class="expense-sheet-trigger" aria-label="Mở bảng chi tiêu">📊</button>
+        </label>
         <input type="number" id="finance-expense" min="0" step="100000" placeholder="0" />
       </div>
       <button type="button" id="finance-apply-total" class="btn btn-primary finance-inputs__save">Áp dụng vào 4 quỹ</button>
@@ -130,8 +133,52 @@
   </footer>
 
   <!-- Pi SDK must load before js/common.js -->
+  <!-- ══════════════════════════════════════════════════
+       EXPENSE SHEET — Excel-style monthly expense table
+  ══════════════════════════════════════════════════ -->
+  <div id="expense-sheet" class="expense-sheet" hidden>
+
+    <div class="expense-sheet__header">
+      <button type="button" id="expense-sheet-close" class="expense-sheet__back">← Xong</button>
+      <span class="expense-sheet__title">📊 Bảng chi tiêu tháng</span>
+      <span id="expense-sheet-total-chip" class="expense-sheet__total-chip">0đ</span>
+    </div>
+
+    <!-- Table -->
+    <div class="expense-sheet__body">
+      <table class="expense-table" id="expense-table">
+        <thead>
+          <tr>
+            <th class="expense-table__col-label">Danh mục</th>
+            <th class="expense-table__col-amount">Số tiền (đ)</th>
+            <th class="expense-table__col-del"></th>
+          </tr>
+        </thead>
+        <tbody id="expense-table-body"></tbody>
+        <tfoot>
+          <tr class="expense-table__total-row">
+            <td class="expense-table__total-label">📊 Tổng chi tiêu</td>
+            <td class="expense-table__total-cell">
+              <input type="number" id="expense-total-override" class="expense-table__total-input" min="0" step="1000" placeholder="Tự động" aria-label="Tổng chi tiêu" />
+            </td>
+            <td></td>
+          </tr>
+          <tr>
+            <td colspan="3" class="expense-table__auto-sum">
+              Tự động: <span id="expense-auto-sum">0</span>đ — nhập vào ô Tổng để ghi đè, để trống = dùng tự động
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <button type="button" id="expense-add-row" class="expense-add-btn">+ Thêm danh mục</button>
+    </div>
+
+  </div>
+
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <script src="js/common.js?v=5"></script>
   <script src="js/financeRebalance.js?v=5"></script>
+  <script src="js/expenseSheet.js?v=1"></script>
 </body>
 </html>
