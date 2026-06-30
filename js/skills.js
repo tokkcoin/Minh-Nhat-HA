@@ -1,13 +1,17 @@
 /* ============================================================
-   Life Balance — skills.js  (v6)
+   Life Balance — skills.js
    Water (Talent) — time-tracked star badges + full-screen folder.
 
    Stars: 5h=1★ | 35h=2★ | 150h=3★ | 365h=4★ | 500h+=5★🏆Master
 
-   Timer fixes:
-   - visibilitychange (primary)
-   - window focus + pageshow (fallback for Pi Browser WebView back-nav)
-   - sessionStorage resume: saves activeSkillId before opening a link
+   Timer runs from openSkillDetail() to closeSkillDetail() only.
+   It does NOT pause for tab visibility or focus changes — time
+   accumulates the entire time the skill folder is open.
+   - flushTimerToStorage(): saves to localStorage without stopping
+     (called on beforeunload + before opening a link)
+   - stopTimerSession(): saves + stops (called on folder close only)
+   - sessionStorage resumeSkillId: if Pi Browser navigates the page
+     away (no new-tab support), folder auto-reopens on return
      so if the page reloads on return the folder auto-reopens
 
    New: MediaRecorder audio recording → auto-download to device
@@ -105,15 +109,34 @@ function startTimerSession() {
   timerIntervalId = setInterval(updateTimerDisplay, 1000);
 }
 
-function pauseTimerSession() {
-  if (timerSessionStart === null) return;
+// Save accumulated time to localStorage WITHOUT stopping the clock.
+// Called on beforeunload and before opening external links so time is
+// never lost if the page is killed or navigated away unexpectedly.
+function flushTimerToStorage() {
+  if (timerSessionStart === null || !skillDetailEditingId) return;
   const elapsed = Math.floor((Date.now() - timerSessionStart) / 1000);
-  timerSessionStart = null;
+  if (elapsed <= 0) return;
+  const total = timerBaseSeconds + elapsed;
+  const skills = loadSkills();
+  const skill  = skills.find(s => s.id === skillDetailEditingId);
+  if (!skill) return;
+  // Update base so next flush doesn't double-count this elapsed period.
+  timerBaseSeconds = total;
+  timerSessionStart = Date.now(); // reset session start to now
+  skill.totalSeconds = total;
+  saveSkills(skills);
+  renderSkills();
+}
+
+// Stop the clock permanently and save. Called ONLY from closeSkillDetail.
+function stopTimerSession() {
+  if (timerSessionStart !== null) {
+    const elapsed = Math.floor((Date.now() - timerSessionStart) / 1000);
+    timerBaseSeconds += elapsed;
+    timerSessionStart = null;
+  }
   clearInterval(timerIntervalId);
   timerIntervalId = null;
-  if (elapsed <= 0) return;
-  timerBaseSeconds += elapsed;
-
   const skills = loadSkills();
   const skill  = skills.find(s => s.id === skillDetailEditingId);
   if (skill) {
@@ -132,12 +155,6 @@ function updateTimerDisplay() {
   const total = timerBaseSeconds + sessionSec;
   timerEl.textContent = `⏱ ${formatTime(total)}`;
   if (starsEl) starsEl.innerHTML = renderStarRow(computeStars(total));
-}
-
-// Resume timer when tab becomes visible again (Pi Browser may fire
-// focus or pageshow instead of / in addition to visibilitychange)
-function handleTabVisible() {
-  if (skillDetailEditingId && timerSessionStart === null) startTimerSession();
 }
 
 // ── 6. Icon picker ─────────────────────────────────────────
@@ -252,14 +269,10 @@ function handleDeleteSkill(skillId) {
 // ── 9. Skill folder ─────────────────────────────────────────
 
 function openLink(url) {
-  // Save skill ID so the folder auto-reopens if Pi Browser navigates the
-  // current WebView (no new tab) — handled in initSkillsTracker on load.
   if (skillDetailEditingId) sessionStorage.setItem('resumeSkillId', skillDetailEditingId);
-  // Do NOT manually pause the timer here. Let visibilitychange handle it:
-  //   tab hidden  → pauseTimerSession()
-  //   tab visible → handleTabVisible() → startTimerSession()
-  // Manual pause+setTimeout to restart was racing the visibility events
-  // and leaving the timer permanently stopped on return.
+  // Flush current elapsed time to localStorage before potentially
+  // navigating away (safety save — timer continues counting after this).
+  flushTimerToStorage();
   const w = window.open(url, '_blank', 'noopener,noreferrer');
   if (!w) window.location.href = url;
 }
@@ -307,7 +320,7 @@ function openSkillDetail(skillId) {
 }
 
 function closeSkillDetail() {
-  pauseTimerSession();
+  stopTimerSession();
   saveSkillNotes();
   skillDetailEditingId = null;
   sessionStorage.removeItem('resumeSkillId');
@@ -450,17 +463,18 @@ function initSkillsTracker() {
     if (e.target.id === 'skill-info-modal') document.getElementById('skill-info-modal').hidden = true;
   });
 
-  // Timer: visibilitychange (primary) + focus/pageshow (fallback for Pi Browser WebView)
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') pauseTimerSession();
-    else handleTabVisible();
-  });
-  window.addEventListener('focus', handleTabVisible);
+  // Flush timer on page unload (safety: preserves time if app is killed
+  // or the browser navigates the page away without the user pressing ←).
+  window.addEventListener('beforeunload', () => flushTimerToStorage());
+
+  // BFCache restore (user pressed Back after Pi Browser navigated away):
+  // resumeSkillId is already handled below; pageshow just ensures the
+  // timer starts if the folder was re-opened via BFCache state.
   window.addEventListener('pageshow', e => {
-    // pageshow with persisted=true = BFCache restore (user pressed Back)
-    if (e.persisted || document.visibilityState === 'visible') handleTabVisible();
+    if ((e.persisted || document.visibilityState === 'visible') && skillDetailEditingId && timerSessionStart === null) {
+      startTimerSession();
+    }
   });
-  window.addEventListener('beforeunload', () => pauseTimerSession());
 
   // Auto-reopen folder if we left via a link click and came back
   const resumeId = sessionStorage.getItem('resumeSkillId');
