@@ -259,6 +259,14 @@ function handleDeleteSkill(skillId) {
 
 // ── 9. Skill folder modal (timer + links + notes + images) ──
 
+function openLink(url) {
+  // window.open() is more reliable than <a target="_blank"> inside Pi Browser
+  // WebView (which may intercept anchor-tag navigation).
+  // If the popup is blocked, fall back to in-tab navigation.
+  const w = window.open(url, '_blank', 'noopener,noreferrer');
+  if (!w) window.location.href = url;
+}
+
 function renderSkillDetailLinks(skill) {
   const container = document.getElementById('skill-detail-links');
   if (!container) return;
@@ -269,15 +277,23 @@ function renderSkillDetailLinks(skill) {
   }
   container.innerHTML = links.map(lk => `
     <div class="skill-detail__link-item">
-      <a class="skill-detail__link-url" href="${escapeHtml(lk.url)}" target="_blank" rel="noopener noreferrer">
+      <button type="button" class="skill-detail__link-open" data-open-url="${escapeHtml(lk.url)}" aria-label="Mở ${escapeHtml(lk.label || lk.url)}">
         🔗 ${escapeHtml(lk.label || lk.url)}
-      </a>
+      </button>
+      <span class="skill-detail__link-domain">${escapeHtml(safeHostname(lk.url))}</span>
       <button type="button" class="skill-detail__link-delete" data-link-delete="${lk.id}" aria-label="Xoá link">✕</button>
     </div>`).join('');
 
+  container.querySelectorAll('[data-open-url]').forEach(btn =>
+    btn.addEventListener('click', () => openLink(btn.dataset.openUrl))
+  );
   container.querySelectorAll('[data-link-delete]').forEach(btn =>
     btn.addEventListener('click', () => handleDeleteSkillLink(btn.dataset.linkDelete))
   );
+}
+
+function safeHostname(url) {
+  try { return new URL(url).hostname; } catch { return url; }
 }
 
 function openSkillDetail(skillId) {
@@ -332,8 +348,9 @@ function handleAddSkillLink() {
   if (!skill) return;
   skill.links = [...(skill.links || []), { id: `${Date.now()}`, url: normalized, label }];
   if (!saveSkills(skills)) return;
-  if (urlInput) urlInput.value = '';
+  if (urlInput) { urlInput.value = ''; urlInput.focus(); }
   if (labelInput) labelInput.value = '';
+  showToast('Đã lưu link ✓');
   renderSkillDetailLinks(skill);
   renderSkills();
 }

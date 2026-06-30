@@ -1521,8 +1521,9 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 /* links section */
 .skill-detail__links { display: flex; flex-direction: column; gap: 4px; margin-bottom: var(--space-sm); }
 .skill-detail__link-item { display: flex; align-items: center; gap: 6px; background: var(--bg-page); border-radius: var(--radius-sm); padding: 6px 8px; }
-.skill-detail__link-url { flex: 1; font-size: 12px; color: var(--water); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.skill-detail__link-url:hover { opacity: .8; }
+.skill-detail__link-open { flex: 1; font-size: 13px; font-weight: 500; color: var(--water); text-align: left; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.skill-detail__link-open:hover { opacity: .8; }
+.skill-detail__link-domain { font-size: 10px; color: var(--text-muted); white-space: nowrap; flex: 0 0 auto; max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
 .skill-detail__link-delete { flex: 0 0 auto; font-size: 11px; opacity: .6; }
 .skill-detail__link-delete:hover { opacity: 1; }
 .skill-detail__link-add { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: var(--space-sm); }
