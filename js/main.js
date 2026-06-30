@@ -536,11 +536,37 @@ function initStoryViewer() {
   });
 }
 
-// ── 6. Boot ───────────────────────────────────────────────────
+// ── 6. Bottom Navigation ─────────────────────────────────────
+
+function initBottomNav() {
+  const tabs = document.querySelectorAll('.bottom-nav__tab');
+  const contents = document.querySelectorAll('.tab-content');
+
+  function switchTab(tabId) {
+    contents.forEach(el => { el.hidden = el.id !== `tab-${tabId}`; });
+    tabs.forEach(t => t.classList.toggle('bottom-nav__tab--active', t.dataset.tab === tabId));
+    sessionStorage.setItem('activeTab', tabId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  // "Get started" button in hero switches to Activities
+  document.getElementById('hero-get-started')?.addEventListener('click', () => switchTab('activities'));
+
+  // Restore last-visited tab across navigations within the same session
+  const saved = sessionStorage.getItem('activeTab') || 'home';
+  switchTab(saved);
+}
+
+// ── 7. Boot ───────────────────────────────────────────────────
 // runBootStep (common.js) isolates each step so one failure can't cascade.
 
 document.addEventListener('DOMContentLoaded', () => {
   runBootStep(initPiSdk);
+  runBootStep(initBottomNav);
   runBootStep(initHowPreview);
   runBootStep(initStoriesRow);
   runBootStep(initUnifiedComposer);

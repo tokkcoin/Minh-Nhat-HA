@@ -10,14 +10,10 @@
 </head>
 <body>
 
-  <!-- ══════════════════════════════════════════════════
-       TOAST NOTIFICATION
-  ══════════════════════════════════════════════════ -->
+  <!-- TOAST NOTIFICATION -->
   <div id="toast" role="status" aria-live="polite"></div>
 
-  <!-- ══════════════════════════════════════════════════
-       HEADER
-  ══════════════════════════════════════════════════ -->
+  <!-- HEADER -->
   <header class="site-header">
     <div class="site-header__inner">
       <div class="logo">
@@ -36,163 +32,179 @@
   <p id="auth-status" class="auth-status"></p>
 
   <!-- ══════════════════════════════════════════════════
-       1. HERO
+       TAB 1 — HOME (hero + showcase + how it works)
   ══════════════════════════════════════════════════ -->
-  <section class="hero">
-    <div>
-      <span class="hero-badge">✨ Five Elements, one dashboard</span>
-      <h1 class="hero-title">Balance<br>for <em>your life</em></h1>
-      <p class="hero-subtitle">Track Money, Health, Talent, Mood, and Situation through the Five Elements. One check-in, five dimensions, daily clarity.</p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="#dashboard">Get started</a>
-        <a class="btn-text" href="#how-it-works">How it works</a>
-      </div>
-    </div>
-    <div class="hero-graphic">
-      <div class="hero-orb" aria-hidden="true"></div>
-      <div class="hero-orbit">
-        <a class="hero-orb__node hero-orb__node--metal" href="finance.html" aria-label="Metal — Money">⛏️</a>
-        <a class="hero-orb__node hero-orb__node--wood" href="health.html" aria-label="Wood — Health">🌳</a>
-        <a class="hero-orb__node hero-orb__node--water" href="skills.html" aria-label="Water — Talent">💧</a>
-        <a class="hero-orb__node hero-orb__node--fire" href="mood.html" aria-label="Fire — Mood">🔥</a>
-        <a class="hero-orb__node hero-orb__node--earth" href="situation.html" aria-label="Earth — Situation">🪨</a>
-      </div>
-    </div>
-  </section>
+  <div id="tab-home" class="tab-content">
 
-  <!-- ══════════════════════════════════════════════════
-       2. ELEMENTS SHOWCASE
-  ══════════════════════════════════════════════════ -->
-  <section class="showcase">
-    <p class="showcase-heading">Five elements of balance, mapped to five dimensions of life.</p>
-    <div class="showcase-row">
-      <span class="showcase-badge showcase-badge--metal"><span class="showcase-badge__icon">⛏️</span> Metal — Money</span>
-      <span class="showcase-badge showcase-badge--wood"><span class="showcase-badge__icon">🌳</span> Wood — Health</span>
-      <span class="showcase-badge showcase-badge--water"><span class="showcase-badge__icon">💧</span> Water — Talent</span>
-      <span class="showcase-badge showcase-badge--fire"><span class="showcase-badge__icon">🔥</span> Fire — Mood</span>
-      <span class="showcase-badge showcase-badge--earth"><span class="showcase-badge__icon">🪨</span> Earth — Situation</span>
-    </div>
-  </section>
-
-  <!-- ══════════════════════════════════════════════════
-       3. HOW IT WORKS
-  ══════════════════════════════════════════════════ -->
-  <section class="how" id="how-it-works">
-    <h2 class="how-title">Rebalance <em>this morning</em></h2>
-    <p class="how-subtitle">A simple, elegant check-in so you can rate your day in seconds. No spreadsheets, no overthinking — just five taps.</p>
-
-    <div class="how-steps">
-      <div class="how-step">
-        <div class="how-step__num">01</div>
-        <div class="how-step__title">Rate</div>
-        <div class="how-step__desc">Score each of the five elements for how today actually felt.</div>
-      </div>
-      <div class="how-step">
-        <div class="how-step__num">02</div>
-        <div class="how-step__title">Reflect</div>
-        <div class="how-step__desc">See which dimension is pulling your balance down this week.</div>
-      </div>
-      <div class="how-step">
-        <div class="how-step__num">03</div>
-        <div class="how-step__title">Rebalance</div>
-        <div class="how-step__desc">Make one small adjustment tomorrow, not a five-part life overhaul.</div>
-      </div>
-    </div>
-
-    <div class="how-preview">
-      <div class="how-preview__tabs">
-        <button type="button" class="how-preview__tab active" data-range="today">Today</button>
-        <button type="button" class="how-preview__tab" data-range="week">This Week</button>
-        <button type="button" class="how-preview__tab" data-range="month">This Month</button>
-      </div>
-      <div class="how-preview__bars">
-        <div class="how-preview__bar how-preview__bar--metal"><span class="how-preview__bar-label">Metal</span><div class="how-preview__bar-track"><div class="how-preview__bar-fill"></div></div><span class="how-preview__bar-count">0</span></div>
-        <div class="how-preview__bar how-preview__bar--wood"><span class="how-preview__bar-label">Wood</span><div class="how-preview__bar-track"><div class="how-preview__bar-fill"></div></div><span class="how-preview__bar-count">0</span></div>
-        <div class="how-preview__bar how-preview__bar--water"><span class="how-preview__bar-label">Water</span><div class="how-preview__bar-track"><div class="how-preview__bar-fill"></div></div><span class="how-preview__bar-count">0</span></div>
-        <div class="how-preview__bar how-preview__bar--fire"><span class="how-preview__bar-label">Fire</span><div class="how-preview__bar-track"><div class="how-preview__bar-fill"></div></div><span class="how-preview__bar-count">0</span></div>
-        <div class="how-preview__bar how-preview__bar--earth"><span class="how-preview__bar-label">Earth</span><div class="how-preview__bar-track"><div class="how-preview__bar-fill"></div></div><span class="how-preview__bar-count">0</span></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════════════════════════════════════════════
-       MAIN — FIVE ELEMENT DASHBOARD
-  ══════════════════════════════════════════════════ -->
-  <main class="page-main" id="dashboard" role="main">
-    <h2 class="page-title">Today's Balance</h2>
-    <p class="page-subtitle">One feed, five elements. Post below, then filter by element if you want focus.</p>
-
-    <div class="feed-wrap">
-      <div class="composer">
-        <textarea id="composer-text" placeholder="What's on your mind?" aria-label="Write a post"></textarea>
-        <input type="file" id="composer-file" accept="image/*,video/*,audio/*" hidden />
-        <div class="composer__meta">
-          <select id="composer-element" aria-label="Element">
-            <option value="">Element…</option>
-            <option value="metal">⛏️ Metal — Money</option>
-            <option value="wood">🌳 Wood — Health</option>
-            <option value="water">💧 Water — Talent</option>
-            <option value="fire">🔥 Fire — Mood</option>
-            <option value="earth">🪨 Earth — Situation</option>
-          </select>
-          <select id="composer-level" aria-label="Priority level">
-            <option value="">Priority…</option>
-            <option value="emergency-important">🔴 Emergency &amp; Important</option>
-            <option value="emergency-unimportant">🟠 Emergency &amp; Unimportant</option>
-            <option value="important-unemergency">🟡 Important &amp; Not Emergency</option>
-            <option value="unimportant-unemergency">⚪ Unimportant &amp; Not Emergency</option>
-          </select>
+    <section class="hero">
+      <div>
+        <span class="hero-badge">✨ Five Elements, one dashboard</span>
+        <h1 class="hero-title">Balance<br>for <em>your life</em></h1>
+        <p class="hero-subtitle">Track Money, Health, Talent, Mood, and Situation through the Five Elements. One check-in, five dimensions, daily clarity.</p>
+        <div class="hero-actions">
+          <button type="button" id="hero-get-started" class="btn btn-primary">Get started</button>
+          <a class="btn-text" href="#how-it-works">How it works</a>
         </div>
-        <div class="composer__row">
-          <button type="button" id="composer-attach" class="composer__attach">📎 Attach</button>
-          <span id="composer-preview" class="composer__preview" hidden></span>
-          <button type="button" id="composer-post" class="composer__post">Post</button>
+      </div>
+      <div class="hero-graphic">
+        <div class="hero-orb" aria-hidden="true"></div>
+        <div class="hero-orbit">
+          <a class="hero-orb__node hero-orb__node--metal" href="finance.html" aria-label="Metal — Money">⛏️</a>
+          <a class="hero-orb__node hero-orb__node--wood" href="health.html" aria-label="Wood — Health">🌳</a>
+          <a class="hero-orb__node hero-orb__node--water" href="skills.html" aria-label="Water — Talent">💧</a>
+          <a class="hero-orb__node hero-orb__node--fire" href="mood.html" aria-label="Fire — Mood">🔥</a>
+          <a class="hero-orb__node hero-orb__node--earth" href="situation.html" aria-label="Earth — Situation">🪨</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="showcase">
+      <p class="showcase-heading">Five elements of balance, mapped to five dimensions of life.</p>
+      <div class="showcase-row">
+        <span class="showcase-badge showcase-badge--metal"><span class="showcase-badge__icon">⛏️</span> Metal — Money</span>
+        <span class="showcase-badge showcase-badge--wood"><span class="showcase-badge__icon">🌳</span> Wood — Health</span>
+        <span class="showcase-badge showcase-badge--water"><span class="showcase-badge__icon">💧</span> Water — Talent</span>
+        <span class="showcase-badge showcase-badge--fire"><span class="showcase-badge__icon">🔥</span> Fire — Mood</span>
+        <span class="showcase-badge showcase-badge--earth"><span class="showcase-badge__icon">🪨</span> Earth — Situation</span>
+      </div>
+    </section>
+
+    <section class="how" id="how-it-works">
+      <h2 class="how-title">Rebalance <em>this morning</em></h2>
+      <p class="how-subtitle">A simple, elegant check-in so you can rate your day in seconds. No spreadsheets, no overthinking — just five taps.</p>
+
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="how-step__num">01</div>
+          <div class="how-step__title">Rate</div>
+          <div class="how-step__desc">Score each of the five elements for how today actually felt.</div>
+        </div>
+        <div class="how-step">
+          <div class="how-step__num">02</div>
+          <div class="how-step__title">Reflect</div>
+          <div class="how-step__desc">See which dimension is pulling your balance down this week.</div>
+        </div>
+        <div class="how-step">
+          <div class="how-step__num">03</div>
+          <div class="how-step__title">Rebalance</div>
+          <div class="how-step__desc">Make one small adjustment tomorrow, not a five-part life overhaul.</div>
         </div>
       </div>
 
-      <div class="stories-tray" aria-label="Stories">
-        <button type="button" class="story-chip story-chip--create" id="story-create-btn">
-          <span class="story-chip__icon story-chip__icon--create" aria-hidden="true">➕</span>
-          <span class="story-chip__label">Your Story</span>
-        </button>
-        <div id="stories-list" class="stories-list"></div>
+      <div class="how-preview">
+        <div class="how-preview__tabs">
+          <button type="button" class="how-preview__tab active" data-range="today">Today</button>
+          <button type="button" class="how-preview__tab" data-range="week">This Week</button>
+          <button type="button" class="how-preview__tab" data-range="month">This Month</button>
+        </div>
+        <div class="how-preview__bars">
+          <div class="how-preview__bar how-preview__bar--metal"><span class="how-preview__bar-label">Metal</span><div class="how-preview__bar-track"><div class="how-preview__bar-fill"></div></div><span class="how-preview__bar-count">0</span></div>
+          <div class="how-preview__bar how-preview__bar--wood"><span class="how-preview__bar-label">Wood</span><div class="how-preview__bar-track"><div class="how-preview__bar-fill"></div></div><span class="how-preview__bar-count">0</span></div>
+          <div class="how-preview__bar how-preview__bar--water"><span class="how-preview__bar-label">Water</span><div class="how-preview__bar-track"><div class="how-preview__bar-fill"></div></div><span class="how-preview__bar-count">0</span></div>
+          <div class="how-preview__bar how-preview__bar--fire"><span class="how-preview__bar-label">Fire</span><div class="how-preview__bar-track"><div class="how-preview__bar-fill"></div></div><span class="how-preview__bar-count">0</span></div>
+          <div class="how-preview__bar how-preview__bar--earth"><span class="how-preview__bar-label">Earth</span><div class="how-preview__bar-track"><div class="how-preview__bar-fill"></div></div><span class="how-preview__bar-count">0</span></div>
+        </div>
       </div>
-      <input type="file" id="story-file-input" accept="image/*,video/*" hidden />
+    </section>
 
-      <div class="stories-row" role="tablist" aria-label="Filter feed by element">
-        <button type="button" class="story-chip story-chip--all active" data-filter="all" role="tab" aria-selected="true">
-          <span class="story-chip__icon" aria-hidden="true">🌐</span>
-          <span class="story-chip__label">All</span>
-        </button>
-        <button type="button" class="story-chip story-chip--metal" data-filter="metal" role="tab" aria-selected="false">
-          <span class="story-chip__icon" aria-hidden="true">⛏️</span>
-          <span class="story-chip__label">Metal</span>
-        </button>
-        <button type="button" class="story-chip story-chip--wood" data-filter="wood" role="tab" aria-selected="false">
-          <span class="story-chip__icon" aria-hidden="true">🌳</span>
-          <span class="story-chip__label">Wood</span>
-        </button>
-        <button type="button" class="story-chip story-chip--water" data-filter="water" role="tab" aria-selected="false">
-          <span class="story-chip__icon" aria-hidden="true">💧</span>
-          <span class="story-chip__label">Water</span>
-        </button>
-        <button type="button" class="story-chip story-chip--fire" data-filter="fire" role="tab" aria-selected="false">
-          <span class="story-chip__icon" aria-hidden="true">🔥</span>
-          <span class="story-chip__label">Fire</span>
-        </button>
-        <button type="button" class="story-chip story-chip--earth" data-filter="earth" role="tab" aria-selected="false">
-          <span class="story-chip__icon" aria-hidden="true">🪨</span>
-          <span class="story-chip__label">Earth</span>
-        </button>
-      </div>
+    <footer class="site-footer" role="contentinfo">
+      <p>&copy; 2026 <strong>Life Balance</strong> — built for Pi Network App Studio.</p>
+    </footer>
 
-      <div class="feed" id="feed" role="feed" aria-label="All journal entries"></div>
-    </div>
-  </main>
+  </div><!-- /tab-home -->
 
   <!-- ══════════════════════════════════════════════════
-       STORY VIEWER (full-screen overlay)
+       TAB 2 — ACTIVITIES (composer + stories + feed)
   ══════════════════════════════════════════════════ -->
+  <div id="tab-activities" class="tab-content" hidden>
+
+    <main class="page-main" id="dashboard" role="main">
+      <h2 class="page-title">Today's Balance</h2>
+      <p class="page-subtitle">One feed, five elements. Post below, then filter by element if you want focus.</p>
+
+      <div class="feed-wrap">
+        <div class="composer">
+          <textarea id="composer-text" placeholder="What's on your mind?" aria-label="Write a post"></textarea>
+          <input type="file" id="composer-file" accept="image/*,video/*,audio/*" hidden />
+          <div class="composer__meta">
+            <select id="composer-element" aria-label="Element">
+              <option value="">Element…</option>
+              <option value="metal">⛏️ Metal — Money</option>
+              <option value="wood">🌳 Wood — Health</option>
+              <option value="water">💧 Water — Talent</option>
+              <option value="fire">🔥 Fire — Mood</option>
+              <option value="earth">🪨 Earth — Situation</option>
+            </select>
+            <select id="composer-level" aria-label="Priority level">
+              <option value="">Priority…</option>
+              <option value="emergency-important">🔴 Emergency &amp; Important</option>
+              <option value="emergency-unimportant">🟠 Emergency &amp; Unimportant</option>
+              <option value="important-unemergency">🟡 Important &amp; Not Emergency</option>
+              <option value="unimportant-unemergency">⚪ Unimportant &amp; Not Emergency</option>
+            </select>
+          </div>
+          <div class="composer__row">
+            <button type="button" id="composer-attach" class="composer__attach">📎 Attach</button>
+            <span id="composer-preview" class="composer__preview" hidden></span>
+            <button type="button" id="composer-post" class="composer__post">Post</button>
+          </div>
+        </div>
+
+        <div class="stories-tray" aria-label="Stories">
+          <button type="button" class="story-chip story-chip--create" id="story-create-btn">
+            <span class="story-chip__icon story-chip__icon--create" aria-hidden="true">➕</span>
+            <span class="story-chip__label">Your Story</span>
+          </button>
+          <div id="stories-list" class="stories-list"></div>
+        </div>
+        <input type="file" id="story-file-input" accept="image/*,video/*" hidden />
+
+        <div class="stories-row" role="tablist" aria-label="Filter feed by element">
+          <button type="button" class="story-chip story-chip--all active" data-filter="all" role="tab" aria-selected="true">
+            <span class="story-chip__icon" aria-hidden="true">🌐</span>
+            <span class="story-chip__label">All</span>
+          </button>
+          <button type="button" class="story-chip story-chip--metal" data-filter="metal" role="tab" aria-selected="false">
+            <span class="story-chip__icon" aria-hidden="true">⛏️</span>
+            <span class="story-chip__label">Metal</span>
+          </button>
+          <button type="button" class="story-chip story-chip--wood" data-filter="wood" role="tab" aria-selected="false">
+            <span class="story-chip__icon" aria-hidden="true">🌳</span>
+            <span class="story-chip__label">Wood</span>
+          </button>
+          <button type="button" class="story-chip story-chip--water" data-filter="water" role="tab" aria-selected="false">
+            <span class="story-chip__icon" aria-hidden="true">💧</span>
+            <span class="story-chip__label">Water</span>
+          </button>
+          <button type="button" class="story-chip story-chip--fire" data-filter="fire" role="tab" aria-selected="false">
+            <span class="story-chip__icon" aria-hidden="true">🔥</span>
+            <span class="story-chip__label">Fire</span>
+          </button>
+          <button type="button" class="story-chip story-chip--earth" data-filter="earth" role="tab" aria-selected="false">
+            <span class="story-chip__icon" aria-hidden="true">🪨</span>
+            <span class="story-chip__label">Earth</span>
+          </button>
+        </div>
+
+        <div class="feed" id="feed" role="feed" aria-label="All journal entries"></div>
+      </div>
+    </main>
+
+  </div><!-- /tab-activities -->
+
+  <!-- ══════════════════════════════════════════════════
+       TAB 3 — CONNECT (coming soon)
+  ══════════════════════════════════════════════════ -->
+  <div id="tab-connect" class="tab-content" hidden>
+    <div class="connect-placeholder">
+      <div class="connect-placeholder__icon">🌐</div>
+      <h2 class="connect-placeholder__title">Connect</h2>
+      <p class="connect-placeholder__text">Tính năng kết nối cộng đồng sẽ sớm ra mắt — chia sẻ hành trình, theo dõi người dùng khác, cùng cân bằng cuộc sống.</p>
+      <span class="element-placeholder__badge">Đang phát triển</span>
+    </div>
+  </div>
+
+  <!-- STORY VIEWER (fixed overlay — shared across all tabs) -->
   <div id="story-viewer" class="story-viewer" hidden>
     <div class="story-viewer__inner">
       <button type="button" id="story-viewer-close" class="story-viewer__close" aria-label="Close story">✕</button>
@@ -203,9 +215,7 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════
-       STORY EDITOR (full-screen overlay, opened from "+ Your Story")
-  ══════════════════════════════════════════════════ -->
+  <!-- STORY EDITOR (fixed overlay — shared across all tabs) -->
   <div id="story-editor" class="story-editor" hidden>
     <div class="story-editor__inner">
       <button type="button" id="story-editor-close" class="story-editor__close" aria-label="Cancel">✕</button>
@@ -250,19 +260,42 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════
-       FOOTER
-  ══════════════════════════════════════════════════ -->
-  <footer class="site-footer" role="contentinfo">
-    <p>&copy; 2026 <strong>Life Balance</strong> — built for Pi Network App Studio.</p>
-  </footer>
+  <!-- BOTTOM NAVIGATION BAR -->
+  <nav class="bottom-nav" id="bottom-nav" aria-label="Main navigation">
+    <button class="bottom-nav__tab bottom-nav__tab--active" data-tab="home" aria-label="Home">
+      <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 12L12 4l9 8"/>
+        <path d="M5 10v9h4v-5h6v5h4v-9"/>
+      </svg>
+      <span class="bottom-nav__label">Home</span>
+    </button>
+    <button class="bottom-nav__tab" data-tab="activities" aria-label="Activities">
+      <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="8" y1="6" x2="21" y2="6"/>
+        <line x1="8" y1="12" x2="21" y2="12"/>
+        <line x1="8" y1="18" x2="21" y2="18"/>
+        <circle cx="3" cy="6" r="0.5" fill="currentColor"/>
+        <circle cx="3" cy="12" r="0.5" fill="currentColor"/>
+        <circle cx="3" cy="18" r="0.5" fill="currentColor"/>
+      </svg>
+      <span class="bottom-nav__label">Activities</span>
+    </button>
+    <button class="bottom-nav__tab" data-tab="connect" aria-label="Connect">
+      <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      <span class="bottom-nav__label">Connect</span>
+    </button>
+  </nav>
 
-  <!-- Pi SDK must load before js/common.js -->
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <script src="js/common.js?v=5"></script>
   <script src="data/storyMusic.js?v=2"></script>
   <script src="js/storyEditor.js?v=5"></script>
-  <script src="js/main.js?v=11"></script>
+  <script src="js/main.js?v=12"></script>
   <script src="js/piAuth.js"></script>
 </body>
 </html>
