@@ -1,5 +1,5 @@
 /* ============================================================
-   Life Balance — backup.js  v11
+   Life Balance — backup.js  v12
 
    Backup key = Pi username (stored in localStorage once confirmed).
    No Pi Auth session dependency — works for every user.
@@ -136,9 +136,24 @@ function hideRestoreScreen() {
 
 async function tryAutoRestore() {
   if (hasLocalData()) return;
-  if (sessionStorage.getItem('lb_just_restored')) return; // avoid loop after reload
+  // Consume the just-restored guard: survives exactly the one reload it was
+  // set for, then clears itself so a later, unrelated empty-storage event
+  // can still trigger a normal restore attempt.
+  if (sessionStorage.getItem('lb_just_restored')) {
+    sessionStorage.removeItem('lb_just_restored');
+    return;
+  }
   const username = getUsername();
   if (!username) return;
+
+  // Hard cap regardless of the guards above — never loop more than twice in
+  // one tab session, no matter what edge case might otherwise cause a repeat.
+  const attempts = Number(sessionStorage.getItem('lb_restore_attempts') || '0');
+  if (attempts >= 2) {
+    console.warn('[backup] restore attempt cap reached, giving up for this session');
+    return;
+  }
+  sessionStorage.setItem('lb_restore_attempts', String(attempts + 1));
 
   // Cover the empty page immediately — no flash
   showRestoreScreen('Đang khôi phục dữ liệu…');
@@ -158,6 +173,12 @@ async function tryAutoRestore() {
       return;
     }
     restoreLocalStorage(payload.localStorage);
+    if (!hasLocalData()) {
+      // The backup exists but carries no usable lifebalance_ data — reloading
+      // would just repeat this exact same "empty backup" cycle forever.
+      hideRestoreScreen();
+      return;
+    }
     saveMeta({ savedAt: payload.savedAt, publicId: sign.publicId, cloudName: sign.cloudName });
     // Mark so the page after reload skips the restore check
     sessionStorage.setItem('lb_just_restored', '1');
@@ -214,7 +235,8 @@ function showDebugBadge() {
     + 'background:#000;color:#0f0;font:11px monospace;padding:3px 6px;'
     + 'text-align:center;pointer-events:none;opacity:.85;';
   const u = getUsername();
-  el.textContent = `dbg v11 · user:${u || 'NONE'} · local:${hasLocalData() ? 'yes' : 'no'} · meta:${localStorage.getItem(META_KEY) ? 'yes' : 'no'}`;
+  const attempts = sessionStorage.getItem('lb_restore_attempts') || '0';
+  el.textContent = `dbg v12 · user:${u || 'NONE'} · local:${hasLocalData() ? 'yes' : 'no'} · meta:${localStorage.getItem(META_KEY) ? 'yes' : 'no'} · tries:${attempts}`;
   document.body.prepend(el);
 }
 
@@ -255,10 +277,6 @@ window.addEventListener('piauth:success', async e => {
 
 document.addEventListener('DOMContentLoaded', async () => {
   navigator.storage?.persist?.().catch(() => {});
-
-  // Clear the "just restored" guard so future empty-storage scenarios
-  // are detected and restored normally (only skip the check once per reload).
-  sessionStorage.removeItem('lb_just_restored');
 
   // Reactive save: intercept every localStorage write that touches lifebalance_ data.
   // Schedule a cloud save 3 s after the last change so quick bursts merge into one upload.
