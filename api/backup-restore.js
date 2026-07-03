@@ -10,6 +10,10 @@
    (with the correct /v<version>/ segment), which we then fetch once
    server-side and hand back to the client as the raw backup JSON.
 
+   Tries life-balance/backups/<username> first, then falls back to the
+   old flat lb_backup_<username> id for backups saved before that
+   folder existed (see api/cloudinary-sign-backup.js).
+
    Body:    { username: "pi_username" }
    Returns: the backup JSON payload directly, or 404 if none exists.
    ============================================================ */
@@ -31,20 +35,24 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const publicId = `lb_backup_${username.toLowerCase()}`;
   const auth = Buffer.from(`${CLOUDINARY_API_KEY}:${CLOUDINARY_API_SECRET}`).toString('base64');
 
-  try {
+  async function lookup(publicId) {
     const metaRes = await fetch(
       `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/resources/raw/upload/${publicId}`,
       { headers: { Authorization: `Basic ${auth}` } }
     );
-    if (metaRes.status === 404) { res.status(404).json({ error: 'Chưa có bản sao lưu' }); return; }
-    if (!metaRes.ok) {
-      res.status(502).json({ error: `Cloudinary admin lookup failed (${metaRes.status})` });
-      return;
-    }
-    const meta = await metaRes.json();
+    if (metaRes.status === 404) return null;
+    if (!metaRes.ok) throw new Error(`Cloudinary admin lookup failed (${metaRes.status})`);
+    return metaRes.json();
+  }
+
+  try {
+    // New, organized location first; fall back to the old flat id for any
+    // backup saved before backups were moved into life-balance/backups/.
+    const meta = (await lookup(`life-balance/backups/${username.toLowerCase()}`))
+      || (await lookup(`lb_backup_${username.toLowerCase()}`));
+    if (!meta) { res.status(404).json({ error: 'Chưa có bản sao lưu' }); return; }
 
     // meta.secure_url includes the correct /v<version>/ path segment for
     // this exact upload, so even the delivery CDN can't serve a stale copy.

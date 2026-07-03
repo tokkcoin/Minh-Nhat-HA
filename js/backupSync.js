@@ -237,24 +237,6 @@ function hideSigninBanner() {
   document.getElementById('backup-signin-banner')?.remove();
 }
 
-// ── 5c. TEMP debug badge ───────────────────────────────────────
-// Tiny always-visible status line to diagnose the "data missing after
-// reopening Pi Browser" report — shows whether this version of the
-// script is even running, whether a username is present, and whether
-// there's local data. Remove once the root cause is confirmed.
-
-function showDebugBadge() {
-  const el = document.createElement('div');
-  el.id = 'backup-debug-badge';
-  el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99998;'
-    + 'background:#000;color:#0f0;font:11px monospace;padding:3px 6px;'
-    + 'text-align:center;pointer-events:none;opacity:.85;';
-  const u = getUsername();
-  const attempts = sessionStorage.getItem('lb_restore_attempts') || '0';
-  el.textContent = `dbg v15 · user:${u || 'NONE'} · local:${hasLocalData() ? 'yes' : 'no'} · meta:${localStorage.getItem(META_KEY) ? 'yes' : 'no'} · tries:${attempts}`;
-  document.body.prepend(el);
-}
-
 // ── 6. Auto-save timer ───────────────────────────────────────
 
 function startAutoSave() {
@@ -304,8 +286,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       saveDebounceTimer = setTimeout(() => doSave(false), 3_000);
     }
   };
-
-  showDebugBadge();
 
   const username = getUsername();
   if (username) {
