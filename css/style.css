@@ -1833,9 +1833,23 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   font-size: 16px; padding: 4px 6px;
   border-radius: var(--radius-sm);
   color: var(--text-secondary); opacity: .75;
-  transition: opacity .2s; line-height: 1;
+  transition: opacity .15s, color .15s; line-height: 1;
+  position: relative;
 }
 .backup-trigger:hover { opacity: 1; }
+/* Auto-save status dot — shown after background save */
+.backup-trigger::after {
+  content: '';
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  opacity: 0; transition: opacity .3s;
+}
+.backup-trigger--saving { opacity: 1; animation: backup-pulse .8s ease-in-out infinite; }
+.backup-trigger--saved::after { background: var(--success); opacity: 1; }
+.backup-trigger--error::after { background: var(--danger); opacity: 1; }
+@keyframes backup-pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
 
 .backup-overlay { position: fixed; inset: 0; z-index: 10500; background: rgba(0,0,0,.55);
   display: flex; align-items: center; justify-content: center; padding: var(--space-md); }

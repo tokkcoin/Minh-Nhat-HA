@@ -139,14 +139,51 @@ async function doRestore() {
   setTimeout(() => window.location.reload(), 1200);
 }
 
-// ── 5. Auto-save ─────────────────────────────────────────────
+// ── 5. Auto-save (runs silently in background) ───────────────
+
+function setBtnState(state) {
+  // state: 'idle' | 'saving' | 'saved' | 'error'
+  const btn = document.getElementById('backup-open-btn');
+  if (!btn) return;
+  btn.classList.remove('backup-trigger--saving', 'backup-trigger--saved', 'backup-trigger--error');
+  if (state !== 'idle') btn.classList.add(`backup-trigger--${state}`);
+}
+
+async function autoSaveOnce() {
+  setBtnState('saving');
+  try {
+    await doSave(false);
+    setBtnState('saved');
+    // Reset to idle after 3 s so the indicator doesn't persist forever
+    setTimeout(() => setBtnState('idle'), 3000);
+  } catch (e) {
+    setBtnState('error');
+    setTimeout(() => setBtnState('idle'), 4000);
+    console.warn('[backup] auto-save failed', e.message);
+  }
+}
 
 function startAutoSave() {
-  if (autoTimer) return;
-  autoTimer = setInterval(async () => {
-    try { await doSave(false); }
-    catch (e) { console.warn('[backup] auto-save failed', e.message); }
-  }, AUTO_MS);
+  if (autoTimer) return; // already running
+  autoTimer = setInterval(autoSaveOnce, AUTO_MS);
+  // Save immediately on next hide (user backgrounds app or switches tab)
+  document.addEventListener('visibilitychange', onVisibilityChange, { passive: true });
+}
+
+function onVisibilityChange() {
+  if (document.hidden) autoSaveOnce();
+}
+
+// Called once at boot — checks auth silently, starts auto-save if signed in.
+async function initAutoBackup() {
+  try {
+    const sign = await getSignature();
+    if (sign.notSignedIn) return; // not signed in — nothing to do
+    signCache = sign;
+    startAutoSave();
+    // First save: 30 s after page load so data has time to hydrate
+    setTimeout(autoSaveOnce, 30_000);
+  } catch { /* network error at boot — will retry on next interval */ }
 }
 
 // ── 6. UI helpers ────────────────────────────────────────────
@@ -204,12 +241,12 @@ function renderSignedIn(username, meta) {
       <button type="button" id="backup-save-btn" class="btn btn-primary backup-cloud-btn">☁️ Lưu lên cloud ngay</button>
       <button type="button" id="backup-restore-btn" class="backup-cloud-btn backup-cloud-btn--outline">⬇️ Khôi phục từ cloud</button>
     </div>
-    <p class="backup-auto-note">✅ Tự động lưu mỗi 5 phút</p>`;
+    <p class="backup-auto-note">✅ Tự động lưu mỗi 5 phút &amp; khi thoát app</p>`;
 
   document.getElementById('backup-save-btn').addEventListener('click', async () => {
     const btn = document.getElementById('backup-save-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Đang lưu…'; }
-    try { await doSave(true); startAutoSave(); }
+    try { await doSave(true); }
     catch (e) { showToast('Lưu thất bại — kiểm tra kết nối'); }
     if (btn) { btn.disabled = false; btn.textContent = '☁️ Lưu lên cloud ngay'; }
   });
@@ -261,4 +298,6 @@ function closeOverlay() {
 document.addEventListener('DOMContentLoaded', () => {
   navigator.storage?.persist?.().catch(() => {});
   document.getElementById('backup-open-btn')?.addEventListener('click', openOverlay);
+  // Silently start auto-backup if user is already signed in
+  initAutoBackup();
 });
