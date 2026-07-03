@@ -1,0 +1,26 @@
+{
+  "name": "Life Balance — Five Elements Tracker",
+  "short_name": "Life Balance",
+  "description": "Track Money, Health, Talent, Mood and Situation through the Five Elements.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f6fb",
+  "theme_color": "#00b8a9",
+  "lang": "vi",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%2300b8a9'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='96' fill='white'>LB</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%2300b8a9'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='256' fill='white'>LB</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
