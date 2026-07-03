@@ -1,7 +1,9 @@
 /* ============================================================
    Life Balance — piAuth.js
    Pi Network "Sign in with Pi" (username scope). Auto-triggers on
-   load and via a manual sign-in button. Loaded only on index.html.
+   load, via a manual button (#pi-signin-button, index.html only),
+   or via backup.js's fallback "sign in again" recovery banner
+   (every page — see js/backup.js's showSigninBanner()).
    ============================================================ */
 
 'use strict';

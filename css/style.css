@@ -1828,7 +1828,21 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .formation-unit__actions button:hover { opacity: 1; }
 .formation-unit__actions button:disabled { opacity: .25; cursor: default; }
 
-/* ── 22. Cloud Backup — auto-restore loading screen ── */
+/* ── 22. Cloud Backup — auto-restore loading screen + sign-in banner ── */
+/* Fallback "sign in again" banner — shown when this page has no Pi username
+   to save/restore with (e.g. after a Pi Browser storage wipe). */
+.backup-signin-banner {
+  position: fixed; left: var(--space-md); right: var(--space-md); bottom: var(--space-md);
+  z-index: 9000;
+  background: var(--primary); color: #fff;
+  border: none; border-radius: var(--radius-md);
+  padding: 12px var(--space-md);
+  font-size: 13px; font-weight: 700; text-align: center;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+}
+.backup-signin-banner:disabled { opacity: .7; cursor: default; }
+
 /* Auto-restore loading screen — covers empty page while fetching cloud data */
 .backup-restore-screen {
   position: fixed; inset: 0; z-index: 99999;

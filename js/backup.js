@@ -145,17 +145,60 @@ async function tryAutoRestore() {
   try {
     const sign = await getSign(username);
     const res  = await fetch(cloudUrl(sign.cloudName, sign.publicId));
-    if (!res.ok) { hideRestoreScreen(); return; }
+    if (res.status === 404) { hideRestoreScreen(); return; } // no backup yet — normal for a brand-new account
+    if (!res.ok) {
+      hideRestoreScreen();
+      showToast(`⚠️ Không tải được bản sao lưu (lỗi ${res.status})`);
+      return;
+    }
     const payload = await res.json();
-    if (payload.appName !== 'life-balance') { hideRestoreScreen(); return; }
+    if (payload.appName !== 'life-balance') {
+      hideRestoreScreen();
+      showToast('⚠️ Bản sao lưu không đúng định dạng');
+      return;
+    }
     restoreLocalStorage(payload.localStorage);
     saveMeta({ savedAt: payload.savedAt, publicId: sign.publicId, cloudName: sign.cloudName });
     // Mark so the page after reload skips the restore check
     sessionStorage.setItem('lb_just_restored', '1');
     window.location.reload(); // reload immediately — screen covers the transition
-  } catch {
-    hideRestoreScreen(); // no backup or network error — show page normally
+  } catch (e) {
+    hideRestoreScreen();
+    showToast(`⚠️ Khôi phục thất bại: ${e.message}`);
+    console.warn('[backup] restore:', e.message);
   }
+}
+
+// ── 5b. Manual sign-in recovery banner ────────────────────────
+// Shown whenever this page has no username to restore/save with —
+// e.g. Pi Browser wiped localStorage and piAuth.js's silent
+// auto-sign-in (no user gesture) didn't go through. Gives the user
+// an explicit, always-available way to trigger a real sign-in tap.
+
+function showSigninBanner() {
+  if (document.getElementById('backup-signin-banner')) return;
+  const el = document.createElement('button');
+  el.id = 'backup-signin-banner';
+  el.type = 'button';
+  el.className = 'backup-signin-banner';
+  el.textContent = '🔑 Đăng nhập lại để khôi phục dữ liệu đã lưu';
+  el.addEventListener('click', () => {
+    if (typeof signInWithPi !== 'function') {
+      showToast('Mở app trong Pi Browser để đăng nhập lại');
+      return;
+    }
+    el.disabled = true;
+    el.textContent = 'Đang đăng nhập…';
+    signInWithPi().finally(() => {
+      el.disabled = false;
+      el.textContent = '🔑 Đăng nhập lại để khôi phục dữ liệu đã lưu';
+    });
+  });
+  document.body.appendChild(el);
+}
+
+function hideSigninBanner() {
+  document.getElementById('backup-signin-banner')?.remove();
 }
 
 // ── 6. Auto-save timer ───────────────────────────────────────
@@ -172,6 +215,7 @@ function startAutoSave() {
 window.addEventListener('piauth:success', async e => {
   const name = e.detail?.username;
   const isFirstLogin = name && !getUsername();
+  hideSigninBanner();
 
   if (isFirstLogin) {
     setUsername(name);
@@ -216,6 +260,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     await tryAutoRestore(); // covers screen if needed; returns fast if data exists
     setTimeout(() => doSave(false), 10_000);
     startAutoSave();
+  } else {
+    // No username on this page yet. piAuth.js's silent auto-sign-in may still
+    // succeed and fire piauth:success shortly (hides this banner) — but if it
+    // needs a real user gesture to complete, this is the fallback so the user
+    // isn't stuck looking at an empty page with no way to recover their data.
+    showSigninBanner();
   }
-  // If no username yet: piauth:success event will set it when Pi Auth completes
 });
