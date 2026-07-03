@@ -1,47 +1,64 @@
 /* ============================================================
-   Life Balance — backup.js  v7
-   Auto-saves all app data to Cloudinary as a raw JSON file.
-   Works for every user — no Pi authentication required.
+   Life Balance — backup.js  v8
 
-   Each device generates a UUID on first use (lifebalance_device_id).
-   Cloudinary public_id = lb_backup_{uuid-without-dashes}
-   The UUID is the user's "backup key" — shown in the panel so they
-   can note it down in case localStorage is ever wiped.
+   Problem:  Pi Browser (mini-app WebView) can clear localStorage
+             when the app is force-closed from recents, wiping all data.
 
-   Save:    /api/cloudinary-sign-backup  →  Cloudinary /raw/upload
-   Restore: fetch public Cloudinary URL  →  write to localStorage
+   Solution: Dual-key persistence + auto-restore on every startup.
 
-   Auto-save triggers (all silent, no user action needed):
-     • 30 seconds after page load
-     • Every 5 minutes
-     • When the app is hidden / user switches away (visibilitychange)
+     1. UUID stored in BOTH localStorage AND a 2-year cookie.
+        Cookies survive many scenarios that clear localStorage.
+
+     2. On every page load:
+        - If localStorage has data → normal (save timer starts).
+        - If localStorage is empty but cookie has the UUID
+          → silently fetch the Cloudinary backup & auto-restore
+          → reload page with full data restored.
+
+     3. Auto-save to Cloudinary:
+        - 30 s after page load (first hydration save)
+        - Every 5 minutes
+        - On visibilitychange (user backgrounds the app)
    ============================================================ */
 
 'use strict';
 
 const DEVICE_ID_KEY = 'lifebalance_device_id';
 const META_KEY      = 'lifebalance_cloud_backup_meta';
+const COOKIE_NAME   = 'lb_device_id';
+const COOKIE_MAX    = 2 * 365 * 24 * 3600; // 2 years in seconds
 const AUTO_MS       = 5 * 60 * 1000;
 let   autoTimer     = null;
-let   isSaving      = false; // debounce concurrent saves
+let   isSaving      = false;
 
-// ── 1. Device ID ──────────────────────────────────────────────
+// ── 1. UUID helpers (localStorage + cookie dual-storage) ─────
 
-function getDeviceId() {
-  let id = localStorage.getItem(DEVICE_ID_KEY);
-  if (!id) {
-    // crypto.randomUUID available in Chromium 92+ (Pi Browser is Chromium-based)
-    id = crypto.randomUUID?.() ?? fallbackUUID();
-    localStorage.setItem(DEVICE_ID_KEY, id);
-  }
-  return id;
+function setCookieId(id) {
+  document.cookie = `${COOKIE_NAME}=${id}; max-age=${COOKIE_MAX}; path=/; SameSite=Lax`;
 }
 
-function fallbackUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.random() * 16 | 0;
-    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-  });
+function getCookieId() {
+  const m = document.cookie.match(new RegExp(`(?:^|;\\s*)${COOKIE_NAME}=([^;]+)`));
+  return m ? m[1] : null;
+}
+
+function genUUID() {
+  return crypto.randomUUID?.() ??
+    'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+}
+
+function getOrCreateDeviceId() {
+  let id = localStorage.getItem(DEVICE_ID_KEY) || getCookieId();
+  if (!id) {
+    id = genUUID();
+  }
+  // Always sync both storage locations
+  localStorage.setItem(DEVICE_ID_KEY, id);
+  setCookieId(id);
+  return id;
 }
 
 // ── 2. localStorage helpers ──────────────────────────────────
@@ -62,11 +79,20 @@ function restoreLocalStorage(lsData) {
   }
 }
 
+function hasLocalData() {
+  // True if the user has at least one app data key (not counting backup meta/device id)
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k?.startsWith('lifebalance_') && k !== META_KEY && k !== DEVICE_ID_KEY) return true;
+  }
+  return false;
+}
+
 function loadMeta() {
   try { return JSON.parse(localStorage.getItem(META_KEY)); } catch { return null; }
 }
 
-function saveMeta(meta) { localStorage.setItem(META_KEY, JSON.stringify(meta)); }
+function saveMeta(m) { localStorage.setItem(META_KEY, JSON.stringify(m)); }
 
 // ── 3. Cloudinary helpers ────────────────────────────────────
 
@@ -78,12 +104,18 @@ async function getSignature(deviceId) {
   });
   if (!res.ok) {
     const { error } = await res.json().catch(() => ({}));
-    throw new Error(error || `Server error ${res.status}`);
+    throw new Error(error || `Server ${res.status}`);
   }
   return res.json(); // { cloudName, apiKey, timestamp, signature, publicId }
 }
 
-async function uploadToCloudinary(sign, blob) {
+async function uploadBackup(sign, lsData, deviceId) {
+  const blob = new Blob([JSON.stringify({
+    appName: 'life-balance', version: 1,
+    savedAt: new Date().toISOString(),
+    deviceId, localStorage: lsData,
+  })], { type: 'application/json' });
+
   const form = new FormData();
   form.append('file',      blob);
   form.append('public_id', sign.publicId);
@@ -92,16 +124,16 @@ async function uploadToCloudinary(sign, blob) {
   form.append('signature', sign.signature);
   form.append('overwrite', 'true');
 
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${sign.cloudName}/raw/upload`, {
-    method: 'POST', body: form,
-  });
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${sign.cloudName}/raw/upload`,
+    { method: 'POST', body: form }
+  );
   if (!res.ok) throw new Error('Cloudinary upload failed');
-  return res.json();
+  return res.json(); // { created_at, … }
 }
 
-function backupUrl(meta) {
-  const ts = meta.savedAt ? new Date(meta.savedAt).getTime() : Date.now();
-  return `https://res.cloudinary.com/${meta.cloudName}/raw/upload/${meta.publicId}?v=${ts}`;
+function buildUrl(cloudName, publicId, ts) {
+  return `https://res.cloudinary.com/${cloudName}/raw/upload/${publicId}?v=${ts || Date.now()}`;
 }
 
 // ── 4. Save ──────────────────────────────────────────────────
@@ -111,18 +143,10 @@ async function doSave(showFeedback = false) {
   isSaving = true;
   setBtnState('saving');
   try {
-    const deviceId = getDeviceId();
+    const deviceId = getOrCreateDeviceId();
     const sign     = await getSignature(deviceId);
-    const blob     = new Blob([JSON.stringify({
-      appName:      'life-balance',
-      savedAt:      new Date().toISOString(),
-      version:      1,
-      deviceId,
-      localStorage: gatherLocalStorage(),
-    })], { type: 'application/json' });
-
-    const result = await uploadToCloudinary(sign, blob);
-    const meta   = {
+    const result   = await uploadBackup(sign, gatherLocalStorage(), deviceId);
+    const meta     = {
       savedAt:   result.created_at || new Date().toISOString(),
       publicId:  sign.publicId,
       cloudName: sign.cloudName,
@@ -131,60 +155,72 @@ async function doSave(showFeedback = false) {
     setLastSavedText(meta.savedAt);
     setBtnState('saved');
     setTimeout(() => setBtnState('idle'), 3000);
-    if (showFeedback) showToast('✅ Dữ liệu đã được lưu lên cloud');
+    if (showFeedback) showToast('✅ Đã lưu dữ liệu lên cloud');
     return meta;
   } catch (e) {
     setBtnState('error');
     setTimeout(() => setBtnState('idle'), 4000);
-    if (showFeedback) showToast('Lưu thất bại — kiểm tra kết nối mạng');
-    console.warn('[backup] save failed', e.message);
+    if (showFeedback) showToast('Lưu thất bại — kiểm tra kết nối');
+    console.warn('[backup] save failed:', e.message);
   } finally {
     isSaving = false;
   }
 }
 
-// ── 5. Restore ───────────────────────────────────────────────
+// ── 5. Auto-restore on startup ───────────────────────────────
+// Called when localStorage is empty but we have a cookie UUID.
+// Fetches the Cloudinary backup silently and reloads the page.
 
-async function doRestore() {
-  let meta = loadMeta();
-  if (!meta) {
-    // localStorage wiped — try to reconstruct from deviceId
-    try {
-      const deviceId = getDeviceId();
-      const sign     = await getSignature(deviceId);
-      meta = { publicId: sign.publicId, cloudName: sign.cloudName, savedAt: null };
-    } catch {
-      showToast('Không thể kết nối server — kiểm tra mạng');
-      return;
-    }
-  }
+async function autoRestore(deviceId) {
+  try {
+    const sign = await getSignature(deviceId);
+    const url  = buildUrl(sign.cloudName, sign.publicId);
+    const res  = await fetch(url);
+    if (!res.ok) return false; // no backup exists yet
+    const payload = await res.json();
+    if (payload.appName !== 'life-balance') return false;
 
-  showToast('Đang tải dữ liệu từ cloud…');
-  let res;
-  try { res = await fetch(backupUrl(meta)); }
-  catch { showToast('Không thể kết nối Cloudinary'); return; }
-
-  if (res.status === 404) { showToast('Chưa có bản lưu trên cloud cho thiết bị này'); return; }
-  if (!res.ok) { showToast(`Lỗi ${res.status} khi tải dữ liệu`); return; }
-
-  let payload;
-  try { payload = await res.json(); }
-  catch { showToast('File sao lưu bị hỏng'); return; }
-  if (payload.appName !== 'life-balance') { showToast('File không đúng định dạng'); return; }
-
-  const lsCount = Object.keys(payload.localStorage || {}).length;
-  const ok = window.confirm(
-    `Khôi phục từ bản lưu ngày ${fmtDate(payload.savedAt)}?\n\n` +
-    `${lsCount} mục dữ liệu sẽ được phục hồi.\nDữ liệu hiện tại sẽ bị ghi đè.`
-  );
-  if (!ok) return;
-
-  restoreLocalStorage(payload.localStorage);
-  showToast('✅ Đã khôi phục — đang tải lại…');
-  setTimeout(() => window.location.reload(), 1200);
+    // Restore all data
+    restoreLocalStorage(payload.localStorage);
+    // Re-sync device ID and meta
+    localStorage.setItem(DEVICE_ID_KEY, deviceId);
+    setCookieId(deviceId);
+    saveMeta({
+      savedAt:   payload.savedAt,
+      publicId:  sign.publicId,
+      cloudName: sign.cloudName,
+    });
+    return true;
+  } catch { return false; }
 }
 
-// ── 6. Auto-save ─────────────────────────────────────────────
+// ── 6. Manual restore (user-triggered) ──────────────────────
+
+async function doRestore() {
+  const deviceId = getOrCreateDeviceId();
+  showToast('Đang tải dữ liệu từ cloud…');
+  try {
+    const sign = await getSignature(deviceId);
+    const meta = loadMeta() || { publicId: sign.publicId, cloudName: sign.cloudName };
+    const url  = buildUrl(meta.cloudName, meta.publicId, meta.savedAt ? new Date(meta.savedAt).getTime() : undefined);
+    const res  = await fetch(url);
+    if (res.status === 404) { showToast('Chưa có bản lưu trên cloud'); return; }
+    if (!res.ok) { showToast(`Lỗi ${res.status}`); return; }
+    const payload = await res.json();
+    if (payload.appName !== 'life-balance') { showToast('File không đúng định dạng'); return; }
+
+    const n = Object.keys(payload.localStorage || {}).length;
+    if (!window.confirm(`Khôi phục từ bản lưu ${fmtDate(payload.savedAt)}?\n${n} mục dữ liệu · Dữ liệu hiện tại sẽ bị ghi đè.`)) return;
+    restoreLocalStorage(payload.localStorage);
+    showToast('✅ Đã khôi phục — đang tải lại…');
+    setTimeout(() => window.location.reload(), 1200);
+  } catch (e) {
+    showToast('Khôi phục thất bại — kiểm tra kết nối');
+    console.warn('[backup] restore failed:', e.message);
+  }
+}
+
+// ── 7. Auto-save timer ───────────────────────────────────────
 
 function setBtnState(state) {
   const btn = document.getElementById('backup-open-btn');
@@ -201,38 +237,25 @@ function startAutoSave() {
   }, { passive: true });
 }
 
-function initAutoBackup() {
-  // First save: 30 s after page load (let all data fully hydrate first)
-  setTimeout(() => doSave(false), 30_000);
-  startAutoSave();
-}
-
-// ── 7. UI helpers ────────────────────────────────────────────
+// ── 8. UI ────────────────────────────────────────────────────
 
 function fmtDate(iso) {
   if (!iso) return '?';
   const d = new Date(iso);
-  return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ` +
-         `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+  return `${d.getDate()}/${d.getMonth()+1} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
 }
-
 function setLastSavedText(iso) {
   const el = document.getElementById('backup-last-saved');
   if (el && iso) el.textContent = `Đã lưu: ${fmtDate(iso)}`;
 }
-
 function esc(s) {
   return String(s).replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
 }
 
-// ── 8. Overlay ───────────────────────────────────────────────
-
 function injectOverlay() {
   if (document.getElementById('backup-overlay')) return;
   const el = document.createElement('div');
-  el.id = 'backup-overlay';
-  el.className = 'backup-overlay';
-  el.setAttribute('hidden', '');
+  el.id = 'backup-overlay'; el.className = 'backup-overlay'; el.setAttribute('hidden', '');
   el.innerHTML = `
     <div class="backup-panel">
       <div class="backup-panel__header">
@@ -249,10 +272,8 @@ function injectOverlay() {
 function renderPanel() {
   const body = document.getElementById('backup-panel-body');
   if (!body) return;
-  const meta     = loadMeta();
-  const deviceId = getDeviceId();
-  const shortId  = deviceId.slice(0, 8) + '…';
-
+  const meta = loadMeta();
+  const id   = getOrCreateDeviceId();
   body.innerHTML = `
     <div class="backup-user">
       <span class="backup-user__avatar">☁️</span>
@@ -268,25 +289,25 @@ function renderPanel() {
     <p class="backup-auto-note">✅ Tự động lưu mỗi 5 phút &amp; khi thoát app</p>
     <div class="backup-device-id">
       <span class="backup-device-id__label">Mã thiết bị:</span>
-      <code class="backup-device-id__code" title="${esc(deviceId)}">${esc(shortId)}</code>
-      <button type="button" class="backup-device-id__copy" id="backup-copy-id">Sao chép</button>
+      <code class="backup-device-id__code" title="${esc(id)}">${esc(id.slice(0,8))}…</code>
+      <button type="button" id="backup-copy-id" class="backup-device-id__copy">Sao chép</button>
     </div>`;
 
   document.getElementById('backup-save-btn').addEventListener('click', async () => {
     const btn = document.getElementById('backup-save-btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Đang lưu…'; }
+    btn.disabled = true; btn.textContent = 'Đang lưu…';
     await doSave(true);
-    if (btn) { btn.disabled = false; btn.textContent = '☁️ Lưu lên cloud ngay'; }
+    btn.disabled = false; btn.textContent = '☁️ Lưu lên cloud ngay';
   });
   document.getElementById('backup-restore-btn').addEventListener('click', async () => {
     const btn = document.getElementById('backup-restore-btn');
-    if (btn) btn.disabled = true;
+    btn.disabled = true;
     await doRestore();
-    if (btn) btn.disabled = false;
+    btn.disabled = false;
   });
   document.getElementById('backup-copy-id').addEventListener('click', () => {
-    navigator.clipboard?.writeText(deviceId).then(() => showToast('Đã sao chép mã thiết bị'))
-      .catch(() => showToast(deviceId));
+    navigator.clipboard?.writeText(id).then(() => showToast('Đã sao chép mã thiết bị'))
+      .catch(() => showToast(id));
   });
 }
 
@@ -296,7 +317,6 @@ function openOverlay() {
   document.body.style.overflow = 'hidden';
   renderPanel();
 }
-
 function closeOverlay() {
   document.getElementById('backup-overlay')?.setAttribute('hidden', '');
   document.body.style.overflow = '';
@@ -304,8 +324,27 @@ function closeOverlay() {
 
 // ── 9. Boot ──────────────────────────────────────────────────
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   navigator.storage?.persist?.().catch(() => {});
   document.getElementById('backup-open-btn')?.addEventListener('click', openOverlay);
-  initAutoBackup();
+
+  const lsId     = localStorage.getItem(DEVICE_ID_KEY);
+  const cookieId = getCookieId();
+
+  if (!hasLocalData() && cookieId) {
+    // localStorage was wiped (e.g. Pi Browser cleared it) but cookie survived.
+    // Auto-restore silently — user gets their data back without doing anything.
+    showToast('Đang khôi phục dữ liệu…');
+    const ok = await autoRestore(cookieId);
+    if (ok) {
+      showToast('✅ Dữ liệu đã được khôi phục');
+      setTimeout(() => window.location.reload(), 800);
+      return; // stop here — page will reload with data
+    }
+  }
+
+  // Normal startup — ensure UUID is set in both storages, start auto-save
+  getOrCreateDeviceId();
+  setTimeout(() => doSave(false), 30_000); // first save 30 s after load
+  startAutoSave();
 });
