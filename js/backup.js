@@ -1,27 +1,34 @@
 /* ============================================================
-   Life Balance — backup.js  v9
-   Automatic cloud backup/restore tied to Pi Network username.
-   No UUID, no cookies — identity comes from Pi Auth.
+   Life Balance — backup.js  v10
 
-   On every Pi sign-in (auto on page load):
-     1. Check Cloudinary for a backup matching this username.
-     2. If local data is empty → auto-restore silently.
-     3. If local data exists → just start auto-save.
+   Backup key = Pi username (stored in localStorage once confirmed).
+   No Pi Auth session dependency — works for every user.
 
-   Auto-save triggers (all silent):
-     • Immediately after Pi sign-in completes
-     • Every 5 minutes
-     • When user exits / backgrounds the app (visibilitychange)
+   Setup (once only):
+     Pi Auth succeeds → username auto-captured.
+     OR user types username in the 💾 panel → saved.
+
+   After setup, fully automatic:
+     • 10 s after page load → first save
+     • Every 5 minutes → save
+     • App hidden / exit → save immediately
+     • App opened with empty data + saved username → auto-restore
    ============================================================ */
 
 'use strict';
 
-const META_KEY  = 'lifebalance_cloud_backup_meta';
-const AUTO_MS   = 5 * 60 * 1000;
-let   autoTimer = null;
-let   isSaving  = false;
+const USERNAME_KEY = 'lifebalance_pi_username';
+const META_KEY     = 'lifebalance_cloud_backup_meta';
+const AUTO_MS      = 5 * 60 * 1000;
+let   autoTimer    = null;
+let   isSaving     = false;
 
-// ── 1. localStorage helpers ──────────────────────────────────
+// ── 1. Username helpers ──────────────────────────────────────
+
+function getUsername()      { return localStorage.getItem(USERNAME_KEY) || ''; }
+function setUsername(name)  { localStorage.setItem(USERNAME_KEY, name.trim()); }
+
+// ── 2. localStorage helpers ──────────────────────────────────
 
 function gatherLocalStorage() {
   const d = {};
@@ -31,53 +38,58 @@ function gatherLocalStorage() {
   }
   return d;
 }
-
 function restoreLocalStorage(data) {
   for (const [k, v] of Object.entries(data || {}))
     if (k.startsWith('lifebalance_')) localStorage.setItem(k, v);
 }
-
 function hasLocalData() {
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
-    if (k?.startsWith('lifebalance_') && k !== META_KEY) return true;
+    if (k?.startsWith('lifebalance_') && k !== META_KEY && k !== USERNAME_KEY) return true;
   }
   return false;
 }
+function loadMeta()   { try { return JSON.parse(localStorage.getItem(META_KEY)); } catch { return null; } }
+function saveMeta(m)  { localStorage.setItem(META_KEY, JSON.stringify(m)); }
 
-function loadMeta() {
-  try { return JSON.parse(localStorage.getItem(META_KEY)); } catch { return null; }
+// ── 3. Cloudinary helpers ────────────────────────────────────
+
+async function getSign(username) {
+  const res = await fetch('/api/cloudinary-sign-backup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username }),
+  });
+  if (!res.ok) {
+    const { error } = await res.json().catch(() => ({}));
+    throw new Error(error || `Server ${res.status}`);
+  }
+  return res.json();
 }
-function saveMeta(m) { localStorage.setItem(META_KEY, JSON.stringify(m)); }
 
-// ── 2. Cloudinary sign ───────────────────────────────────────
-
-async function getSign() {
-  const res = await fetch('/api/cloudinary-sign-backup', { method: 'POST' });
-  if (res.status === 401) return null; // not signed in
-  if (!res.ok) throw new Error(`Server error ${res.status}`);
-  return res.json(); // { cloudName, apiKey, timestamp, signature, publicId, username }
+function cloudUrl(cloudName, publicId) {
+  return `https://res.cloudinary.com/${cloudName}/raw/upload/${publicId}?v=${Date.now()}`;
 }
 
-// ── 3. Save ──────────────────────────────────────────────────
+// ── 4. Save ──────────────────────────────────────────────────
 
 async function doSave(feedback = false) {
+  const username = getUsername();
+  if (!username) return; // username not set yet
   if (isSaving) return;
   isSaving = true;
   setBtnState('saving');
   try {
-    const sign = await getSign();
-    if (!sign) { setBtnState('idle'); return; } // not signed in
-
+    const sign = await getSign(username);
     const blob = new Blob([JSON.stringify({
       appName: 'life-balance', version: 1,
       savedAt: new Date().toISOString(),
-      username: sign.username,
+      username,
       localStorage: gatherLocalStorage(),
     })], { type: 'application/json' });
 
     const form = new FormData();
-    form.append('file', blob);
+    form.append('file',      blob);
     form.append('public_id', sign.publicId);
     form.append('api_key',   sign.apiKey);
     form.append('timestamp', sign.timestamp);
@@ -85,42 +97,73 @@ async function doSave(feedback = false) {
     form.append('overwrite', 'true');
 
     const up = await fetch(`https://api.cloudinary.com/v1_1/${sign.cloudName}/raw/upload`, { method: 'POST', body: form });
-    if (!up.ok) throw new Error('Upload failed');
+    if (!up.ok) throw new Error('Cloudinary upload failed');
     const result = await up.json();
 
-    const meta = { savedAt: result.created_at || new Date().toISOString(), publicId: sign.publicId, cloudName: sign.cloudName };
-    saveMeta(meta);
-    setLastSavedText(meta.savedAt);
+    saveMeta({ savedAt: result.created_at || new Date().toISOString(), publicId: sign.publicId, cloudName: sign.cloudName });
+    setLastSavedText(loadMeta()?.savedAt);
     setBtnState('saved');
     setTimeout(() => setBtnState('idle'), 3000);
     if (feedback) showToast('✅ Đã lưu dữ liệu lên cloud');
   } catch (e) {
     setBtnState('error');
     setTimeout(() => setBtnState('idle'), 4000);
-    if (feedback) showToast('Lưu thất bại — kiểm tra kết nối');
+    if (feedback) showToast(`Lưu thất bại: ${e.message}`);
     console.warn('[backup] save:', e.message);
   } finally { isSaving = false; }
 }
 
-// ── 4. Auto-restore after sign-in ────────────────────────────
+// ── 5. Restore ───────────────────────────────────────────────
 
-async function tryAutoRestore(sign) {
-  if (hasLocalData()) return; // already have data — don't overwrite
-  const meta = loadMeta() || { publicId: sign.publicId, cloudName: sign.cloudName };
-  const ts   = meta.savedAt ? new Date(meta.savedAt).getTime() : Date.now();
+async function doRestore(confirm = true) {
+  const username = getUsername();
+  if (!username) return;
   try {
-    const res = await fetch(`https://res.cloudinary.com/${meta.cloudName}/raw/upload/${meta.publicId}?v=${ts}`);
-    if (!res.ok) return; // no backup yet or error
+    const sign = await getSign(username);
+    const res  = await fetch(cloudUrl(sign.cloudName, sign.publicId));
+    if (!res.ok) { showToast('Chưa có bản lưu trên cloud'); return; }
+    const payload = await res.json();
+    if (payload.appName !== 'life-balance') { showToast('File không đúng định dạng'); return; }
+    if (confirm) {
+      const n = Object.keys(payload.localStorage || {}).length;
+      if (!window.confirm(`Khôi phục từ bản lưu ${fmtDate(payload.savedAt)}?\n${n} mục · Dữ liệu hiện tại sẽ bị ghi đè.`)) return;
+    }
+    restoreLocalStorage(payload.localStorage);
+    saveMeta({ savedAt: payload.savedAt, publicId: sign.publicId, cloudName: sign.cloudName });
+    showToast(`✅ Đã khôi phục dữ liệu của @${username}`);
+    setTimeout(() => window.location.reload(), 1000);
+  } catch (e) {
+    showToast(`Khôi phục thất bại: ${e.message}`);
+  }
+}
+
+// ── 6. Auto-restore on startup ───────────────────────────────
+
+async function tryAutoRestore() {
+  if (hasLocalData()) return; // already have data
+  const username = getUsername();
+  if (!username) return;
+  try {
+    const sign = await getSign(username);
+    const res  = await fetch(cloudUrl(sign.cloudName, sign.publicId));
+    if (!res.ok) return;
     const payload = await res.json();
     if (payload.appName !== 'life-balance') return;
     restoreLocalStorage(payload.localStorage);
     saveMeta({ savedAt: payload.savedAt, publicId: sign.publicId, cloudName: sign.cloudName });
-    showToast(`✅ Đã khôi phục dữ liệu của @${payload.username || sign.username}`);
-    setTimeout(() => window.location.reload(), 1000);
-  } catch { /* no backup or network error — ignore */ }
+    showToast(`✅ Dữ liệu của @${username} đã được khôi phục`);
+    setTimeout(() => window.location.reload(), 800);
+  } catch { /* no backup or network issue — skip */ }
 }
 
-// ── 5. Auto-save timer ───────────────────────────────────────
+// ── 7. Auto-save timer ───────────────────────────────────────
+
+function setBtnState(state) {
+  const btn = document.getElementById('backup-open-btn');
+  if (!btn) return;
+  btn.classList.remove('backup-trigger--saving', 'backup-trigger--saved', 'backup-trigger--error');
+  if (state !== 'idle') btn.classList.add(`backup-trigger--${state}`);
+}
 
 function startAutoSave() {
   if (autoTimer) return;
@@ -130,23 +173,19 @@ function startAutoSave() {
   }, { passive: true });
 }
 
-// Called after Pi Auth succeeds (either on this load or from piAuth.js event)
-async function onSignedIn() {
-  const sign = await getSign().catch(() => null);
-  if (!sign) return;
-  await tryAutoRestore(sign);  // restore if local data is empty
-  doSave(false);               // save current state immediately
-  startAutoSave();             // start ongoing auto-save
-}
+// Capture username from Pi Auth event (fired by piAuth.js after login)
+window.addEventListener('piauth:success', e => {
+  const name = e.detail?.username;
+  if (name && !getUsername()) {
+    setUsername(name);
+    renderPanel(); // refresh panel to show username
+  }
+  doSave(false);
+  startAutoSave();
+});
 
-// ── 6. UI helpers ────────────────────────────────────────────
+// ── 8. UI ────────────────────────────────────────────────────
 
-function setBtnState(state) {
-  const btn = document.getElementById('backup-open-btn');
-  if (!btn) return;
-  btn.classList.remove('backup-trigger--saving', 'backup-trigger--saved', 'backup-trigger--error');
-  if (state !== 'idle') btn.classList.add(`backup-trigger--${state}`);
-}
 function fmtDate(iso) {
   if (!iso) return '?';
   const d = new Date(iso);
@@ -158,8 +197,6 @@ function setLastSavedText(iso) {
 }
 function esc(s) { return String(s).replace(/[<>&"]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
 
-// ── 7. Overlay ───────────────────────────────────────────────
-
 function injectOverlay() {
   if (document.getElementById('backup-overlay')) return;
   const el = document.createElement('div');
@@ -170,36 +207,52 @@ function injectOverlay() {
         <h2 class="backup-panel__title">☁️ Lưu dữ liệu</h2>
         <button type="button" id="backup-close-btn" class="backup-panel__close">✕</button>
       </div>
-      <div class="backup-panel__body" id="backup-panel-body">
-        <p class="backup-status-hint">Đang kiểm tra đăng nhập…</p>
-      </div>
+      <div class="backup-panel__body" id="backup-panel-body"></div>
     </div>`;
   document.body.appendChild(el);
   el.addEventListener('click', e => { if (e.target === el) closeOverlay(); });
   document.getElementById('backup-close-btn').addEventListener('click', closeOverlay);
 }
 
-async function renderPanel() {
+function renderPanel() {
   const body = document.getElementById('backup-panel-body');
   if (!body) return;
-  const sign = await getSign().catch(() => null);
-  const meta = loadMeta();
+  const username = getUsername();
+  const meta     = loadMeta();
 
-  if (!sign) {
+  if (!username) {
+    // First time — ask for Pi username
     body.innerHTML = `
       <div class="backup-signin-prompt">
-        <div class="backup-signin-prompt__icon">π</div>
-        <p class="backup-signin-prompt__text">Đăng nhập bằng Pi Network để tự động lưu và khôi phục dữ liệu.</p>
-        <a href="index.html" class="btn btn-primary backup-cloud-btn">Đăng nhập với Pi →</a>
+        <div class="backup-signin-prompt__icon">💾</div>
+        <p class="backup-signin-prompt__text">Nhập tên đăng nhập Pi Network của bạn để bật tính năng tự động lưu dữ liệu.</p>
+        <input type="text" id="backup-username-input" class="backup-username-input"
+               placeholder="Tên Pi của bạn (vd: john_doe)" autocapitalize="none" />
+        <button type="button" id="backup-username-save" class="btn btn-primary backup-cloud-btn" style="margin-top:10px">
+          Bắt đầu lưu tự động
+        </button>
       </div>`;
+    document.getElementById('backup-username-save').addEventListener('click', () => {
+      const input = document.getElementById('backup-username-input');
+      const name  = input?.value.trim();
+      if (!name || !/^[a-zA-Z0-9_]{1,50}$/.test(name)) {
+        showToast('Tên không hợp lệ — chỉ dùng chữ, số và gạch dưới');
+        return;
+      }
+      setUsername(name);
+      doSave(true);
+      startAutoSave();
+      renderPanel(); // re-render with username shown
+    });
     return;
   }
 
+  // Username set — show status panel
   body.innerHTML = `
     <div class="backup-user">
       <span class="backup-user__avatar">π</span>
       <div>
-        <span class="backup-user__name">@${esc(sign.username)}</span>
+        <span class="backup-user__name">@${esc(username)}</span>
         <span id="backup-last-saved" class="backup-last-saved">${meta ? `Đã lưu: ${fmtDate(meta.savedAt)}` : 'Chưa lưu lần nào'}</span>
       </div>
     </div>
@@ -207,7 +260,8 @@ async function renderPanel() {
       <button type="button" id="backup-save-btn" class="btn btn-primary backup-cloud-btn">☁️ Lưu lên cloud ngay</button>
       <button type="button" id="backup-restore-btn" class="backup-cloud-btn backup-cloud-btn--outline">⬇️ Khôi phục từ cloud</button>
     </div>
-    <p class="backup-auto-note">✅ Tự động lưu mỗi 5 phút &amp; khi thoát app</p>`;
+    <p class="backup-auto-note">✅ Tự động lưu mỗi 5 phút &amp; khi thoát app</p>
+    <button type="button" id="backup-change-user" class="backup-change-user">Đổi tên người dùng</button>`;
 
   document.getElementById('backup-save-btn').addEventListener('click', async () => {
     const btn = document.getElementById('backup-save-btn');
@@ -218,20 +272,15 @@ async function renderPanel() {
   document.getElementById('backup-restore-btn').addEventListener('click', async () => {
     const btn = document.getElementById('backup-restore-btn');
     btn.disabled = true;
-    // Force restore even if local data exists
-    const sign2 = await getSign().catch(() => null);
-    if (!sign2) { showToast('Không thể xác thực — thử lại'); btn.disabled = false; return; }
-    const m = meta || { publicId: sign2.publicId, cloudName: sign2.cloudName };
-    const ts = m.savedAt ? new Date(m.savedAt).getTime() : Date.now();
-    try {
-      const res = await fetch(`https://res.cloudinary.com/${m.cloudName}/raw/upload/${m.publicId}?v=${ts}`);
-      if (res.status === 404) { showToast('Chưa có bản lưu trên cloud'); btn.disabled = false; return; }
-      const payload = await res.json();
-      if (!window.confirm(`Khôi phục từ bản lưu ${fmtDate(payload.savedAt)}?\nDữ liệu hiện tại sẽ bị ghi đè.`)) { btn.disabled = false; return; }
-      restoreLocalStorage(payload.localStorage);
-      showToast('✅ Đã khôi phục — đang tải lại…');
-      setTimeout(() => window.location.reload(), 1200);
-    } catch { showToast('Khôi phục thất bại'); btn.disabled = false; }
+    await doRestore(true);
+    btn.disabled = false;
+  });
+  document.getElementById('backup-change-user').addEventListener('click', () => {
+    if (window.confirm('Đổi tên người dùng sẽ xoá liên kết với bản lưu hiện tại. Tiếp tục?')) {
+      localStorage.removeItem(USERNAME_KEY);
+      localStorage.removeItem(META_KEY);
+      renderPanel();
+    }
   });
 }
 
@@ -246,17 +295,18 @@ function closeOverlay() {
   document.body.style.overflow = '';
 }
 
-// ── 8. Boot ──────────────────────────────────────────────────
+// ── 9. Boot ──────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', async () => {
   navigator.storage?.persist?.().catch(() => {});
   document.getElementById('backup-open-btn')?.addEventListener('click', openOverlay);
 
-  // Listen for Pi sign-in completing on this page (index.html has piAuth.js)
-  window.addEventListener('piauth:success', () => onSignedIn(), { once: false });
-
-  // Also check immediately in case the lb_session cookie already exists
-  // (user returning to a secondary page after having signed in on index.html)
-  const sign = await getSign().catch(() => null);
-  if (sign) onSignedIn();
+  const username = getUsername();
+  if (username) {
+    // Auto-restore if local data empty, then start auto-save
+    await tryAutoRestore();
+    setTimeout(() => doSave(false), 10_000);
+    startAutoSave();
+  }
+  // If no username yet: piauth:success event will set it when Pi Auth completes
 });

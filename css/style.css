@@ -1893,6 +1893,20 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .backup-status-hint { font-size: 13px; color: var(--text-muted); text-align: center;
   padding: var(--space-lg) 0; }
 
+/* username input (first-time setup) */
+.backup-username-input {
+  width: 100%; padding: 10px 12px;
+  border: 1.5px solid var(--border); border-radius: var(--radius-md);
+  font-size: 14px; font-family: var(--font-body);
+  color: var(--text-primary); background: var(--bg-page);
+}
+.backup-username-input:focus { outline: none; border-color: var(--primary); }
+.backup-change-user {
+  display: block; width: 100%; margin-top: 10px;
+  font-size: 11px; color: var(--text-muted); text-align: center;
+}
+.backup-change-user:hover { color: var(--danger); }
+
 /* device ID row */
 .backup-device-id {
   display: flex; align-items: center; gap: 6px;
