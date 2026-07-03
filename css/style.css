@@ -1828,71 +1828,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .formation-unit__actions button:hover { opacity: 1; }
 .formation-unit__actions button:disabled { opacity: .25; cursor: default; }
 
-/* ── 22. Cloud Backup overlay ── */
-.backup-trigger {
-  font-size: 16px; padding: 4px 6px;
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary); opacity: .75;
-  transition: opacity .15s, color .15s; line-height: 1;
-  position: relative;
-}
-.backup-trigger:hover { opacity: 1; }
-/* Auto-save status dot — shown after background save */
-.backup-trigger::after {
-  content: '';
-  position: absolute;
-  top: 2px; right: 2px;
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  opacity: 0; transition: opacity .3s;
-}
-.backup-trigger--saving { opacity: 1; animation: backup-pulse .8s ease-in-out infinite; }
-.backup-trigger--saved::after { background: var(--success); opacity: 1; }
-.backup-trigger--error::after { background: var(--danger); opacity: 1; }
-@keyframes backup-pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
-
-.backup-overlay { position: fixed; inset: 0; z-index: 10500; background: rgba(0,0,0,.55);
-  display: flex; align-items: center; justify-content: center; padding: var(--space-md); }
-.backup-overlay[hidden] { display: none; }
-
-.backup-panel { background: var(--bg-card); border-radius: var(--radius-lg);
-  width: 100%; max-width: 400px; box-shadow: var(--shadow-lg); overflow: hidden; }
-.backup-panel__header { display: flex; align-items: center; justify-content: space-between;
-  padding: 14px var(--space-md);
-  background: linear-gradient(135deg, #0d1b2a 0%, #1b3a5c 100%); }
-.backup-panel__title { font-size: 15px; font-weight: 700; color: #fff; margin: 0; }
-.backup-panel__close { color: rgba(255,255,255,.7); font-size: 16px; padding: 2px 6px;
-  border-radius: 50%; }
-.backup-panel__close:hover { background: rgba(255,255,255,.15); color: #fff; }
-.backup-panel__body { padding: var(--space-md); }
-
-/* signed-in state */
-.backup-user { display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-md);
-  padding-bottom: var(--space-md); border-bottom: 1px solid var(--border); }
-.backup-user__avatar { width: 36px; height: 36px; border-radius: 50%;
-  background: linear-gradient(135deg, #7c3aed, #2563eb);
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-weight: 800; font-size: 16px; flex: 0 0 auto; }
-.backup-user__name { font-weight: 700; font-size: 14px; color: var(--text-primary); flex: 1; }
-.backup-last-saved { font-size: 11px; color: var(--text-muted); display: block; }
-.backup-cloud-actions { display: flex; flex-direction: column; gap: 8px; }
-.backup-cloud-btn { width: 100%; padding: 11px; font-size: 14px; font-weight: 600;
-  border-radius: var(--radius-md); text-align: center; cursor: pointer; }
-.backup-cloud-btn--outline { background: transparent; border: 1.5px solid var(--primary);
-  color: var(--primary); }
-.backup-cloud-btn--outline:hover { background: var(--primary-xlight); }
-.backup-auto-note { font-size: 11px; color: var(--success); margin-top: 10px; text-align: center; }
-
-/* not-signed-in state */
-.backup-signin-prompt { text-align: center; padding: var(--space-md) 0; }
-.backup-signin-prompt__icon { font-size: 40px; margin-bottom: 10px; }
-.backup-signin-prompt__text { font-size: 13px; color: var(--text-secondary);
-  line-height: 1.6; margin-bottom: var(--space-md); }
-
-/* generic hint */
-.backup-status-hint { font-size: 13px; color: var(--text-muted); text-align: center;
-  padding: var(--space-lg) 0; }
-
+/* ── 22. Cloud Backup — auto-restore loading screen ── */
 /* Auto-restore loading screen — covers empty page while fetching cloud data */
 .backup-restore-screen {
   position: fixed; inset: 0; z-index: 99999;
@@ -1913,40 +1849,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .backup-restore-screen__msg {
   font-size: 14px; color: var(--text-secondary);
   font-weight: 500;
-}
-
-/* username input (first-time setup) */
-.backup-username-input {
-  width: 100%; padding: 10px 12px;
-  border: 1.5px solid var(--border); border-radius: var(--radius-md);
-  font-size: 14px; font-family: var(--font-body);
-  color: var(--text-primary); background: var(--bg-page);
-}
-.backup-username-input:focus { outline: none; border-color: var(--primary); }
-.backup-change-user {
-  display: block; width: 100%; margin-top: 10px;
-  font-size: 11px; color: var(--text-muted); text-align: center;
-}
-.backup-change-user:hover { color: var(--danger); }
-
-/* device ID row */
-.backup-device-id {
-  display: flex; align-items: center; gap: 6px;
-  margin-top: var(--space-md); padding-top: var(--space-md);
-  border-top: 1px solid var(--border);
-  font-size: 11px;
-}
-.backup-device-id__label { color: var(--text-muted); flex: 0 0 auto; }
-.backup-device-id__code {
-  flex: 1; font-family: monospace; font-size: 11px;
-  background: var(--bg-page); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 2px 6px;
-  color: var(--text-secondary);
-}
-.backup-device-id__copy {
-  flex: 0 0 auto; font-size: 11px; color: var(--primary);
-  font-weight: 600; padding: 2px 8px;
-  border: 1px solid var(--primary); border-radius: var(--radius-sm);
 }
 
 /* ── 23. Expense Sheet (Metal element — monthly expense spreadsheet) ─ */
