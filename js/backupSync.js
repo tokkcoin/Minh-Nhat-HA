@@ -1,5 +1,8 @@
 /* ============================================================
-   Life Balance — backup.js  v13
+   Life Balance — backupSync.js  v14
+   (renamed from backup.js — same file, forced a fresh URL because some
+   Pi Browser installs were stuck serving a stale cached backup.js no
+   matter how the ?v= cache-bust query param was bumped)
 
    Backup key = Pi username (stored in localStorage once confirmed).
    No Pi Auth session dependency — works for every user.
@@ -244,7 +247,7 @@ function showDebugBadge() {
     + 'text-align:center;pointer-events:none;opacity:.85;';
   const u = getUsername();
   const attempts = sessionStorage.getItem('lb_restore_attempts') || '0';
-  el.textContent = `dbg v13 · user:${u || 'NONE'} · local:${hasLocalData() ? 'yes' : 'no'} · meta:${localStorage.getItem(META_KEY) ? 'yes' : 'no'} · tries:${attempts}`;
+  el.textContent = `dbg v14 · user:${u || 'NONE'} · local:${hasLocalData() ? 'yes' : 'no'} · meta:${localStorage.getItem(META_KEY) ? 'yes' : 'no'} · tries:${attempts}`;
   document.body.prepend(el);
 }
 

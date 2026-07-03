@@ -43,15 +43,15 @@ life-balance/
 │   ├── skills.js               # skills.html: icon-based skill badges (name + emoji icon picker + 1-5 star level), add/edit/delete; click a skill's icon to open a per-skill "folder" (notes + Cloudinary-uploaded images)
 │   ├── situation.js             # situation.html: 3-zone strategic formation board (Thiên thời/Địa lợi/Nhân hoà), units moved between zones via ▲/▼, add/edit/delete
 │   ├── mood.js                   # Placeholder boot-only script — Fire element page, real features land here next
-│   ├── backup.js                # Loaded on every page: automatic cloud backup/restore of all localStorage data, keyed by Pi username, via Cloudinary
+│   ├── backupSync.js            # Loaded on every page (renamed from backup.js to defeat a stubborn Pi Browser cache): automatic cloud backup/restore of all localStorage data, keyed by Pi username, via Cloudinary
 │   ├── piPayment.js            # pi-test-payment.html: authenticate -> createPayment -> server approve/complete flow
-│   └── piAuth.js               # index.html only: Pi.authenticate (username scope) -> /api/verify-auth -> session cookie
+│   └── piAuth.js               # Loaded on every page: Pi.authenticate (username scope) -> /api/verify-auth -> session cookie; also re-establishes the username for backupSync.js on pages other than index.html
 ├── api/                     # Vercel serverless functions — deliberate, scoped exception to the static/no-backend rule (see tech-defaults.md)
 │   ├── approve-payment.js     # POST: server-side U2A payment approval (uses PI_API_KEY env var)
 │   ├── complete-payment.js    # POST: server-side U2A payment completion (uses PI_API_KEY env var)
 │   ├── verify-auth.js         # POST: validates a Pi accessToken via GET /v2/me, issues a signed session cookie (uses SESSION_SECRET env var)
 │   ├── cloudinary-sign.js     # POST: issues a signed upload signature for direct browser->Cloudinary uploads (uses CLOUDINARY_API_KEY/_SECRET/_CLOUD_NAME env vars)
-│   └── cloudinary-sign-backup.js # POST: signed upload signature dedicated to the automatic backup flow in js/backup.js
+│   └── cloudinary-sign-backup.js # POST: signed upload signature dedicated to the automatic backup flow in js/backupSync.js
 ├── data/                    # Script-loaded static data files (see .claude/agents/researcher.md) — NOT user content
 ├── audio/NCS/                # Self-hosted royalty-free music tracks used by the Story music picker (data/storyMusic.js)
 └── .claude/                 # Claude Configuration Folder

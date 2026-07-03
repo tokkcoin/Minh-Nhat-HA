@@ -2,8 +2,8 @@
    Life Balance — piAuth.js
    Pi Network "Sign in with Pi" (username scope). Auto-triggers on
    load, via a manual button (#pi-signin-button, index.html only),
-   or via backup.js's fallback "sign in again" recovery banner
-   (every page — see js/backup.js's showSigninBanner()).
+   or via backupSync.js's fallback "sign in again" recovery banner
+   (every page — see js/backupSync.js's showSigninBanner()).
    ============================================================ */
 
 'use strict';
@@ -60,7 +60,7 @@ async function signInWithPi() {
       signInBtn.disabled = true;
     }
 
-    // Notify backup.js so it can start auto-save + auto-restore
+    // Notify backupSync.js so it can start auto-save + auto-restore
     window.dispatchEvent(new CustomEvent('piauth:success', { detail: { username: user.username } }));
   } catch (err) {
     setAuthStatus(`Sign-in failed: ${err.message || err}`);
