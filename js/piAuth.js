@@ -57,6 +57,9 @@ async function signInWithPi() {
       signInBtn.textContent = `@${user.username}`;
       signInBtn.disabled = true;
     }
+
+    // Notify backup.js so it can start auto-save + auto-restore
+    window.dispatchEvent(new CustomEvent('piauth:success', { detail: { username: user.username } }));
   } catch (err) {
     setAuthStatus(`Sign-in failed: ${err.message || err}`);
   }

@@ -31,11 +31,11 @@ async function initPiSdk() {
   }
 
   if (!piInitPromise) {
-    piInitPromise = Promise.resolve(Pi.init({ version: '2.0', sandbox: true }));
+    piInitPromise = Promise.resolve(Pi.init({ version: '2.0', sandbox: false }));
   }
   await piInitPromise;
 
-  if (statusEl) statusEl.textContent = '✅ Pi Browser detected (sandbox)';
+  if (statusEl) statusEl.textContent = '✅ Pi Browser detected';
   return true;
 }
 
