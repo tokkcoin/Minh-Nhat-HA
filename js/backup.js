@@ -1,5 +1,5 @@
 /* ============================================================
-   Life Balance — backup.js  v12
+   Life Balance — backup.js  v13
 
    Backup key = Pi username (stored in localStorage once confirmed).
    No Pi Auth session dependency — works for every user.
@@ -54,10 +54,14 @@ function saveMeta(m)  { localStorage.setItem(META_KEY, JSON.stringify(m)); }
 // ── 3. Cloudinary helpers ────────────────────────────────────
 
 async function getSign(username) {
+  // keepalive: this request often fires from the visibilitychange "app is
+  // being backgrounded/closed" handler — without it, the mobile OS can
+  // suspend the page mid-request and silently drop the save.
   const res = await fetch('/api/cloudinary-sign-backup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username }),
+    keepalive: true,
   });
   if (!res.ok) {
     const { error } = await res.json().catch(() => ({}));
@@ -94,7 +98,11 @@ async function doSave(feedback = false) {
     form.append('signature', sign.signature);
     form.append('overwrite', 'true');
 
-    const up = await fetch(`https://api.cloudinary.com/v1_1/${sign.cloudName}/raw/upload`, { method: 'POST', body: form });
+    // Same reasoning as getSign() above — keep this alive past a page
+    // suspension. The backup payload is plain JSON (no embedded media,
+    // those live on Cloudinary already as URLs), so it comfortably fits
+    // under the browser's keepalive request-size cap.
+    const up = await fetch(`https://api.cloudinary.com/v1_1/${sign.cloudName}/raw/upload`, { method: 'POST', body: form, keepalive: true });
     if (!up.ok) throw new Error('Cloudinary upload failed');
     const result = await up.json();
 
@@ -236,7 +244,7 @@ function showDebugBadge() {
     + 'text-align:center;pointer-events:none;opacity:.85;';
   const u = getUsername();
   const attempts = sessionStorage.getItem('lb_restore_attempts') || '0';
-  el.textContent = `dbg v12 · user:${u || 'NONE'} · local:${hasLocalData() ? 'yes' : 'no'} · meta:${localStorage.getItem(META_KEY) ? 'yes' : 'no'} · tries:${attempts}`;
+  el.textContent = `dbg v13 · user:${u || 'NONE'} · local:${hasLocalData() ? 'yes' : 'no'} · meta:${localStorage.getItem(META_KEY) ? 'yes' : 'no'} · tries:${attempts}`;
   document.body.prepend(el);
 }
 
