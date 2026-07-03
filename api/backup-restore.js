@@ -10,9 +10,11 @@
    (with the correct /v<version>/ segment), which we then fetch once
    server-side and hand back to the client as the raw backup JSON.
 
-   Tries life-balance/backups/<username> first, then falls back to the
-   old flat lb_backup_<username> id for backups saved before that
-   folder existed (see api/cloudinary-sign-backup.js).
+   Tries the current life-balance/users/<username>/data location first,
+   then falls back through the two earlier locations backups have lived
+   at (life-balance/backups/<username>, then the original flat
+   lb_backup_<username>) so backups saved at any point in this app's
+   history still restore correctly (see api/cloudinary-sign-backup.js).
 
    Body:    { username: "pi_username" }
    Returns: the backup JSON payload directly, or 404 if none exists.
@@ -48,10 +50,12 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // New, organized location first; fall back to the old flat id for any
-    // backup saved before backups were moved into life-balance/backups/.
-    const meta = (await lookup(`life-balance/backups/${username.toLowerCase()}`))
-      || (await lookup(`lb_backup_${username.toLowerCase()}`));
+    // Current per-user tree location first, then the two earlier schemes
+    // this app has used for backups, oldest last.
+    const u = username.toLowerCase();
+    const meta = (await lookup(`life-balance/users/${u}/data`))
+      || (await lookup(`life-balance/backups/${u}`))
+      || (await lookup(`lb_backup_${u}`));
     if (!meta) { res.status(404).json({ error: 'Chưa có bản sao lưu' }); return; }
 
     // meta.secure_url includes the correct /v<version>/ path segment for

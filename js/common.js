@@ -104,16 +104,26 @@ function saveElementPosts(elementKey, posts) {
 // never passes through our Vercel functions — only the tiny signature
 // request does, see api/cloudinary-sign.js). Throws on failure; callers
 // must catch and show a toast rather than assume this always succeeds.
+// Lands under life-balance/users/<pi-username>/images|videos (server-
+// computed, see api/cloudinary-sign.js) so the whole Cloudinary account
+// stays organized per-user instead of one flat pile of files.
 async function uploadMediaToCloudinary(file) {
-  const signRes = await fetch('/api/cloudinary-sign', { method: 'POST' });
+  const username = typeof getUsername === 'function' ? getUsername() : '';
+  const kind = file.type.startsWith('image/') ? 'image' : 'video';
+  const signRes = await fetch('/api/cloudinary-sign', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, kind }),
+  });
   if (!signRes.ok) throw new Error('Could not get upload signature');
-  const { cloudName, apiKey, timestamp, signature } = await signRes.json();
+  const { cloudName, apiKey, timestamp, signature, folder } = await signRes.json();
 
   const form = new FormData();
   form.append('file', file);
   form.append('api_key', apiKey);
   form.append('timestamp', timestamp);
   form.append('signature', signature);
+  form.append('folder', folder);
 
   const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
     method: 'POST',

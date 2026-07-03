@@ -4,11 +4,13 @@
    Identity = Pi username supplied by the client (no session cookie
    required). The username is validated server-side for format only.
 
-   Backups live under life-balance/backups/<username> (a Cloudinary
-   "folder", just a path prefix on the public_id) instead of a flat
-   lb_backup_<username> id at the account root — keeps the media
-   library organized as usage grows. api/backup-restore.js falls back
-   to the old flat id for any backup saved before this change.
+   Backups live under life-balance/users/<username>/data (a Cloudinary
+   "folder", just a path prefix on the public_id) — same per-user tree
+   as media uploads (life-balance/users/<username>/images|videos, see
+   api/cloudinary-sign.js) so the whole account is organized by user
+   from one level down. api/backup-restore.js falls back through the
+   two earlier locations (life-balance/backups/<username>, then the
+   original flat lb_backup_<username>) for backups saved before this.
 
    Body:    { username: "pi_username" }
    Returns: { cloudName, apiKey, timestamp, signature, publicId }
@@ -34,7 +36,7 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const publicId  = `life-balance/backups/${username.toLowerCase()}`;
+  const publicId  = `life-balance/users/${username.toLowerCase()}/data`;
   const timestamp = Math.floor(Date.now() / 1000);
   const paramStr  = `overwrite=true&public_id=${publicId}&timestamp=${timestamp}`;
   const signature = crypto.createHash('sha1').update(paramStr + CLOUDINARY_API_SECRET).digest('hex');
