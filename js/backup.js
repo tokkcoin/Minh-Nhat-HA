@@ -139,21 +139,50 @@ async function doRestore(confirm = true) {
 
 // ── 6. Auto-restore on startup ───────────────────────────────
 
+// Full-screen cover that hides the empty page while we check/fetch the backup.
+// Injected before any content is visible so there's no empty-state flash.
+function showRestoreScreen(msg) {
+  if (document.getElementById('backup-restore-screen')) return;
+  const el = document.createElement('div');
+  el.id = 'backup-restore-screen';
+  el.className = 'backup-restore-screen';
+  el.innerHTML = `
+    <div class="backup-restore-screen__inner">
+      <div class="backup-restore-screen__spinner"></div>
+      <p class="backup-restore-screen__msg">${msg}</p>
+    </div>`;
+  document.body.appendChild(el);
+}
+
+function hideRestoreScreen() {
+  const el = document.getElementById('backup-restore-screen');
+  if (!el) return;
+  el.classList.add('backup-restore-screen--done');
+  setTimeout(() => el.remove(), 300);
+}
+
 async function tryAutoRestore() {
-  if (hasLocalData()) return; // already have data
+  if (hasLocalData()) return;
+  if (sessionStorage.getItem('lb_just_restored')) return; // avoid loop after reload
   const username = getUsername();
   if (!username) return;
+
+  // Cover the empty page immediately — no flash
+  showRestoreScreen('Đang khôi phục dữ liệu…');
   try {
     const sign = await getSign(username);
     const res  = await fetch(cloudUrl(sign.cloudName, sign.publicId));
-    if (!res.ok) return;
+    if (!res.ok) { hideRestoreScreen(); return; }
     const payload = await res.json();
-    if (payload.appName !== 'life-balance') return;
+    if (payload.appName !== 'life-balance') { hideRestoreScreen(); return; }
     restoreLocalStorage(payload.localStorage);
     saveMeta({ savedAt: payload.savedAt, publicId: sign.publicId, cloudName: sign.cloudName });
-    showToast(`✅ Dữ liệu của @${username} đã được khôi phục`);
-    setTimeout(() => window.location.reload(), 800);
-  } catch { /* no backup or network issue — skip */ }
+    // Mark so the page after reload skips the restore check
+    sessionStorage.setItem('lb_just_restored', '1');
+    window.location.reload(); // reload immediately — screen covers the transition
+  } catch {
+    hideRestoreScreen(); // no backup or network error — show page normally
+  }
 }
 
 // ── 7. Auto-save timer ───────────────────────────────────────
@@ -301,10 +330,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   navigator.storage?.persist?.().catch(() => {});
   document.getElementById('backup-open-btn')?.addEventListener('click', openOverlay);
 
+  // Clear the "just restored" guard so future empty-storage scenarios
+  // are detected and restored normally (only skip the check once per reload).
+  sessionStorage.removeItem('lb_just_restored');
+
   const username = getUsername();
   if (username) {
-    // Auto-restore if local data empty, then start auto-save
-    await tryAutoRestore();
+    await tryAutoRestore(); // covers screen if needed; returns fast if data exists
     setTimeout(() => doSave(false), 10_000);
     startAutoSave();
   }

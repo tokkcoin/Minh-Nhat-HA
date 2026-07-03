@@ -1893,6 +1893,28 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .backup-status-hint { font-size: 13px; color: var(--text-muted); text-align: center;
   padding: var(--space-lg) 0; }
 
+/* Auto-restore loading screen — covers empty page while fetching cloud data */
+.backup-restore-screen {
+  position: fixed; inset: 0; z-index: 99999;
+  background: var(--bg-page);
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity .3s ease;
+}
+.backup-restore-screen--done { opacity: 0; pointer-events: none; }
+.backup-restore-screen__inner { text-align: center; }
+.backup-restore-screen__spinner {
+  width: 40px; height: 40px; margin: 0 auto 16px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: restore-spin .8s linear infinite;
+}
+@keyframes restore-spin { to { transform: rotate(360deg); } }
+.backup-restore-screen__msg {
+  font-size: 14px; color: var(--text-secondary);
+  font-weight: 500;
+}
+
 /* username input (first-time setup) */
 .backup-username-input {
   width: 100%; padding: 10px 12px;
