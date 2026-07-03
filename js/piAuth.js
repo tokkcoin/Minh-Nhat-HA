@@ -69,5 +69,17 @@ async function signInWithPi() {
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('pi-signin-button')?.addEventListener('click', signInWithPi);
-  signInWithPi(); // auto-trigger on load
+
+  const cached = localStorage.getItem('lifebalance_pi_username');
+  if (cached) {
+    // Returning user: surface name instantly from localStorage — no round-trip to Pi SDK.
+    // The 30-day session cookie issued by verify-auth covers subsequent API calls.
+    setAuthStatus(`Đã đăng nhập @${cached}`);
+    const btn = document.getElementById('pi-signin-button');
+    if (btn) { btn.textContent = `@${cached}`; btn.disabled = true; }
+    window.dispatchEvent(new CustomEvent('piauth:success', { detail: { username: cached } }));
+  } else {
+    // First time on this device: full Pi authentication flow.
+    signInWithPi();
+  }
 });

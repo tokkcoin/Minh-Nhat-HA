@@ -20,8 +20,9 @@
 const USERNAME_KEY = 'lifebalance_pi_username';
 const META_KEY     = 'lifebalance_cloud_backup_meta';
 const AUTO_MS      = 5 * 60 * 1000;
-let   autoTimer    = null;
-let   isSaving     = false;
+let   autoTimer         = null;
+let   isSaving          = false;
+let   saveDebounceTimer = null;
 
 // ── 1. Username helpers ──────────────────────────────────────
 
@@ -108,7 +109,7 @@ async function doSave(feedback = false) {
   } catch (e) {
     setBtnState('error');
     setTimeout(() => setBtnState('idle'), 4000);
-    if (feedback) showToast(`Lưu thất bại: ${e.message}`);
+    showToast(`⚠️ Lưu thất bại: ${e.message}`);
     console.warn('[backup] save:', e.message);
   } finally { isSaving = false; }
 }
@@ -345,6 +346,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Clear the "just restored" guard so future empty-storage scenarios
   // are detected and restored normally (only skip the check once per reload).
   sessionStorage.removeItem('lb_just_restored');
+
+  // Reactive save: intercept every localStorage write that touches lifebalance_ data.
+  // Schedule a cloud save 3 s after the last change so quick bursts merge into one upload.
+  // This ensures data is never lost even if the user exits before the 5-min timer fires.
+  const _origSetItem = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function reactiveSetItem(key, value) {
+    _origSetItem(key, value);
+    if (key.startsWith('lifebalance_') && key !== META_KEY && key !== USERNAME_KEY && getUsername()) {
+      clearTimeout(saveDebounceTimer);
+      saveDebounceTimer = setTimeout(() => doSave(false), 3_000);
+    }
+  };
 
   const username = getUsername();
   if (username) {
