@@ -23,6 +23,7 @@ const AUTO_MS      = 5 * 60 * 1000;
 let   autoTimer         = null;
 let   isSaving          = false;
 let   saveDebounceTimer = null;
+let   firstSaveDone     = false; // show toast on first auto-save so user knows it's working
 
 // ── 1. Username helpers ──────────────────────────────────────
 
@@ -189,10 +190,12 @@ async function tryAutoRestore() {
 // ── 7. Auto-save timer ───────────────────────────────────────
 
 function setBtnState(state) {
-  const btn = document.getElementById('backup-open-btn');
-  if (!btn) return;
-  btn.classList.remove('backup-trigger--saving', 'backup-trigger--saved', 'backup-trigger--error');
-  if (state !== 'idle') btn.classList.add(`backup-trigger--${state}`);
+  // The 💾 button was removed — state changes are communicated via toasts instead.
+  // 'saved' state triggers a toast on first save so the user knows auto-save is active.
+  if (state === 'saved' && !firstSaveDone) {
+    firstSaveDone = true;
+    showToast('☁️ Đã lưu dữ liệu tự động');
+  }
 }
 
 function startAutoSave() {
