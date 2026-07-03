@@ -203,14 +203,26 @@ function startAutoSave() {
 }
 
 // Capture username from Pi Auth event (fired by piAuth.js after login)
-window.addEventListener('piauth:success', e => {
+window.addEventListener('piauth:success', async e => {
   const name = e.detail?.username;
-  if (name && !getUsername()) {
+  const isFirstLogin = name && !getUsername();
+
+  if (isFirstLogin) {
     setUsername(name);
-    renderPanel(); // refresh panel to show username
+    renderPanel();
+    // New device: restore cloud data BEFORE saving anything.
+    // doSave() with empty localStorage would overwrite the user's real data.
+    // tryAutoRestore() reloads the page when it finds a backup; after reload
+    // DOMContentLoaded will start auto-save normally.
+    await tryAutoRestore();
+    // Reaches here only if no cloud backup was found (brand-new user).
+    setTimeout(() => doSave(false), 10_000);
+    startAutoSave();
+  } else {
+    // Returning user on the same device: data already present, just save.
+    doSave(false);
+    startAutoSave();
   }
-  doSave(false);
-  startAutoSave();
 });
 
 // ── 8. UI ────────────────────────────────────────────────────
