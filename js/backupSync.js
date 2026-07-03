@@ -1,5 +1,5 @@
 /* ============================================================
-   Life Balance — backupSync.js  v14
+   Life Balance — backupSync.js  v15
    (renamed from backup.js — same file, forced a fresh URL because some
    Pi Browser installs were stuck serving a stale cached backup.js no
    matter how the ?v= cache-bust query param was bumped)
@@ -71,10 +71,6 @@ async function getSign(username) {
     throw new Error(error || `Server ${res.status}`);
   }
   return res.json();
-}
-
-function cloudUrl(cloudName, publicId) {
-  return `https://res.cloudinary.com/${cloudName}/raw/upload/${publicId}?v=${Date.now()}`;
 }
 
 // ── 4. Save ──────────────────────────────────────────────────
@@ -169,8 +165,16 @@ async function tryAutoRestore() {
   // Cover the empty page immediately — no flash
   showRestoreScreen('Đang khôi phục dữ liệu…');
   try {
-    const sign = await getSign(username);
-    const res  = await fetch(cloudUrl(sign.cloudName, sign.publicId));
+    // Goes through /api/backup-restore (Cloudinary Admin API, never CDN-
+    // cached) instead of fetching the public res.cloudinary.com delivery
+    // URL directly — that CDN was found to keep serving a stale, long-out-
+    // of-date backup regardless of the ?v= cache-bust query string, since
+    // it caches raw-file responses by path and ignores query params.
+    const res = await fetch('/api/backup-restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    });
     if (res.status === 404) { hideRestoreScreen(); return; } // no backup yet — normal for a brand-new account
     if (!res.ok) {
       hideRestoreScreen();
@@ -190,7 +194,7 @@ async function tryAutoRestore() {
       hideRestoreScreen();
       return;
     }
-    saveMeta({ savedAt: payload.savedAt, publicId: sign.publicId, cloudName: sign.cloudName });
+    saveMeta({ savedAt: payload.savedAt });
     // Mark so the page after reload skips the restore check
     sessionStorage.setItem('lb_just_restored', '1');
     window.location.reload(); // reload immediately — screen covers the transition
@@ -247,7 +251,7 @@ function showDebugBadge() {
     + 'text-align:center;pointer-events:none;opacity:.85;';
   const u = getUsername();
   const attempts = sessionStorage.getItem('lb_restore_attempts') || '0';
-  el.textContent = `dbg v14 · user:${u || 'NONE'} · local:${hasLocalData() ? 'yes' : 'no'} · meta:${localStorage.getItem(META_KEY) ? 'yes' : 'no'} · tries:${attempts}`;
+  el.textContent = `dbg v15 · user:${u || 'NONE'} · local:${hasLocalData() ? 'yes' : 'no'} · meta:${localStorage.getItem(META_KEY) ? 'yes' : 'no'} · tries:${attempts}`;
   document.body.prepend(el);
 }
 
