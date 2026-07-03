@@ -19,36 +19,41 @@ All guidelines and configuration systems are managed under the `.claude/` direct
 ```
 life-balance/
 ├── index.html              # Landing page — hero (orbiting element nodes, each links out to its own element page) + showcase/how-it-works + the unified multi-element feed (composer + Stories-style filter row + combined feed)
-├── finance.html             # Metal element page — the Money/finance-rebalance allocation engine (extracted out of index.html)
-├── health.html              # Wood element page — health tracking (placeholder/scaffold, no real features yet)
-├── mood.html                # Fire element page — mood/emotion tracking (placeholder/scaffold, no real features yet)
-├── skills.html              # Water element page — talent/skill building: icon-based skill badges with a 1-5 star proficiency level
-├── situation.html           # Earth element page — strategic "battle formation" board: goals/priorities placed in Tiền tuyến/Trung quân/Hậu phương zones
+├── finance.html             # Metal element page — 4-pool allocation engine + "Thực tế" comparison panel + expense sheet overlay (extracted out of index.html)
+├── health.html              # Wood element page — wuxia-MMO-style quest system (Main/Side/Daily/Weekly/Monthly quests, XP + levels)
+├── mood.html                # Fire element page — mood/emotion tracking (placeholder/scaffold, no real features yet — the only element still unbuilt)
+├── skills.html              # Water element page — talent/skill building: icon-based skill badges with a 1-5 star proficiency level + per-skill notes/image "folder"
+├── situation.html           # Earth element page — strategic "battle formation" board: goals/priorities placed in Thiên thời/Địa lợi/Nhân hoà zones
 ├── journal.html             # Per-element journal (still works standalone via ?el=metal|wood|water|fire|earth, no longer linked from index.html)
 ├── chart-concepts.html      # Design-comparison page: 5 combo (bar+line) growth chart concepts
 ├── pi-test-payment.html     # One-off Mainnet U2A payment page for the Pi Developer Portal checklist (noindex, not linked from nav)
 ├── privacy-policy.html      # Public privacy policy (linked from Pi Developer Portal)
 ├── validation-key.txt       # Pi domain-ownership validation file (must stay at root, content from the portal)
+├── manifest.json            # PWA manifest — lets Pi Browser install the app
 ├── CLAUDE.md                # Root-level AI context
 ├── css/style.css            # All styles
 ├── js/
-│   ├── common.js              # Shared helpers (showToast, initPiSdk) + shared post model (ELEMENTS, PRIORITY_LEVELS, loadElementPosts/saveElementPosts, timeAgo, escapeHtml, uploadMediaToCloudinary, maxBytesForFile) — loaded on every page
+│   ├── common.js              # Shared helpers (showToast, initPiSdk, safeSetItem) + shared post model (ELEMENTS, PRIORITY_LEVELS, loadElementPosts/saveElementPosts, timeAgo, escapeHtml, uploadMediaToCloudinary, maxBytesForFile) — loaded on every page
 │   ├── main.js                 # index.html boot: How-it-works preview + unified composer/feed + Stories tray (create/view/delete)
 │   ├── journal.js              # journal.html: per-element composer, feed, like/delete (uses common.js's shared post model)
 │   ├── chartConcepts.js        # chart-concepts.html: builds weekly post-count series (real or demo) and renders the 5 chart designs
-│   ├── financeRebalance.js     # finance.html: Metal/Money 4-pool allocation engine (invest/savings/selfDev/emergency), live Pi Network price via CoinGecko, ±5% rebalance warnings
+│   ├── financeRebalance.js     # finance.html: Metal/Money 4-pool allocation engine (invest/savings/selfDev/emergency), live Pi Network price via CoinGecko, ±5% rebalance warnings, "Thực tế" comparison panel + pie charts
+│   ├── expenseSheet.js         # finance.html: full-screen monthly expense spreadsheet overlay (category/amount rows, auto-sum, feeds finance-expense input)
 │   ├── health.js               # health.html: wuxia-MMO-style quest system — Main/Side/Daily/Weekly/Monthly quests with XP + levels (replaced an earlier "Kỷ luật thép" target/streak tracker)
 │   ├── skills.js               # skills.html: icon-based skill badges (name + emoji icon picker + 1-5 star level), add/edit/delete; click a skill's icon to open a per-skill "folder" (notes + Cloudinary-uploaded images)
-│   ├── situation.js             # situation.html: 3-zone strategic formation board (frontline/middle/rear), units moved between zones via ▲/▼, add/edit/delete
+│   ├── situation.js             # situation.html: 3-zone strategic formation board (Thiên thời/Địa lợi/Nhân hoà), units moved between zones via ▲/▼, add/edit/delete
 │   ├── mood.js                   # Placeholder boot-only script — Fire element page, real features land here next
+│   ├── backup.js                # Loaded on every page: automatic cloud backup/restore of all localStorage data, keyed by Pi username, via Cloudinary
 │   ├── piPayment.js            # pi-test-payment.html: authenticate -> createPayment -> server approve/complete flow
 │   └── piAuth.js               # index.html only: Pi.authenticate (username scope) -> /api/verify-auth -> session cookie
 ├── api/                     # Vercel serverless functions — deliberate, scoped exception to the static/no-backend rule (see tech-defaults.md)
 │   ├── approve-payment.js     # POST: server-side U2A payment approval (uses PI_API_KEY env var)
 │   ├── complete-payment.js    # POST: server-side U2A payment completion (uses PI_API_KEY env var)
 │   ├── verify-auth.js         # POST: validates a Pi accessToken via GET /v2/me, issues a signed session cookie (uses SESSION_SECRET env var)
-│   └── cloudinary-sign.js     # POST: issues a signed upload signature for direct browser->Cloudinary uploads (uses CLOUDINARY_API_KEY/_SECRET/_CLOUD_NAME env vars)
+│   ├── cloudinary-sign.js     # POST: issues a signed upload signature for direct browser->Cloudinary uploads (uses CLOUDINARY_API_KEY/_SECRET/_CLOUD_NAME env vars)
+│   └── cloudinary-sign-backup.js # POST: signed upload signature dedicated to the automatic backup flow in js/backup.js
 ├── data/                    # Script-loaded static data files (see .claude/agents/researcher.md) — NOT user content
+├── audio/NCS/                # Self-hosted royalty-free music tracks used by the Story music picker (data/storyMusic.js)
 └── .claude/                 # Claude Configuration Folder
     ├── CLAUDE.md           # Project identity & guidelines
     ├── CLAUDE.local.md     # Developer overrides (not in git)
