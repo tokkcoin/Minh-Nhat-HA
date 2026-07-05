@@ -2189,8 +2189,16 @@ body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
   display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;
 }
 .charsheet__portrait::before { content: ""; position: absolute; inset: 5px; border-radius: 5px; background: var(--bg-card-hover); opacity: .94; }
-.character-figure { position: relative; z-index: 1; width: 62%; }
-.character-figure svg { width: 100%; height: auto; display: block; }
+.charsheet__portrait::after {
+  content: ""; position: absolute; inset: 5px; border-radius: 5px; pointer-events: none; z-index: 2;
+  background: radial-gradient(ellipse at 50% 38%, transparent 45%, rgba(0,0,0,.25) 100%);
+}
+.charsheet__portrait-photo {
+  position: absolute; inset: 5px; z-index: 1;
+  width: calc(100% - 10px); height: calc(100% - 10px);
+  object-fit: cover; object-position: 50% 15%;
+  border-radius: 5px;
+}
 .charsheet__avatar-name { text-align: center; font-family: var(--font-display); font-size: 11px; color: var(--text-primary); margin-top: 4px; }
 .charsheet__avatar-rank { text-align: center; font-size: 9px; color: var(--text-muted); }
 
