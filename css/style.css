@@ -2096,7 +2096,10 @@ body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 .connect-placeholder__title { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-sm); }
 .connect-placeholder__text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; margin-bottom: var(--space-md); }
 
-/* ── 25. Character Equipment Panel (home hero — Mũ/Áo/Quần/Vũ khí/Ngựa slots mapped to the 5 elements) ── */
+/* ── 25. Character Panel (home hero) — real per-element stats (left),
+   5 equipment shortcut icons (middle), avatar (right). Mũ/Áo/Quần/
+   Vũ khí/Ngựa map to Hoả/Mộc/Thuỷ/Kim/Thổ — thematic pairing only,
+   see characterPanel.js for which localStorage key backs each stat. ── */
 .character-section {
   max-width: 1100px;
   margin: 0 auto;
@@ -2124,53 +2127,58 @@ body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
   max-width: 460px;
   margin: 0 auto var(--space-xl);
 }
-.character-stage {
-  position: relative;
-  width: 100%;
-  max-width: 320px;
-  min-height: 340px;
+
+.character-card {
+  display: grid;
+  grid-template-columns: 1.3fr auto 1fr;
+  gap: var(--space-lg);
+  align-items: start;
+  text-align: left;
+  max-width: 900px;
   margin: 0 auto;
 }
-.character-figure {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 46%;
-  transform: translate(-50%, -50%);
-}
-.character-figure svg { width: 100%; height: auto; display: block; }
 
+.character-stats { display: flex; flex-direction: column; gap: var(--space-sm); }
+.character-stats__empty { font-size: 13px; color: var(--text-muted); }
+.character-stat-group {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--el, var(--border));
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.character-stat-group__head {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 700; color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.character-stat-group__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--el, var(--border)); flex: none; }
+.character-stat-group__line { font-size: 12.5px; color: var(--text-secondary); margin: 2px 0; }
+
+.character-equip-col { display: flex; flex-direction: column; gap: 10px; }
 .equip-slot {
-  position: absolute;
-  width: 64px;
-  height: 64px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: var(--bg-card);
   border: 2px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
-  transform: translate(-50%, -50%);
+  font-size: 22px;
   transition: all var(--transition);
   box-shadow: var(--shadow-sm);
 }
-.equip-slot:hover { transform: translate(-50%, -50%) scale(1.08); box-shadow: var(--shadow-md); }
-.equip-slot--hat    { top: 4%;  left: 50%; border-color: var(--fire);  background: var(--fire-tint); }
-.equip-slot--weapon { top: 30%; left: 4%;  border-color: var(--metal); background: var(--metal-tint); }
-.equip-slot--shirt  { top: 30%; left: 96%; border-color: var(--wood);  background: var(--wood-tint); }
-.equip-slot--pants  { top: 78%; left: 14%; border-color: var(--water); background: var(--water-tint); }
-.equip-slot--horse  { top: 78%; left: 86%; border-color: var(--earth); background: var(--earth-tint); }
+.equip-slot:hover { transform: scale(1.08); box-shadow: var(--shadow-md); }
+.equip-slot--hat    { border-color: var(--fire);  background: var(--fire-tint); }
+.equip-slot--shirt  { border-color: var(--wood);  background: var(--wood-tint); }
+.equip-slot--pants  { border-color: var(--water); background: var(--water-tint); }
+.equip-slot--weapon { border-color: var(--metal); background: var(--metal-tint); }
+.equip-slot--horse  { border-color: var(--earth); background: var(--earth-tint); }
 
-.character-stat__element { font-size: 12px; color: var(--text-muted); margin-bottom: var(--space-sm); }
-.character-stat__lines { display: flex; flex-direction: column; gap: 6px; }
-.character-stat__line {
-  font-size: 13px;
-  color: var(--text-secondary);
-  background: var(--bg-page);
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
-}
+.character-avatar { display: flex; justify-content: center; }
+.character-figure { width: 100%; max-width: 200px; }
+.character-figure svg { width: 100%; height: auto; display: block; }
 
 /* ── 26. Daily Quest Widget (shared) — reusable daily checklist for the
    Fire/Water/Metal/Earth pages, mirrors .health-task but themed off
@@ -2214,6 +2222,8 @@ body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
   .hero-actions { justify-content: center; }
   .how-steps { grid-template-columns: 1fr; }
   .finance-pools { grid-template-columns: repeat(2, 1fr); }
+  .character-card { grid-template-columns: 1fr; justify-items: center; }
+  .character-equip-col { flex-direction: row; flex-wrap: wrap; justify-content: center; }
 }
 @media (max-width: 768px) {
   .hero-title { font-size: 40px; }
@@ -2224,6 +2234,5 @@ body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
   .chart-mini-grid { grid-template-columns: 1fr; }
   .finance-pools { grid-template-columns: 1fr; }
   .finance-charts { grid-template-columns: 1fr; }
-  .character-stage { max-width: 260px; min-height: 280px; }
-  .equip-slot { width: 52px; height: 52px; font-size: 22px; }
+  .equip-slot { width: 44px; height: 44px; font-size: 20px; }
 }

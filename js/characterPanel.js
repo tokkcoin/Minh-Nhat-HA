@@ -1,30 +1,20 @@
 /* ============================================================
    Life Balance — characterPanel.js
-   Home-page "character" panel (index.html only): a wuxia-style
-   equipment silhouette with 5 clickable slots — Mũ/Áo/Quần/Vũ khí/
-   Ngựa — each mapped to one of the 5 elements. Clicking a slot opens
-   a stat modal (reuses .finance-modal chrome from financeRebalance.js)
-   showing real numbers read straight from that element's own
-   localStorage data — no separate "character" data model of its own.
+   Home-page "character" panel (index.html only): real numbers read
+   straight from each element's own localStorage data (no separate
+   "character" data model of its own), shown as an always-visible
+   stat list. The 5 equipment icons next to it are plain <a href>
+   shortcuts to each element's page (see index.html) — no JS wiring
+   needed there, so this file only renders the stat list.
    ============================================================ */
 
 'use strict';
 
-// ── 1. Slot ↔ Element mapping ───────────────────────────────
-// Kim(Metal)=weapon (blades are metal), Mộc(Wood)=armor (body/growth),
-// Thuỷ(Water)=pants (fluid movement), Hoả(Fire)=hat (head/energy),
-// Thổ(Earth)=horse (earth-bound mount) — a thematic pairing only,
-// each slot's real stats come from that element's actual tracked data.
+// Stat list order — matches the rest of the home page (main.js's
+// HOW_PREVIEW_ELEMENTS / DAILY_SOURCES order).
+const CHARACTER_STAT_ORDER = ['metal', 'wood', 'water', 'fire', 'earth'];
 
-const CHARACTER_SLOTS = [
-  { key: 'hat',    label: 'Mũ',       icon: '🧢', element: 'fire' },
-  { key: 'weapon', label: 'Vũ khí',   icon: '⚔️', element: 'metal' },
-  { key: 'shirt',  label: 'Áo giáp',  icon: '🥋', element: 'wood' },
-  { key: 'pants',  label: 'Quần',     icon: '👖', element: 'water' },
-  { key: 'horse',  label: 'Ngựa',     icon: '🐎', element: 'earth' },
-];
-
-// ── 2. Per-element stat readers ─────────────────────────────
+// ── 1. Per-element stat readers ─────────────────────────────
 // Each reads the same localStorage key its own element page already
 // owns (finance.html/health.js/skills.js/situation.js) and derives a
 // few display lines — never writes anything, never duplicates state.
@@ -129,43 +119,30 @@ const CHARACTER_STAT_FN = {
   earth: computeEarthStat,
 };
 
-// ── 3. Modal ─────────────────────────────────────────────────
+// ── 2. Render ────────────────────────────────────────────────
 
-function openCharacterStatModal(slotKey) {
-  const slot = CHARACTER_SLOTS.find(s => s.key === slotKey);
-  const modal = document.getElementById('character-stat-modal');
-  const titleEl = document.getElementById('character-stat-title');
-  const elementEl = document.getElementById('character-stat-element');
-  const bodyEl = document.getElementById('character-stat-body');
-  if (!slot || !modal || !titleEl || !bodyEl) return;
+function renderCharacterStats() {
+  const container = document.getElementById('character-stats');
+  if (!container) return;
 
-  const element = ELEMENTS[slot.element];
-  const lines = CHARACTER_STAT_FN[slot.element]();
-
-  titleEl.textContent = `${slot.icon} ${slot.label}`;
-  if (elementEl) elementEl.textContent = element ? `${element.icon} ${element.name} — ${element.dimension}` : '';
-  bodyEl.innerHTML = lines.map(line => `<p class="character-stat__line">${escapeHtml(line)}</p>`).join('');
-
-  modal.hidden = false;
-}
-
-function closeCharacterStatModal() {
-  const modal = document.getElementById('character-stat-modal');
-  if (modal) modal.hidden = true;
+  container.innerHTML = CHARACTER_STAT_ORDER.map(key => {
+    const element = ELEMENTS[key];
+    const lines = CHARACTER_STAT_FN[key]();
+    return `
+      <div class="character-stat-group" style="--el:var(--${key})">
+        <div class="character-stat-group__head">
+          <span class="character-stat-group__dot"></span>${element.icon} ${element.name} — ${element.dimension}
+        </div>
+        ${lines.map(line => `<p class="character-stat-group__line">${escapeHtml(line)}</p>`).join('')}
+      </div>`;
+  }).join('');
 }
 
 function initCharacterPanel() {
-  const slots = document.querySelectorAll('.equip-slot');
-  if (!slots.length) return;
-
-  slots.forEach(btn => btn.addEventListener('click', () => openCharacterStatModal(btn.dataset.slot)));
-  document.getElementById('character-stat-close')?.addEventListener('click', closeCharacterStatModal);
-  document.getElementById('character-stat-modal')?.addEventListener('click', evt => {
-    if (evt.target.id === 'character-stat-modal') closeCharacterStatModal();
-  });
+  renderCharacterStats();
 }
 
-// ── 4. Boot ──────────────────────────────────────────────────
+// ── 3. Boot ──────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
   runBootStep(initCharacterPanel);
