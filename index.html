@@ -7,7 +7,7 @@
   <meta name="description" content="Track your balance across Money, Health, Talent, Mood, and Situation through the Five Elements." />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
-  <link rel="stylesheet" href="css/style.css?v=47" />
+  <link rel="stylesheet" href="css/style.css?v=48" />
 </head>
 <body>
 
@@ -112,12 +112,14 @@
           </div>
 
           <div class="charsheet__avatar-col">
-            <div class="character-figure" aria-hidden="true">
-              <svg viewBox="0 0 100 180" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50" cy="26" r="18" fill="var(--bg-card-hover)" stroke="var(--border)" stroke-width="2"/>
-                <path d="M50 44 C22 50 15 92 19 172 L81 172 C85 92 78 50 50 44 Z" fill="var(--bg-card-hover)" stroke="var(--border)" stroke-width="2"/>
-                <path d="M50 46 L50 172" stroke="var(--border)" stroke-width="1" opacity=".5"/>
-              </svg>
+            <div class="charsheet__portrait">
+              <div class="character-figure" aria-hidden="true">
+                <svg viewBox="0 0 100 180" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="50" cy="26" r="18" fill="var(--bg-card-hover)" stroke="var(--border)" stroke-width="2"/>
+                  <path d="M50 44 C22 50 15 92 19 172 L81 172 C85 92 78 50 50 44 Z" fill="var(--bg-card-hover)" stroke="var(--border)" stroke-width="2"/>
+                  <path d="M50 46 L50 172" stroke="var(--border)" stroke-width="1" opacity=".5"/>
+                </svg>
+              </div>
             </div>
             <div class="charsheet__avatar-name">Đạo Hữu</div>
             <div class="charsheet__avatar-rank">Sơ Nhập Ngũ Hành</div>
@@ -138,6 +140,7 @@
           <button type="button" class="charsheet__tab-chip" id="charsheet-fire-tab" style="--el:var(--fire)" aria-expanded="false" aria-controls="charsheet-fire-panel">火<span>Tu Tâm</span></button>
           <button type="button" class="charsheet__tab-chip" style="--el:var(--earth)" disabled>土<span>Sắp mở</span></button>
         </div>
+        <p class="charsheet__tabs-hint">bấm 火 Hoả để xem thử khu Tu Tâm</p>
 
         <div class="charsheet__fire-panel" id="charsheet-fire-panel" hidden>
           <div class="charsheet__fire-realm"><b>☯ Luyện Tâm</b><span>185 / 300 Hoả Khí</span></div>
@@ -159,21 +162,23 @@
           <div class="charsheet__formula-note">
             <code>Điểm hiệu dụng = Gốc + (Gốc nguồn × Hệ số Sinh) − (Gốc khắc × Hệ số Khắc × [1−Kháng/(Kháng+100)])</code>
           </div>
-          <table class="charsheet__formula-table">
-            <thead><tr><th>Cặp</th><th>Hiệu ứng</th><th style="text-align:right">Điểm</th></tr></thead>
-            <tbody>
-              <tr class="row-sinh"><td>Thuỷ→Mộc</td><td>mạnh khỏe</td><td class="num">+12</td></tr>
-              <tr class="row-sinh"><td>Mộc→Hoả</td><td>hưng phấn</td><td class="num">+12</td></tr>
-              <tr class="row-sinh"><td>Hoả→Thổ</td><td>thuận lợi</td><td class="num">+1</td></tr>
-              <tr class="row-sinh"><td>Thổ→Kim</td><td>nhiều tiền</td><td class="num">+10</td></tr>
-              <tr class="row-sinh"><td>Kim→Thuỷ</td><td>kỷ luật</td><td class="num">+10</td></tr>
-              <tr class="row-khac"><td>Kim→Mộc</td><td>ít tiền</td><td class="num">−1</td></tr>
-              <tr class="row-khac"><td>Mộc→Thổ</td><td>chậm chạp</td><td class="num">−1</td></tr>
-              <tr class="row-khac"><td>Thổ→Thuỷ</td><td>khủng hoảng</td><td class="num">−2</td></tr>
-              <tr class="row-khac"><td>Thuỷ→Hoả</td><td>mất hứng</td><td class="num">−1</td></tr>
-              <tr class="row-khac"><td>Hoả→Kim</td><td>FOMO</td><td class="num">−1</td></tr>
-            </tbody>
-          </table>
+          <div class="charsheet__formula-table-scroll">
+            <table class="charsheet__formula-table">
+              <thead><tr><th>Cặp</th><th>Hiệu ứng</th><th style="text-align:right">Điểm</th></tr></thead>
+              <tbody>
+                <tr class="row-sinh"><td>Thuỷ→Mộc</td><td>mạnh khỏe</td><td class="num">+12</td></tr>
+                <tr class="row-sinh"><td>Mộc→Hoả</td><td>hưng phấn</td><td class="num">+12</td></tr>
+                <tr class="row-sinh"><td>Hoả→Thổ</td><td>thuận lợi</td><td class="num">+1</td></tr>
+                <tr class="row-sinh"><td>Thổ→Kim</td><td>nhiều tiền</td><td class="num">+10</td></tr>
+                <tr class="row-sinh"><td>Kim→Thuỷ</td><td>kỷ luật</td><td class="num">+10</td></tr>
+                <tr class="row-khac"><td>Kim→Mộc</td><td>ít tiền</td><td class="num">−1</td></tr>
+                <tr class="row-khac"><td>Mộc→Thổ</td><td>chậm chạp</td><td class="num">−1</td></tr>
+                <tr class="row-khac"><td>Thổ→Thuỷ</td><td>khủng hoảng</td><td class="num">−2</td></tr>
+                <tr class="row-khac"><td>Thuỷ→Hoả</td><td>mất hứng</td><td class="num">−1</td></tr>
+                <tr class="row-khac"><td>Hoả→Kim</td><td>FOMO</td><td class="num">−1</td></tr>
+              </tbody>
+            </table>
+          </div>
         </details>
 
       </div>
