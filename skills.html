@@ -7,7 +7,7 @@
   <meta name="description" content="Water element — talent and skill building." />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
-  <link rel="stylesheet" href="css/style.css?v=42" />
+  <link rel="stylesheet" href="css/style.css?v=44" />
 </head>
 <body>
 
@@ -32,6 +32,23 @@
     <button type="button" id="skill-info-open" class="journal-hero__icon journal-hero__icon--btn" aria-label="Xem cách tính cấp độ kỹ năng">💧</button>
     <h1 class="journal-hero__title">Water Element</h1>
     <p class="journal-hero__dimension">Talent — xây dựng kỹ năng <span class="skill-hero-hint">Nhấn 💧 để xem cách tính sao</span></p>
+  </section>
+
+  <section class="daily-quest-section" id="daily-quest" style="--current-element: var(--water); --current-element-tint: var(--water-tint);">
+    <h2 class="daily-quest-section__title">💧 Nhiệm vụ hàng ngày</h2>
+    <p class="daily-quest-section__subtitle">Thói quen nhỏ, đều đặn mỗi ngày — tách biệt với giờ luyện tập theo dõi bên dưới.</p>
+
+    <div class="quest-add-row">
+      <div class="quest-add-row__bottom">
+        <input type="text" id="daily-quest-new-title" placeholder="Thêm nhiệm vụ mới…" />
+        <input type="number" id="daily-quest-new-xp" min="0" value="10" aria-label="XP" />
+        <button type="button" id="daily-quest-add-btn" class="btn btn-primary">Thêm</button>
+      </div>
+    </div>
+
+    <button type="button" id="daily-quest-seed-btn" class="btn-text daily-quest-seed-btn">💧 Tạo 5 nhiệm vụ mẫu</button>
+
+    <div id="daily-quest-list" class="daily-quest-list"></div>
   </section>
 
   <section class="skill-section" id="skills">
@@ -152,6 +169,7 @@
   <script src="js/common.js?v=10"></script>
   <script src="js/backupSync.js?v=3"></script>
   <script src="js/piAuth.js?v=4"></script>
-  <script src="js/skills.js?v=11"></script>
+  <script src="js/dailyTasks.js?v=1"></script>
+  <script src="js/skills.js?v=12"></script>
 </body>
 </html>

@@ -559,7 +559,20 @@ async function initFinanceRebalance() {
   }, FINANCE_PRICE_REFRESH_MS);
 }
 
+const FINANCE_SEED_TASKS = [
+  { title: 'Ghi lại các khoản chi tiêu hôm nay', xp: 10 },
+  { title: 'Không mua sắm bốc đồng hôm nay', xp: 12 },
+  { title: 'Kiểm tra giá Pi Network', xp: 5 },
+  { title: 'Đọc 1 bài về đầu tư/tài chính', xp: 8 },
+  { title: 'Bỏ vào quỹ tiết kiệm nhỏ hôm nay', xp: 10 },
+];
+
 document.addEventListener('DOMContentLoaded', () => {
   runBootStep(initPiSdk);
   runBootStep(initFinanceRebalance);
+  runBootStep(() => initDailyChecklist({
+    storageKey: 'lifebalance_finance_quests',
+    defaultXp: 10,
+    seedTasks: FINANCE_SEED_TASKS,
+  }));
 });

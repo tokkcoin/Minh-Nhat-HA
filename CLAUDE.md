@@ -59,7 +59,8 @@ life-balance/
     ├── CLAUDE.local.md     # Developer overrides (not in git)
     ├── settings.json       # AI preference settings
     ├── settings.local.json # Local settings (not in git)
-    ├── memory.md            # Persistent log of decisions and history
+    ├── memory.md            # Persistent log of decisions and history (summarized/interpreted)
+    ├── ideas-raw.md         # Verbatim log of the user's own messages, unedited, chronological
     ├── rules/
     │   ├── workflow.md      # Rules for adding code & testing changes
     │   ├── design.md        # Full design system (colors, typography, styles)
@@ -79,3 +80,4 @@ Please consult the specific files inside `.claude/rules/` for guidance:
 - To check code conventions or dependencies: see [.claude/rules/tech-defaults.md](file:///.claude/rules/tech-defaults.md)
 - Before making code changes or testing: see [.claude/rules/workflow.md](file:///.claude/rules/workflow.md)
 - To see past design history and decisions: see [.claude/memory.md](file:///.claude/memory.md)
+- To see the user's original wording behind any decision above: see [.claude/ideas-raw.md](file:///.claude/ideas-raw.md)

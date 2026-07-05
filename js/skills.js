@@ -670,7 +670,20 @@ function initSkillsTracker() {
   }
 }
 
+const SKILLS_SEED_TASKS = [
+  { title: 'Luyện tập kỹ năng chính 15 phút', xp: 15 },
+  { title: 'Xem 1 video/bài học mới', xp: 8 },
+  { title: 'Ghi chú điều học được hôm nay', xp: 5 },
+  { title: 'Áp dụng kỹ năng vào việc thực tế', xp: 12 },
+  { title: 'Chia sẻ/dạy lại cho người khác', xp: 10 },
+];
+
 document.addEventListener('DOMContentLoaded', () => {
   runBootStep(initPiSdk);
   runBootStep(initSkillsTracker);
+  runBootStep(() => initDailyChecklist({
+    storageKey: 'lifebalance_skills_quests',
+    defaultXp: 10,
+    seedTasks: SKILLS_SEED_TASKS,
+  }));
 });

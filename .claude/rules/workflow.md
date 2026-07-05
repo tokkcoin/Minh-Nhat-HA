@@ -10,6 +10,7 @@
 2. **Read** the relevant rule file (`design.md` for CSS, `tech-defaults.md` for dependencies)
 3. **Understand** the existing file structure before adding new files
 4. **Plan** changes — list files to modify before touching anything
+5. If the user shares a new idea/requirement/question, **append their message verbatim** to `.claude/ideas-raw.md` (typos and all, newest entry on top) in addition to summarizing it into `.claude/memory.md` — the two files serve different purposes and neither replaces the other
 
 ## Making Changes
 

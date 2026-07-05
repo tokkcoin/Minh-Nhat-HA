@@ -7,7 +7,7 @@
   <meta name="description" content="Track your balance across Money, Health, Talent, Mood, and Situation through the Five Elements." />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
-  <link rel="stylesheet" href="css/style.css?v=42" />
+  <link rel="stylesheet" href="css/style.css?v=44" />
 </head>
 <body>
 
@@ -63,6 +63,47 @@
       </div>
     </section>
 
+    <section class="character-section" id="character-section">
+      <h2 class="character-section__title">Nhân vật <em>của bạn</em></h2>
+      <p class="character-section__subtitle">Mỗi món trang bị phản chiếu một yếu tố ngũ hành — nhấn vào để xem chỉ số thực tế.</p>
+
+      <div class="character-stage">
+        <div class="character-figure" aria-hidden="true">
+          <svg viewBox="0 0 100 180" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="26" r="18" fill="var(--bg-card-hover)" stroke="var(--border)" stroke-width="2"/>
+            <path d="M50 44 C22 50 15 92 19 172 L81 172 C85 92 78 50 50 44 Z" fill="var(--bg-card-hover)" stroke="var(--border)" stroke-width="2"/>
+            <path d="M50 46 L50 172" stroke="var(--border)" stroke-width="1" opacity=".5"/>
+          </svg>
+        </div>
+
+        <button type="button" class="equip-slot equip-slot--hat" data-slot="hat" title="Mũ — Hoả" aria-label="Mũ — Hoả — Cảm xúc">
+          <span aria-hidden="true">🧢</span>
+        </button>
+        <button type="button" class="equip-slot equip-slot--weapon" data-slot="weapon" title="Vũ khí — Kim" aria-label="Vũ khí — Kim — Tài chính">
+          <span aria-hidden="true">⚔️</span>
+        </button>
+        <button type="button" class="equip-slot equip-slot--shirt" data-slot="shirt" title="Áo giáp — Mộc" aria-label="Áo giáp — Mộc — Sức khoẻ">
+          <span aria-hidden="true">🥋</span>
+        </button>
+        <button type="button" class="equip-slot equip-slot--pants" data-slot="pants" title="Quần — Thuỷ" aria-label="Quần — Thuỷ — Kỹ năng">
+          <span aria-hidden="true">👖</span>
+        </button>
+        <button type="button" class="equip-slot equip-slot--horse" data-slot="horse" title="Ngựa — Thổ" aria-label="Ngựa — Thổ — Vị thế">
+          <span aria-hidden="true">🐎</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- CHARACTER STAT MODAL (reuses .finance-modal chrome) -->
+    <div id="character-stat-modal" class="finance-modal" hidden>
+      <div class="finance-modal__inner">
+        <button type="button" id="character-stat-close" class="finance-modal__close" aria-label="Đóng">✕</button>
+        <h3 id="character-stat-title" class="finance-modal__title"></h3>
+        <p id="character-stat-element" class="character-stat__element"></p>
+        <div id="character-stat-body" class="character-stat__lines"></div>
+      </div>
+    </div>
+
     <section class="showcase">
       <p class="showcase-heading">Five elements of balance, mapped to five dimensions of life.</p>
       <div class="showcase-row">
@@ -76,23 +117,30 @@
 
     <section class="how" id="how-it-works">
       <h2 class="how-title">Rebalance <em>this morning</em></h2>
-      <p class="how-subtitle">A simple, elegant check-in so you can rate your day in seconds. No spreadsheets, no overthinking — just five taps.</p>
+      <button type="button" id="how-toggle" class="how-toggle" aria-expanded="false" aria-controls="how-details">
+        <span class="how-toggle__label">Xem chi tiết</span>
+        <span class="how-toggle__chevron" aria-hidden="true">▾</span>
+      </button>
 
-      <div class="how-steps">
-        <div class="how-step">
-          <div class="how-step__num">01</div>
-          <div class="how-step__title">Rate</div>
-          <div class="how-step__desc">Score each of the five elements for how today actually felt.</div>
-        </div>
-        <div class="how-step">
-          <div class="how-step__num">02</div>
-          <div class="how-step__title">Reflect</div>
-          <div class="how-step__desc">See which dimension is pulling your balance down this week.</div>
-        </div>
-        <div class="how-step">
-          <div class="how-step__num">03</div>
-          <div class="how-step__title">Rebalance</div>
-          <div class="how-step__desc">Make one small adjustment tomorrow, not a five-part life overhaul.</div>
+      <div id="how-details" class="how-details" hidden>
+        <p class="how-subtitle">A simple, elegant check-in so you can rate your day in seconds. No spreadsheets, no overthinking — just five taps.</p>
+
+        <div class="how-steps">
+          <div class="how-step">
+            <div class="how-step__num">01</div>
+            <div class="how-step__title">Rate</div>
+            <div class="how-step__desc">Score each of the five elements for how today actually felt.</div>
+          </div>
+          <div class="how-step">
+            <div class="how-step__num">02</div>
+            <div class="how-step__title">Reflect</div>
+            <div class="how-step__desc">See which dimension is pulling your balance down this week.</div>
+          </div>
+          <div class="how-step">
+            <div class="how-step__num">03</div>
+            <div class="how-step__title">Rebalance</div>
+            <div class="how-step__desc">Make one small adjustment tomorrow, not a five-part life overhaul.</div>
+          </div>
         </div>
       </div>
 
@@ -301,7 +349,8 @@
   <script src="js/backupSync.js?v=3"></script>
   <script src="data/storyMusic.js?v=2"></script>
   <script src="js/storyEditor.js?v=5"></script>
-  <script src="js/main.js?v=13"></script>
+  <script src="js/characterPanel.js?v=1"></script>
+  <script src="js/main.js?v=15"></script>
   <script src="js/piAuth.js?v=4"></script>
 </body>
 </html>

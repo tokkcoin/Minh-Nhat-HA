@@ -160,7 +160,20 @@ function initSituationTracker() {
   document.getElementById('formation-add-form')?.addEventListener('submit', handleSaveUnit);
 }
 
+const SITUATION_SEED_TASKS = [
+  { title: 'Xem lại 3 mục tiêu ưu tiên', xp: 8 },
+  { title: 'Chuẩn bị cho 1 việc quan trọng sắp tới', xp: 12 },
+  { title: 'Liên hệ/duy trì 1 mối quan hệ', xp: 10 },
+  { title: 'Đánh giá lại 1 quyết định gần đây', xp: 10 },
+  { title: 'Dọn dẹp 1 việc còn dang dở', xp: 8 },
+];
+
 document.addEventListener('DOMContentLoaded', () => {
   runBootStep(initPiSdk);
   runBootStep(initSituationTracker);
+  runBootStep(() => initDailyChecklist({
+    storageKey: 'lifebalance_situation_quests',
+    defaultXp: 10,
+    seedTasks: SITUATION_SEED_TASKS,
+  }));
 });

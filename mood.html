@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cảm xúc — Life Balance</title>
-  <meta name="description" content="Fire element — mood and emotional balance, coming soon." />
+  <meta name="description" content="Fire element — daily mind-cultivation practices to build emotional resilience." />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
-  <link rel="stylesheet" href="css/style.css?v=42" />
+  <link rel="stylesheet" href="css/style.css?v=44" />
 </head>
 <body>
 
@@ -34,9 +34,21 @@
     <p class="journal-hero__dimension">Mood — xây dựng cảm xúc</p>
   </section>
 
-  <section class="element-placeholder">
-    <span class="element-placeholder__badge">Đang xây dựng</span>
-    <p class="element-placeholder__text">Trang xây dựng cảm xúc sẽ được xây dựng tại đây — theo dõi tâm trạng, cảm xúc hằng ngày và các công cụ cân bằng tinh thần.</p>
+  <section class="daily-quest-section" id="daily-quest" style="--current-element: var(--fire); --current-element-tint: var(--fire-tint);">
+    <h2 class="daily-quest-section__title">🔥 Tu Tâm — nhiệm vụ hàng ngày</h2>
+    <p class="daily-quest-section__subtitle">Đốt cháy vô minh, thắp sáng tâm trí. Mỗi việc thực hành dưới đây tích thêm Hoả Khí cho hôm nay.</p>
+
+    <div class="quest-add-row">
+      <div class="quest-add-row__bottom">
+        <input type="text" id="daily-quest-new-title" placeholder="Thêm việc thực hành mới…" />
+        <input type="number" id="daily-quest-new-xp" min="0" value="10" aria-label="XP" />
+        <button type="button" id="daily-quest-add-btn" class="btn btn-primary">Thêm</button>
+      </div>
+    </div>
+
+    <button type="button" id="daily-quest-seed-btn" class="btn-text daily-quest-seed-btn">🕯️ Tạo 5 việc thực hành mẫu</button>
+
+    <div id="daily-quest-list" class="daily-quest-list"></div>
   </section>
 
   <footer class="site-footer" role="contentinfo">
@@ -47,6 +59,7 @@
   <script src="js/common.js?v=10"></script>
   <script src="js/backupSync.js?v=3"></script>
   <script src="js/piAuth.js?v=4"></script>
-  <script src="js/mood.js?v=1"></script>
+  <script src="js/dailyTasks.js?v=1"></script>
+  <script src="js/mood.js?v=2"></script>
 </body>
 </html>

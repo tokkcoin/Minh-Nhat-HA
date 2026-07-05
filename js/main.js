@@ -66,6 +66,23 @@ function initHowPreview() {
   renderHowPreview(document.querySelector('.how-preview__tab.active')?.dataset.range ?? 'today');
 }
 
+// "Xem chi tiết" toggle — subtitle + 3 step cards start collapsed,
+// expand only on click (the preview bars below stay visible, they're
+// a live widget, not "reading" text).
+function initHowToggle() {
+  const toggle = document.getElementById('how-toggle');
+  const details = document.getElementById('how-details');
+  const label = toggle?.querySelector('.how-toggle__label');
+  if (!toggle || !details) return;
+
+  toggle.addEventListener('click', () => {
+    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', String(!expanded));
+    details.hidden = expanded;
+    if (label) label.textContent = expanded ? 'Xem chi tiết' : 'Ẩn bớt';
+  });
+}
+
 // ── 2. Unified Feed — merge all 5 elements' posts ────────────
 
 let activeFeedFilter = 'all';
@@ -563,12 +580,16 @@ function initBottomNav() {
 
 // ── 7. Daily Panel ───────────────────────────────────────────
 // Aggregates "daily" category quests from each element's storage key.
-// Currently sourced from health.js (Wood). As other elements gain daily
-// tasks they can be added here by extending DAILY_SOURCES.
+// Wood (health.js) has its own full quest system; the other four use
+// the shared dailyTasks.js widget — both write the same task shape,
+// so this loader doesn't care which one produced a given key.
 
 const DAILY_SOURCES = [
   { key: 'lifebalance_health_quests', element: '🌳', filter: q => q.category === 'daily' },
-  // Future: add metal/water/fire/earth sources here once they exist
+  { key: 'lifebalance_mood_quests', element: '🔥', filter: q => q.category === 'daily' },
+  { key: 'lifebalance_skills_quests', element: '💧', filter: q => q.category === 'daily' },
+  { key: 'lifebalance_finance_quests', element: '⛏️', filter: q => q.category === 'daily' },
+  { key: 'lifebalance_situation_quests', element: '🪨', filter: q => q.category === 'daily' },
 ];
 
 function homeTodayKey() {
@@ -613,7 +634,7 @@ function renderDailyPanel() {
   if (countEl) countEl.textContent = pending.length ? `${pending.length} còn lại` : '';
 
   if (!all.length) {
-    listEl.innerHTML = `<p class="daily-panel__no-tasks">Chưa có nhiệm vụ hàng ngày nào.<br><a href="health.html">🌳 Thêm nhiệm vụ ở trang Mộc →</a></p>`;
+    listEl.innerHTML = `<p class="daily-panel__no-tasks">Chưa có nhiệm vụ hàng ngày nào.<br>Thêm nhiệm vụ ở trang <a href="health.html">🌳 Mộc</a>, <a href="mood.html">🔥 Hoả</a>, <a href="skills.html">💧 Thuỷ</a>, <a href="finance.html">⛏️ Kim</a> hoặc <a href="situation.html">🪨 Thổ</a></p>`;
     return;
   }
   if (!pending.length) {
@@ -653,6 +674,7 @@ document.addEventListener('DOMContentLoaded', () => {
   runBootStep(initBottomNav);
   runBootStep(initDailyPanel);
   runBootStep(initHowPreview);
+  runBootStep(initHowToggle);
   runBootStep(initStoriesRow);
   runBootStep(initUnifiedComposer);
   runBootStep(renderUnifiedFeed);
