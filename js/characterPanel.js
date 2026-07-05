@@ -66,20 +66,46 @@ function computeWoodStat() {
   ];
 }
 
+// Mirrors skills.js's STAR_THRESHOLDS — skill objects only ever store
+// totalSeconds (see skills.js handleSaveSkill), stars are always derived,
+// never persisted as a "level" field.
+const CHARACTER_STAR_THRESHOLDS = [
+  { hours: 500, stars: 5 },
+  { hours: 365, stars: 4 },
+  { hours: 150, stars: 3 },
+  { hours: 35, stars: 2 },
+  { hours: 5, stars: 1 },
+];
+
+function characterComputeStars(totalSeconds) {
+  const hours = (totalSeconds || 0) / 3600;
+  for (const t of CHARACTER_STAR_THRESHOLDS) if (hours >= t.hours) return t.stars;
+  return 0;
+}
+
 function computeWaterStat() {
   const skills = characterReadJson('lifebalance_skills', []);
   if (!skills.length) return ['Chưa có kỹ năng nào — hãy mở trang Thuỷ (Kỹ năng).'];
-  const avg = skills.reduce((sum, s) => sum + (s.level || 0), 0) / skills.length;
-  const top = [...skills].sort((a, b) => (b.level || 0) - (a.level || 0))[0];
+  const stars = skills.map(s => characterComputeStars(s.totalSeconds));
+  const avg = stars.reduce((sum, s) => sum + s, 0) / skills.length;
+  const topIndex = stars.indexOf(Math.max(...stars));
+  const top = skills[topIndex];
   return [
     `Số kỹ năng: ${skills.length}`,
     `Điểm trung bình: ${avg.toFixed(1)}★`,
-    `Kỹ năng nổi bật: ${top.icon} ${top.name} (${top.level}★)`,
+    `Kỹ năng nổi bật: ${top.icon} ${top.name} (${stars[topIndex]}★)`,
   ];
 }
 
 function computeFireStat() {
-  return ['Hoả (Cảm xúc) chưa có tính năng theo dõi — quay lại khi tab Hoả có dữ liệu.'];
+  const quests = characterReadJson('lifebalance_mood_quests', []);
+  if (!quests.length) return ['Chưa có việc thực hành nào — hãy mở trang Hoả (Cảm xúc).'];
+  const totalXp = quests.reduce((sum, q) => sum + q.completedPeriods.length * q.xp, 0);
+  const doneAtLeastOnce = quests.filter(q => q.completedPeriods.length > 0).length;
+  return [
+    `Hoả Khí tích luỹ: ${totalXp}`,
+    `Việc thực hành đã từng hoàn thành: ${doneAtLeastOnce}/${quests.length}`,
+  ];
 }
 
 function computeEarthStat() {

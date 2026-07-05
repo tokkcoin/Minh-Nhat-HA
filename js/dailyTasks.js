@@ -95,7 +95,7 @@ function initDailyChecklist(config) {
     tasks.push({
       id: `${Date.now()}`,
       title: trimmed,
-      xp: xp || defaultXp,
+      xp: Number.isFinite(xp) ? xp : defaultXp,
       category: 'daily',
       completedPeriods: [],
     });
@@ -109,7 +109,7 @@ function initDailyChecklist(config) {
     const toAdd = seedTasks.map((s, i) => ({
       id: `${Date.now()}-${i}`,
       title: s.title,
-      xp: s.xp || defaultXp,
+      xp: Number.isFinite(s.xp) ? s.xp : defaultXp,
       category: 'daily',
       completedPeriods: [],
     }));
