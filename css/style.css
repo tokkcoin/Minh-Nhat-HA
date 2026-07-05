@@ -2190,6 +2190,8 @@ body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 }
 .charsheet__tab-chip:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
 .charsheet__tab-chip span { display: block; font-size: 10px; font-weight: 500; color: var(--text-muted); margin-top: 2px; }
+.charsheet__tab-chip:disabled { color: var(--text-muted); cursor: not-allowed; opacity: .55; }
+.charsheet__tab-chip:disabled:hover { transform: none; box-shadow: none; }
 
 .charsheet__fire-panel { margin-top: var(--space-sm); padding-top: var(--space-sm); border-top: 1px solid var(--border); }
 .charsheet__fire-panel[hidden] { display: none; }
