@@ -7,7 +7,7 @@
   <meta name="description" content="Track your balance across Money, Health, Talent, Mood, and Situation through the Five Elements." />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
-  <link rel="stylesheet" href="css/style.css?v=45" />
+  <link rel="stylesheet" href="css/style.css?v=46" />
 </head>
 <body>
 
@@ -64,31 +64,118 @@
     </section>
 
     <section class="character-section" id="character-section">
-      <h2 class="character-section__title">Nhân vật <em>của bạn</em></h2>
-      <p class="character-section__subtitle">Chỉ số thật, đọc thẳng từ dữ liệu 5 hành hiện có của bạn — không có số bịa.</p>
+      <div class="charsheet">
 
-      <div class="character-card">
-        <div class="character-stats" id="character-stats">
-          <p class="character-stats__empty">Đang tải…</p>
+        <div class="charsheet__titlebar">
+          <div class="charsheet__tabs">
+            <h2 class="charsheet__title">Nhân Vật</h2>
+            <span class="charsheet__tab2">Nhật ký</span>
+          </div>
+          <span class="charsheet__badge" title="Số liệu bên dưới là demo giao diện, chưa nối vào dữ liệu thật">Demo giao diện</span>
         </div>
 
-        <div class="character-equip-col">
-          <a class="equip-slot equip-slot--hat" href="mood.html" title="Mũ — Hoả" aria-label="Mũ — Hoả — Cảm xúc"><span aria-hidden="true">🧢</span></a>
-          <a class="equip-slot equip-slot--shirt" href="health.html" title="Áo giáp — Mộc" aria-label="Áo giáp — Mộc — Sức khoẻ"><span aria-hidden="true">🥋</span></a>
-          <a class="equip-slot equip-slot--pants" href="skills.html" title="Quần — Thuỷ" aria-label="Quần — Thuỷ — Kỹ năng"><span aria-hidden="true">👖</span></a>
-          <a class="equip-slot equip-slot--weapon" href="finance.html" title="Vũ khí — Kim" aria-label="Vũ khí — Kim — Tài chính"><span aria-hidden="true">⚔️</span></a>
-          <a class="equip-slot equip-slot--horse" href="situation.html" title="Ngựa — Thổ" aria-label="Ngựa — Thổ — Vị thế"><span aria-hidden="true">🐎</span></a>
-        </div>
+        <div class="charsheet__main">
+          <div class="charsheet__stats">
+            <div class="charsheet__stat-row" style="--el:var(--wood)"><span class="charsheet__dot"></span><span class="charsheet__label"><b>Physical</b></span><span class="charsheet__val is-pos">+1000</span></div>
+            <div class="charsheet__stat-row" style="--el:var(--wood)"><span class="charsheet__dot"></span><span class="charsheet__label"><b>Mental</b></span><span class="charsheet__val is-neg">−1000</span></div>
+            <div class="charsheet__stat-row" style="--el:var(--water)"><span class="charsheet__dot"></span><span class="charsheet__label"><b>Tu dưỡng</b> → T.lũy</span><span class="charsheet__val is-neg">−1000</span></div>
+            <div class="charsheet__stat-row" style="--el:var(--water)"><span class="charsheet__dot"></span><span class="charsheet__label"><b>Trải nghiệm</b></span><span class="charsheet__val is-pos">+10000</span></div>
+            <div class="charsheet__stat-row" style="--el:var(--metal)"><span class="charsheet__dot"></span><span class="charsheet__label"><b>Đầu tư</b></span><span class="charsheet__val is-neg">−10000</span></div>
+            <div class="charsheet__stat-row" style="--el:var(--metal)"><span class="charsheet__dot"></span><span class="charsheet__label"><b>Tiền mặt</b></span><span class="charsheet__val is-pos">+1000</span></div>
+            <div class="charsheet__stat-row" style="--el:var(--fire)"><span class="charsheet__dot"></span><span class="charsheet__label"><b>C.Stress</b></span><span class="charsheet__val is-neg">−100</span></div>
+            <div class="charsheet__stat-row" style="--el:var(--fire)"><span class="charsheet__dot"></span><span class="charsheet__label"><b>Brain-storm</b></span><span class="charsheet__val is-pos">+100</span></div>
+            <div class="charsheet__stat-row" style="--el:var(--earth)"><span class="charsheet__dot"></span><span class="charsheet__label"><b>Chiến lược</b></span><span class="charsheet__val is-neg">−3</span></div>
+            <div class="charsheet__stat-row" style="--el:var(--earth)"><span class="charsheet__dot"></span><span class="charsheet__label"><b>Né tránh</b> → Đ.phá</span><span class="charsheet__val is-pos">+2</span></div>
 
-        <div class="character-avatar">
-          <div class="character-figure" aria-hidden="true">
-            <svg viewBox="0 0 100 180" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="50" cy="26" r="18" fill="var(--bg-card-hover)" stroke="var(--border)" stroke-width="2"/>
-              <path d="M50 44 C22 50 15 92 19 172 L81 172 C85 92 78 50 50 44 Z" fill="var(--bg-card-hover)" stroke="var(--border)" stroke-width="2"/>
-              <path d="M50 46 L50 172" stroke="var(--border)" stroke-width="1" opacity=".5"/>
-            </svg>
+            <div class="charsheet__subhead">
+              <span>☯ Sinh Khắc</span>
+              <span class="charsheet__subhead-meta"><b class="s">+</b>/<b class="k">−</b></span>
+            </div>
+            <div class="charsheet__cycle-row charsheet__cycle-row--sinh"><span class="charsheet__cycle-name">mạnh khỏe<span class="charsheet__cycle-path">Thuỷ→Mộc</span></span><span class="charsheet__cycle-val">+12</span></div>
+            <div class="charsheet__cycle-row charsheet__cycle-row--sinh"><span class="charsheet__cycle-name">hưng phấn<span class="charsheet__cycle-path">Mộc→Hoả</span></span><span class="charsheet__cycle-val">+12</span></div>
+            <div class="charsheet__cycle-row charsheet__cycle-row--sinh"><span class="charsheet__cycle-name">thuận lợi<span class="charsheet__cycle-path">Hoả→Thổ</span></span><span class="charsheet__cycle-val">+1</span></div>
+            <div class="charsheet__cycle-row charsheet__cycle-row--sinh"><span class="charsheet__cycle-name">nhiều tiền<span class="charsheet__cycle-path">Thổ→Kim</span></span><span class="charsheet__cycle-val">+10</span></div>
+            <div class="charsheet__cycle-row charsheet__cycle-row--sinh"><span class="charsheet__cycle-name">kỷ luật<span class="charsheet__cycle-path">Kim→Thuỷ</span></span><span class="charsheet__cycle-val">+10</span></div>
+            <div class="charsheet__cycle-row charsheet__cycle-row--khac"><span class="charsheet__cycle-name">ít tiền<span class="charsheet__cycle-path">Kim→Mộc</span></span><span class="charsheet__cycle-val">−1</span></div>
+            <div class="charsheet__cycle-row charsheet__cycle-row--khac"><span class="charsheet__cycle-name">chậm chạp<span class="charsheet__cycle-path">Mộc→Thổ</span></span><span class="charsheet__cycle-val">−1</span></div>
+            <div class="charsheet__cycle-row charsheet__cycle-row--khac"><span class="charsheet__cycle-name">khủng hoảng<span class="charsheet__cycle-path">Thổ→Thuỷ</span></span><span class="charsheet__cycle-val">−2</span></div>
+            <div class="charsheet__cycle-row charsheet__cycle-row--khac"><span class="charsheet__cycle-name">mất hứng<span class="charsheet__cycle-path">Thuỷ→Hoả</span></span><span class="charsheet__cycle-val">−1</span></div>
+            <div class="charsheet__cycle-row charsheet__cycle-row--khac"><span class="charsheet__cycle-name">FOMO<span class="charsheet__cycle-path">Hoả→Kim</span></span><span class="charsheet__cycle-val">−1</span></div>
+          </div>
+
+          <div class="charsheet__equip">
+            <a class="equip-slot equip-slot--hat" href="mood.html" title="Mũ — Hoả" aria-label="Mũ — Hoả — Cảm xúc"><span aria-hidden="true">🧢</span></a>
+            <a class="equip-slot equip-slot--shirt" href="health.html" title="Áo giáp — Mộc" aria-label="Áo giáp — Mộc — Sức khoẻ"><span aria-hidden="true">🥋</span></a>
+            <a class="equip-slot equip-slot--pants" href="skills.html" title="Quần — Thuỷ" aria-label="Quần — Thuỷ — Kỹ năng"><span aria-hidden="true">👖</span></a>
+            <a class="equip-slot equip-slot--weapon" href="finance.html" title="Vũ khí — Kim" aria-label="Vũ khí — Kim — Tài chính"><span aria-hidden="true">⚔️</span></a>
+            <a class="equip-slot equip-slot--horse" href="situation.html" title="Ngựa — Thổ" aria-label="Ngựa — Thổ — Vị thế"><span aria-hidden="true">🐎</span></a>
+          </div>
+
+          <div class="charsheet__avatar-col">
+            <div class="character-figure" aria-hidden="true">
+              <svg viewBox="0 0 100 180" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="26" r="18" fill="var(--bg-card-hover)" stroke="var(--border)" stroke-width="2"/>
+                <path d="M50 44 C22 50 15 92 19 172 L81 172 C85 92 78 50 50 44 Z" fill="var(--bg-card-hover)" stroke="var(--border)" stroke-width="2"/>
+                <path d="M50 46 L50 172" stroke="var(--border)" stroke-width="1" opacity=".5"/>
+              </svg>
+            </div>
+            <div class="charsheet__avatar-name">Đạo Hữu</div>
+            <div class="charsheet__avatar-rank">Sơ Nhập Ngũ Hành</div>
+
+            <div class="charsheet__alloc-head">Phân bổ</div>
+            <div class="charsheet__alloc-row" style="--el:var(--metal)"><span class="charsheet__alloc-dot"></span><span class="charsheet__alloc-label">Kim</span><span class="charsheet__alloc-val">10$</span></div>
+            <div class="charsheet__alloc-row" style="--el:var(--wood)"><span class="charsheet__alloc-dot"></span><span class="charsheet__alloc-label">Mộc</span><span class="charsheet__alloc-val">20❤</span></div>
+            <div class="charsheet__alloc-row" style="--el:var(--water)"><span class="charsheet__alloc-dot"></span><span class="charsheet__alloc-label">Thuỷ</span><span class="charsheet__alloc-val">1000EX</span></div>
+            <div class="charsheet__alloc-row" style="--el:var(--fire)"><span class="charsheet__alloc-dot"></span><span class="charsheet__alloc-label">Hoả</span><span class="charsheet__alloc-val">1000⚡</span></div>
+            <div class="charsheet__alloc-row" style="--el:var(--earth)"><span class="charsheet__alloc-dot"></span><span class="charsheet__alloc-label">Thổ</span><span class="charsheet__alloc-val">1000🍀</span></div>
           </div>
         </div>
+
+        <div class="charsheet__tabs-row">
+          <button type="button" class="charsheet__tab-chip" style="--el:var(--wood)" disabled>木<span>Sắp mở</span></button>
+          <button type="button" class="charsheet__tab-chip" style="--el:var(--water)" disabled>水<span>Sắp mở</span></button>
+          <button type="button" class="charsheet__tab-chip" style="--el:var(--metal)" disabled>金<span>Sắp mở</span></button>
+          <button type="button" class="charsheet__tab-chip" id="charsheet-fire-tab" style="--el:var(--fire)" aria-expanded="false" aria-controls="charsheet-fire-panel">火<span>Tu Tâm</span></button>
+          <button type="button" class="charsheet__tab-chip" style="--el:var(--earth)" disabled>土<span>Sắp mở</span></button>
+        </div>
+
+        <div class="charsheet__fire-panel" id="charsheet-fire-panel" hidden>
+          <div class="charsheet__fire-realm"><b>☯ Luyện Tâm</b><span>185 / 300 Hoả Khí</span></div>
+          <div class="charsheet__fire-bar"><div class="charsheet__fire-bar-fill" style="width:62%"></div></div>
+          <div class="charsheet__fire-quest is-done"><span class="charsheet__fire-check">✓</span><span class="charsheet__fire-name">Thiền 10 phút</span><span class="charsheet__fire-pt">+10</span></div>
+          <div class="charsheet__fire-quest is-done"><span class="charsheet__fire-check">✓</span><span class="charsheet__fire-name">Ghi nhật ký cảm xúc</span><span class="charsheet__fire-pt">+8</span></div>
+          <div class="charsheet__fire-quest"><span class="charsheet__fire-check"></span><span class="charsheet__fire-name">Hít thở chính niệm 3 phút</span><span class="charsheet__fire-pt">+5</span></div>
+          <div class="charsheet__fire-quest"><span class="charsheet__fire-check"></span><span class="charsheet__fire-name">Buông bỏ 1 điều lo âu</span><span class="charsheet__fire-pt">+15</span></div>
+          <div class="charsheet__fire-note">Demo giao diện — tab Hoả thật (bấm 🔥 ở vòng ngũ hành phía trên hoặc <a href="mood.html">mở trang Hoả</a>) đã có nhiệm vụ hàng ngày thật.</div>
+        </div>
+
+        <div class="charsheet__summary">
+          <div class="charsheet__summary-cell"><div class="charsheet__summary-label">Biến hoá</div><div class="charsheet__summary-val">0</div></div>
+          <div class="charsheet__summary-cell"><div class="charsheet__summary-label">Tu vi Ngũ Hành</div><div class="charsheet__summary-val">12,000,000,000</div></div>
+        </div>
+
+        <details class="charsheet__formula">
+          <summary>Bảng công thức cộng / trừ điểm</summary>
+          <div class="charsheet__formula-note">
+            <code>Điểm hiệu dụng = Gốc + (Gốc nguồn × Hệ số Sinh) − (Gốc khắc × Hệ số Khắc × [1−Kháng/(Kháng+100)])</code>
+          </div>
+          <table class="charsheet__formula-table">
+            <thead><tr><th>Cặp</th><th>Hiệu ứng</th><th style="text-align:right">Điểm</th></tr></thead>
+            <tbody>
+              <tr class="row-sinh"><td>Thuỷ→Mộc</td><td>mạnh khỏe</td><td class="num">+12</td></tr>
+              <tr class="row-sinh"><td>Mộc→Hoả</td><td>hưng phấn</td><td class="num">+12</td></tr>
+              <tr class="row-sinh"><td>Hoả→Thổ</td><td>thuận lợi</td><td class="num">+1</td></tr>
+              <tr class="row-sinh"><td>Thổ→Kim</td><td>nhiều tiền</td><td class="num">+10</td></tr>
+              <tr class="row-sinh"><td>Kim→Thuỷ</td><td>kỷ luật</td><td class="num">+10</td></tr>
+              <tr class="row-khac"><td>Kim→Mộc</td><td>ít tiền</td><td class="num">−1</td></tr>
+              <tr class="row-khac"><td>Mộc→Thổ</td><td>chậm chạp</td><td class="num">−1</td></tr>
+              <tr class="row-khac"><td>Thổ→Thuỷ</td><td>khủng hoảng</td><td class="num">−2</td></tr>
+              <tr class="row-khac"><td>Thuỷ→Hoả</td><td>mất hứng</td><td class="num">−1</td></tr>
+              <tr class="row-khac"><td>Hoả→Kim</td><td>FOMO</td><td class="num">−1</td></tr>
+            </tbody>
+          </table>
+        </details>
+
       </div>
     </section>
 
@@ -337,7 +424,7 @@
   <script src="js/backupSync.js?v=3"></script>
   <script src="data/storyMusic.js?v=2"></script>
   <script src="js/storyEditor.js?v=5"></script>
-  <script src="js/characterPanel.js?v=3"></script>
+  <script src="js/characterPanel.js?v=4"></script>
   <script src="js/main.js?v=15"></script>
   <script src="js/piAuth.js?v=4"></script>
 </body>

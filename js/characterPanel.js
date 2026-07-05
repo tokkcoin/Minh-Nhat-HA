@@ -1,17 +1,25 @@
 /* ============================================================
    Life Balance — characterPanel.js
-   Home-page "character" panel (index.html only): real numbers read
-   straight from each element's own localStorage data (no separate
-   "character" data model of its own), shown as an always-visible
-   stat list. The 5 equipment icons next to it are plain <a href>
-   shortcuts to each element's page (see index.html) — no JS wiring
-   needed there, so this file only renders the stat list.
+   Home-page "character sheet" (index.html only).
+
+   ⚠️ 2026-07-05: the stat/sinh-khắc/phân bổ numbers in the charsheet
+   markup are hardcoded interface-test placeholders (per user request —
+   "chỉ up để test giao diện", real wiring deferred). The compute*Stat
+   readers below already work correctly (each reads real data straight
+   from that element's own localStorage key, no separate "character"
+   data model) — kept here, just not called yet, for whenever the
+   charsheet's stat rows get wired to them instead of the placeholders.
+
+   What IS live right now: the 5 equip icons are plain <a href>
+   shortcuts to each element's page, and the 🔥 training-tab below
+   toggles a demo preview of the real Fire daily-checklist (mood.html).
    ============================================================ */
 
 'use strict';
 
 // Stat list order — matches the rest of the home page (main.js's
-// HOW_PREVIEW_ELEMENTS / DAILY_SOURCES order).
+// HOW_PREVIEW_ELEMENTS / DAILY_SOURCES order). Not read yet — see
+// the banner comment above.
 const CHARACTER_STAT_ORDER = ['metal', 'wood', 'water', 'fire', 'earth'];
 
 // ── 1. Per-element stat readers ─────────────────────────────
@@ -119,31 +127,27 @@ const CHARACTER_STAT_FN = {
   earth: computeEarthStat,
 };
 
-// ── 2. Render ────────────────────────────────────────────────
+// ── 2. Fire training-tab toggle (the only interactive part of the
+// charsheet right now — everything else is static placeholder markup) ─
 
-function renderCharacterStats() {
-  const container = document.getElementById('character-stats');
-  if (!container) return;
+function initCharsheetFireTab() {
+  const tab = document.getElementById('charsheet-fire-tab');
+  const panel = document.getElementById('charsheet-fire-panel');
+  if (!tab || !panel) return;
 
-  container.innerHTML = CHARACTER_STAT_ORDER.map(key => {
-    const element = ELEMENTS[key];
-    const lines = CHARACTER_STAT_FN[key]();
-    return `
-      <div class="character-stat-group" style="--el:var(--${key})">
-        <div class="character-stat-group__head">
-          <span class="character-stat-group__dot"></span>${element.icon} ${element.name} — ${element.dimension}
-        </div>
-        ${lines.map(line => `<p class="character-stat-group__line">${escapeHtml(line)}</p>`).join('')}
-      </div>`;
-  }).join('');
-}
+  tab.addEventListener('click', () => {
+    const open = !panel.hidden;
+    panel.hidden = open;
+    tab.setAttribute('aria-expanded', String(!open));
+  });
 
-function initCharacterPanel() {
-  renderCharacterStats();
+  panel.querySelectorAll('.charsheet__fire-quest').forEach(row => {
+    row.addEventListener('click', () => row.classList.toggle('is-done'));
+  });
 }
 
 // ── 3. Boot ──────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-  runBootStep(initCharacterPanel);
+  runBootStep(initCharsheetFireTab);
 });
