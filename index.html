@@ -7,7 +7,7 @@
   <meta name="description" content="Track your balance across Money, Health, Talent, Mood, and Situation through the Five Elements." />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
-  <link rel="stylesheet" href="css/style.css?v=49" />
+  <link rel="stylesheet" href="css/style.css?v=50" />
 </head>
 <body>
 
@@ -71,11 +71,11 @@
             <h2 class="charsheet__title">Nhân Vật</h2>
             <span class="charsheet__tab2">Nhật ký</span>
           </div>
-          <span class="charsheet__badge" title="Số liệu bên dưới là demo giao diện, chưa nối vào dữ liệu thật">Demo giao diện</span>
         </div>
 
         <div class="charsheet__main">
           <div class="charsheet__stats">
+            <p class="charsheet__stats-note">🎭 Bảng chỉ số &amp; Sinh Khắc bên dưới là minh hoạ giao diện Ngũ Hành RPG — chưa nối dữ liệu thật. Chỉ số ở khu "Phân bổ" và các ô Ngũ Hành bên dưới là dữ liệu thật của bạn.</p>
             <div class="charsheet__stat-row" style="--el:var(--wood)"><span class="charsheet__dot"></span><span class="charsheet__label"><b>Physical</b></span><span class="charsheet__val is-pos">+1000</span></div>
             <div class="charsheet__stat-row" style="--el:var(--wood)"><span class="charsheet__dot"></span><span class="charsheet__label"><b>Mental</b></span><span class="charsheet__val is-neg">−1000</span></div>
             <div class="charsheet__stat-row" style="--el:var(--water)"><span class="charsheet__dot"></span><span class="charsheet__label"><b>Tu dưỡng</b> → T.lũy</span><span class="charsheet__val is-neg">−1000</span></div>
@@ -119,31 +119,27 @@
             <div class="charsheet__avatar-rank">Sơ Nhập Ngũ Hành</div>
 
             <div class="charsheet__alloc-head">Phân bổ</div>
-            <div class="charsheet__alloc-row" style="--el:var(--metal)"><span class="charsheet__alloc-dot"></span><span class="charsheet__alloc-label">Kim</span><span class="charsheet__alloc-val">10$</span></div>
-            <div class="charsheet__alloc-row" style="--el:var(--wood)"><span class="charsheet__alloc-dot"></span><span class="charsheet__alloc-label">Mộc</span><span class="charsheet__alloc-val">20❤</span></div>
-            <div class="charsheet__alloc-row" style="--el:var(--water)"><span class="charsheet__alloc-dot"></span><span class="charsheet__alloc-label">Thuỷ</span><span class="charsheet__alloc-val">1000EX</span></div>
-            <div class="charsheet__alloc-row" style="--el:var(--fire)"><span class="charsheet__alloc-dot"></span><span class="charsheet__alloc-label">Hoả</span><span class="charsheet__alloc-val">1000⚡</span></div>
-            <div class="charsheet__alloc-row" style="--el:var(--earth)"><span class="charsheet__alloc-dot"></span><span class="charsheet__alloc-label">Thổ</span><span class="charsheet__alloc-val">1000🍀</span></div>
+            <div class="charsheet__alloc-row" style="--el:var(--metal)"><span class="charsheet__alloc-dot"></span><span class="charsheet__alloc-label">Kim</span><span class="charsheet__alloc-val" id="charsheet-alloc-metal">–</span></div>
+            <div class="charsheet__alloc-row" style="--el:var(--wood)"><span class="charsheet__alloc-dot"></span><span class="charsheet__alloc-label">Mộc</span><span class="charsheet__alloc-val" id="charsheet-alloc-wood">–</span></div>
+            <div class="charsheet__alloc-row" style="--el:var(--water)"><span class="charsheet__alloc-dot"></span><span class="charsheet__alloc-label">Thuỷ</span><span class="charsheet__alloc-val" id="charsheet-alloc-water">–</span></div>
+            <div class="charsheet__alloc-row" style="--el:var(--fire)"><span class="charsheet__alloc-dot"></span><span class="charsheet__alloc-label">Hoả</span><span class="charsheet__alloc-val" id="charsheet-alloc-fire">–</span></div>
+            <div class="charsheet__alloc-row" style="--el:var(--earth)"><span class="charsheet__alloc-dot"></span><span class="charsheet__alloc-label">Thổ</span><span class="charsheet__alloc-val" id="charsheet-alloc-earth">–</span></div>
           </div>
         </div>
 
         <div class="charsheet__tabs-row">
-          <button type="button" class="charsheet__tab-chip" style="--el:var(--wood)" disabled>木<span>Sắp mở</span></button>
-          <button type="button" class="charsheet__tab-chip" style="--el:var(--water)" disabled>水<span>Sắp mở</span></button>
-          <button type="button" class="charsheet__tab-chip" style="--el:var(--metal)" disabled>金<span>Sắp mở</span></button>
-          <button type="button" class="charsheet__tab-chip" id="charsheet-fire-tab" style="--el:var(--fire)" aria-expanded="false" aria-controls="charsheet-fire-panel">火<span>Tu Tâm</span></button>
-          <button type="button" class="charsheet__tab-chip" style="--el:var(--earth)" disabled>土<span>Sắp mở</span></button>
+          <button type="button" class="charsheet__tab-chip" data-el="wood" style="--el:var(--wood)" aria-expanded="false" aria-controls="charsheet-el-panel">木<span>Mộc</span></button>
+          <button type="button" class="charsheet__tab-chip" data-el="water" style="--el:var(--water)" aria-expanded="false" aria-controls="charsheet-el-panel">水<span>Thuỷ</span></button>
+          <button type="button" class="charsheet__tab-chip" data-el="metal" style="--el:var(--metal)" aria-expanded="false" aria-controls="charsheet-el-panel">金<span>Kim</span></button>
+          <button type="button" class="charsheet__tab-chip" data-el="fire" style="--el:var(--fire)" aria-expanded="false" aria-controls="charsheet-el-panel">火<span>Hoả</span></button>
+          <button type="button" class="charsheet__tab-chip" data-el="earth" style="--el:var(--earth)" aria-expanded="false" aria-controls="charsheet-el-panel">土<span>Thổ</span></button>
         </div>
-        <p class="charsheet__tabs-hint">bấm 火 Hoả để xem thử khu Tu Tâm</p>
+        <p class="charsheet__tabs-hint">Bấm một ô Ngũ Hành để xem chỉ số thật của bạn</p>
 
-        <div class="charsheet__fire-panel" id="charsheet-fire-panel" hidden>
-          <div class="charsheet__fire-realm"><b>☯ Luyện Tâm</b><span>185 / 300 Hoả Khí</span></div>
-          <div class="charsheet__fire-bar"><div class="charsheet__fire-bar-fill" style="width:62%"></div></div>
-          <div class="charsheet__fire-quest is-done"><span class="charsheet__fire-check">✓</span><span class="charsheet__fire-name">Thiền 10 phút</span><span class="charsheet__fire-pt">+10</span></div>
-          <div class="charsheet__fire-quest is-done"><span class="charsheet__fire-check">✓</span><span class="charsheet__fire-name">Ghi nhật ký cảm xúc</span><span class="charsheet__fire-pt">+8</span></div>
-          <div class="charsheet__fire-quest"><span class="charsheet__fire-check"></span><span class="charsheet__fire-name">Hít thở chính niệm 3 phút</span><span class="charsheet__fire-pt">+5</span></div>
-          <div class="charsheet__fire-quest"><span class="charsheet__fire-check"></span><span class="charsheet__fire-name">Buông bỏ 1 điều lo âu</span><span class="charsheet__fire-pt">+15</span></div>
-          <div class="charsheet__fire-note">Demo giao diện — tab Hoả thật (bấm 🔥 ở vòng ngũ hành phía trên hoặc <a href="mood.html">mở trang Hoả</a>) đã có nhiệm vụ hàng ngày thật.</div>
+        <div class="charsheet__el-panel" id="charsheet-el-panel" hidden>
+          <div class="charsheet__el-realm"><b id="charsheet-el-title">☯</b></div>
+          <div class="charsheet__el-lines" id="charsheet-el-lines"></div>
+          <a class="charsheet__el-link" id="charsheet-el-link" href="#">Mở trang →</a>
         </div>
 
         <div class="charsheet__summary">
@@ -423,7 +419,7 @@
   <script src="js/backupSync.js?v=3"></script>
   <script src="data/storyMusic.js?v=2"></script>
   <script src="js/storyEditor.js?v=5"></script>
-  <script src="js/characterPanel.js?v=4"></script>
+  <script src="js/characterPanel.js?v=5"></script>
   <script src="js/main.js?v=15"></script>
   <script src="js/piAuth.js?v=4"></script>
 </body>
