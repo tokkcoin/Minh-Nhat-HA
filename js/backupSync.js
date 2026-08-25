@@ -1,8 +1,13 @@
 /* ============================================================
-   Life Balance — backupSync.js  v15
+   Life Balance — backupSync.js  v16
    (renamed from backup.js — same file, forced a fresh URL because some
    Pi Browser installs were stuck serving a stale cached backup.js no
    matter how the ?v= cache-bust query param was bumped)
+
+   v16: doSave() now refuses to upload when localStorage is empty but a
+   cloud backup is already known to exist (META_KEY set) — previously a
+   failed/skipped restore left localStorage empty and the unconditional
+   10s-after-boot doSave() would overwrite the real cloud backup with {}.
 
    Backup key = Pi username (stored in localStorage once confirmed).
    No Pi Auth session dependency — works for every user.
@@ -75,10 +80,21 @@ async function getSign(username) {
 
 // ── 4. Save ──────────────────────────────────────────────────
 
+function hasKnownBackup() { return !!localStorage.getItem(META_KEY); }
+
 async function doSave(feedback = false) {
   const username = getUsername();
   if (!username) return; // username not set yet
   if (isSaving) return;
+  if (!hasLocalData() && hasKnownBackup()) {
+    // localStorage is empty but a real cloud backup already exists (META_KEY
+    // is only ever set after a successful save/restore) — uploading now would
+    // overwrite that backup with {} and destroy the user's real data. This is
+    // the failure mode a failed/skipped tryAutoRestore() leaves behind: don't
+    // save blind, wait for the next trigger (restore retry, new local write).
+    console.warn('[backup] save: skipped — localStorage empty but a cloud backup exists, refusing to overwrite it');
+    return;
+  }
   isSaving = true;
   try {
     const sign = await getSign(username);
