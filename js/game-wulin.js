@@ -3,61 +3,27 @@
    "Ngũ Hành Giang Hồ" — wuxia-flavored turn-based RPG (Connect tab).
 
    The whole point of this game: combat stats are DERIVED from the
-   player's real Five Elements tracking data, using the exact same
-   read-only localStorage-key pattern as js/characterPanel.js's
-   compute*Stat() readers (never writes to those keys, never invents
-   a parallel data model). Unlike characterPanel.js's placeholder
-   "no data yet" text, every formula here has a floor/base value so
-   a brand-new user with zero tracked data can still fight — see
-   WULIN_BASE below. Which stats are real vs. baseline is shown in
-   the stats panel for honesty (see renderStatsPanel).
+   player's real Five Elements tracking data, using the same
+   read-only readers as js/characterPanel.js and js/weaponPrototype.js
+   (never writes to those keys, never invents a parallel data model —
+   see js/elementStats.js, which all 3 files now read through). Unlike
+   characterPanel.js's placeholder "no data yet" text, every formula
+   here has a floor/base value so a brand-new user with zero tracked
+   data can still fight — see WULIN_BASE below. Which stats are real
+   vs. baseline is shown in the stats panel for honesty (see
+   renderStatsPanel).
    ============================================================ */
 
 'use strict';
 
-// ── 1. Real-data readers (same keys/pattern as characterPanel.js) ──
-
-const WULIN_KEYS = {
-  finance: 'lifebalance_finance_state',
-  health: 'lifebalance_health_quests',
-  skills: 'lifebalance_skills',
-  mood: 'lifebalance_mood_quests',
-  situation: 'lifebalance_situation_units',
-};
+// ── 1. Real-data readers ────────────────────────────────────
+// Raw per-element data comes from js/elementStats.js (must be loaded
+// before this file) — only the combat-specific formulas below (base
+// floors, multipliers, "hasData" gates for the badge) live here.
 
 // Baseline floors so a fresh user (all keys empty) still gets a fully
 // playable character instead of getting stuck at 0.
 const WULIN_BASE = { hp: 80, attack: 12, skillPower: 15, crit: 5, defense: 8, evasion: 5 };
-
-function wulinReadJson(key, fallback) {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(key));
-    return parsed == null ? fallback : parsed;
-  } catch {
-    return fallback;
-  }
-}
-
-// Mirrors skills.js's STAR_THRESHOLDS / characterPanel.js's
-// CHARACTER_STAR_THRESHOLDS — skills only ever persist totalSeconds,
-// stars are always derived, never stored.
-const WULIN_STAR_THRESHOLDS = [
-  { hours: 500, stars: 5 },
-  { hours: 365, stars: 4 },
-  { hours: 150, stars: 3 },
-  { hours: 35, stars: 2 },
-  { hours: 5, stars: 1 },
-];
-
-function wulinComputeStars(totalSeconds) {
-  const hours = (totalSeconds || 0) / 3600;
-  for (const t of WULIN_STAR_THRESHOLDS) if (hours >= t.hours) return t.stars;
-  return 0;
-}
-
-function wulinSumQuestXp(quests) {
-  return quests.reduce((sum, q) => sum + ((q.completedPeriods?.length || 0) * (q.xp || 0)), 0);
-}
 
 // ── 2. Stat derivation — formulas documented per element ──
 //
@@ -74,31 +40,24 @@ function wulinSumQuestXp(quests) {
 // Earth (situation units count) -> Evasion%: base 5% + 2% per unit,
 //   capped at 30% so a dodge-everything build isn't possible.
 function computeWulinStats() {
-  const healthQuests = wulinReadJson(WULIN_KEYS.health, []);
-  const woodXp = wulinSumQuestXp(healthQuests);
-  const woodLevel = Math.floor(woodXp / 100) + 1;
-  const woodHasData = healthQuests.some(q => (q.completedPeriods?.length || 0) > 0);
+  const { totalXp: woodXp, level: woodLevel, doneCount: woodDone } = ElementStats.readWood();
+  const woodHasData = woodDone > 0;
   const maxHp = WULIN_BASE.hp + woodLevel * 10 + Math.min(150, Math.floor(woodXp / 8));
 
-  const moodQuests = wulinReadJson(WULIN_KEYS.mood, []);
-  const fireXp = wulinSumQuestXp(moodQuests);
-  const fireHasData = moodQuests.some(q => (q.completedPeriods?.length || 0) > 0);
+  const { totalXp: fireXp, doneCount: fireDone } = ElementStats.readFire();
+  const fireHasData = fireDone > 0;
   const attack = WULIN_BASE.attack + Math.floor(fireXp / 6);
 
-  const skills = wulinReadJson(WULIN_KEYS.skills, []);
-  const starList = skills.map(s => wulinComputeStars(s.totalSeconds || 0));
-  const avgStars = starList.length ? starList.reduce((a, b) => a + b, 0) / starList.length : 0;
+  const { skills, avgStars } = ElementStats.readWater();
   const waterHasData = avgStars > 0;
   const skillPower = WULIN_BASE.skillPower + Math.round(avgStars * 9);
   const critChance = Math.round(WULIN_BASE.crit + avgStars * 4);
 
-  const financeState = wulinReadJson(WULIN_KEYS.finance, null);
-  const pools = financeState?.pools;
-  const totalCapital = pools ? Object.values(pools).reduce((sum, p) => sum + (p.principal || 0), 0) : 0;
+  const { total: totalCapital } = ElementStats.readMetal();
   const metalHasData = totalCapital > 0;
   const defense = WULIN_BASE.defense + Math.round(5 * Math.log10(1 + totalCapital));
 
-  const units = wulinReadJson(WULIN_KEYS.situation, []);
+  const { units } = ElementStats.readEarth();
   const earthHasData = units.length > 0;
   const evasion = Math.min(30, WULIN_BASE.evasion + units.length * 2);
 

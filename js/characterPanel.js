@@ -12,6 +12,11 @@
    design decisions on what those abstract stats mean, so it's left as
    clearly-labeled demo (see .charsheet__stats-note) rather than guessed
    at here.
+
+   2026-08-25: compute*Stat below now reads through js/elementStats.js
+   (shared with game-wulin.js/weaponPrototype.js) instead of its own
+   copy of the localStorage keys/star-threshold table — see that file's
+   header comment for why. requires elementStats.js loaded first.
    ============================================================ */
 
 'use strict';
@@ -35,13 +40,13 @@ const CHARACTER_EL_META = {
 // owns (finance.html/health.js/skills.js/situation.js) and derives a
 // few display lines — never writes anything, never duplicates state.
 
+// Delegates to js/elementStats.js's generic JSON reader — kept as its
+// own name here since it's also used for the dailyTasks.js widget keys
+// below, which elementStats.js doesn't own (those are a separate
+// per-page daily-checklist system, not part of the 5 elements' main
+// stat derivation that game-wulin.js/weaponPrototype.js also read).
 function characterReadJson(key, fallback) {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(key));
-    return parsed == null ? fallback : parsed;
-  } catch {
-    return fallback;
-  }
+  return ElementStats.readJson(key, fallback);
 }
 
 // Shared by Metal/Water/Earth below — each of those pages also has its
@@ -51,15 +56,13 @@ function characterReadJson(key, fallback) {
 function characterDailyQuestSummary(key) {
   const quests = characterReadJson(key, []);
   if (!quests.length) return null;
-  const totalXp = quests.reduce((sum, q) => sum + q.completedPeriods.length * q.xp, 0);
+  const totalXp = ElementStats.sumQuestXp(quests);
   const doneAtLeastOnce = quests.filter(q => q.completedPeriods.length > 0).length;
   return `Nhiệm vụ hàng ngày: ${totalXp} điểm tích luỹ (${doneAtLeastOnce}/${quests.length} đã từng hoàn thành)`;
 }
 
 function computeMetalStat() {
-  const state = characterReadJson('lifebalance_finance_state', null);
-  const pools = state?.pools;
-  const total = pools ? Object.values(pools).reduce((sum, p) => sum + (p.principal || 0), 0) : 0;
+  const { pools, total } = ElementStats.readMetal();
   const lines = total > 0 ? [
     `Tổng vốn đã phân bổ: ${total.toLocaleString('vi-VN')}đ`,
     `Đầu tư: ${(pools.invest?.principal || 0).toLocaleString('vi-VN')}đ`,
@@ -73,47 +76,25 @@ function computeMetalStat() {
 }
 
 function computeWoodStat() {
-  const quests = characterReadJson('lifebalance_health_quests', []);
+  const { quests, totalXp, level, doneCount } = ElementStats.readWood();
   if (!quests.length) return ['Chưa có nhiệm vụ nào — hãy mở trang Mộc (Sức khoẻ).'];
-  const totalXp = quests.reduce((sum, q) => sum + q.completedPeriods.length * q.xp, 0);
-  const level = Math.floor(totalXp / 100) + 1;
-  const doneAtLeastOnce = quests.filter(q => q.completedPeriods.length > 0).length;
   return [
     `Cấp độ: ${level}`,
     `Tổng EXP: ${totalXp}`,
-    `Nhiệm vụ đã từng hoàn thành: ${doneAtLeastOnce}/${quests.length}`,
+    `Nhiệm vụ đã từng hoàn thành: ${doneCount}/${quests.length}`,
   ];
 }
 
-// Mirrors skills.js's STAR_THRESHOLDS — skill objects only ever store
-// totalSeconds (see skills.js handleSaveSkill), stars are always derived,
-// never persisted as a "level" field.
-const CHARACTER_STAR_THRESHOLDS = [
-  { hours: 500, stars: 5 },
-  { hours: 365, stars: 4 },
-  { hours: 150, stars: 3 },
-  { hours: 35, stars: 2 },
-  { hours: 5, stars: 1 },
-];
-
-function characterComputeStars(totalSeconds) {
-  const hours = (totalSeconds || 0) / 3600;
-  for (const t of CHARACTER_STAR_THRESHOLDS) if (hours >= t.hours) return t.stars;
-  return 0;
-}
-
 function computeWaterStat() {
-  const skills = characterReadJson('lifebalance_skills', []);
+  const { skills, starList, avgStars } = ElementStats.readWater();
   const lines = [];
   if (skills.length) {
-    const stars = skills.map(s => characterComputeStars(s.totalSeconds));
-    const avg = stars.reduce((sum, s) => sum + s, 0) / skills.length;
-    const topIndex = stars.indexOf(Math.max(...stars));
+    const topIndex = starList.indexOf(Math.max(...starList));
     const top = skills[topIndex];
     lines.push(
       `Số kỹ năng: ${skills.length}`,
-      `Điểm trung bình: ${avg.toFixed(1)}★`,
-      `Kỹ năng nổi bật: ${top.icon} ${top.name} (${stars[topIndex]}★)`,
+      `Điểm trung bình: ${avgStars.toFixed(1)}★`,
+      `Kỹ năng nổi bật: ${top.icon} ${top.name} (${starList[topIndex]}★)`,
     );
   } else {
     lines.push('Chưa có kỹ năng nào — hãy mở trang Thuỷ (Kỹ năng).');
@@ -124,22 +105,18 @@ function computeWaterStat() {
 }
 
 function computeFireStat() {
-  const quests = characterReadJson('lifebalance_mood_quests', []);
+  const { quests, totalXp, doneCount } = ElementStats.readFire();
   if (!quests.length) return ['Chưa có việc thực hành nào — hãy mở trang Hoả (Cảm xúc).'];
-  const totalXp = quests.reduce((sum, q) => sum + q.completedPeriods.length * q.xp, 0);
-  const doneAtLeastOnce = quests.filter(q => q.completedPeriods.length > 0).length;
   return [
     `Hoả Khí tích luỹ: ${totalXp}`,
-    `Việc thực hành đã từng hoàn thành: ${doneAtLeastOnce}/${quests.length}`,
+    `Việc thực hành đã từng hoàn thành: ${doneCount}/${quests.length}`,
   ];
 }
 
 function computeEarthStat() {
-  const units = characterReadJson('lifebalance_situation_units', []);
+  const { units, counts } = ElementStats.readEarth();
   const lines = [];
   if (units.length) {
-    const counts = { frontline: 0, middle: 0, rear: 0 };
-    units.forEach(u => { if (counts[u.zone] != null) counts[u.zone] += 1; });
     lines.push(
       `Tổng mục tiêu: ${units.length}`,
       `🌤️ Thiên thời: ${counts.frontline}`,
@@ -167,34 +144,28 @@ const CHARACTER_STAT_FN = {
 // above (same underlying reads, just reformatted to fit the tiny row).
 
 function computeMetalAllocLabel() {
-  const state = characterReadJson('lifebalance_finance_state', null);
-  const pools = state?.pools;
-  const total = pools ? Object.values(pools).reduce((sum, p) => sum + (p.principal || 0), 0) : 0;
+  const { total } = ElementStats.readMetal();
   if (total <= 0) return '–';
   return total >= 1_000_000 ? `${(total / 1_000_000).toFixed(1)}tr đ` : `${total.toLocaleString('vi-VN')}đ`;
 }
 
 function computeWoodAllocLabel() {
-  const quests = characterReadJson('lifebalance_health_quests', []);
-  if (!quests.length) return '–';
-  const totalXp = quests.reduce((sum, q) => sum + q.completedPeriods.length * q.xp, 0);
-  return `Cấp ${Math.floor(totalXp / 100) + 1}`;
+  const { quests, level } = ElementStats.readWood();
+  return quests.length ? `Cấp ${level}` : '–';
 }
 
 function computeWaterAllocLabel() {
-  const skills = characterReadJson('lifebalance_skills', []);
+  const { skills } = ElementStats.readWater();
   return skills.length ? `${skills.length} kỹ năng` : '–';
 }
 
 function computeFireAllocLabel() {
-  const quests = characterReadJson('lifebalance_mood_quests', []);
-  if (!quests.length) return '–';
-  const totalXp = quests.reduce((sum, q) => sum + q.completedPeriods.length * q.xp, 0);
-  return `${totalXp}⚡`;
+  const { quests, totalXp } = ElementStats.readFire();
+  return quests.length ? `${totalXp}⚡` : '–';
 }
 
 function computeEarthAllocLabel() {
-  const units = characterReadJson('lifebalance_situation_units', []);
+  const { units } = ElementStats.readEarth();
   return units.length ? `${units.length} mục tiêu` : '–';
 }
 
