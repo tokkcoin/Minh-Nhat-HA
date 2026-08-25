@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pháo Đài Anh Hùng — Life Balance</title>
+  <meta name="description" content="Connect tab game — turn-based artillery duel: aim, charge power, mind the wind, and outlast a local AI opponent." />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23c7ccd1'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
+  <link rel="stylesheet" href="css/style.css?v=52" />
+  <link rel="stylesheet" href="css/game-artillery.css?v=4" />
+</head>
+<body>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="logo">
+        <div class="logo-mark">LB</div>
+        <div class="logo-text">
+          <strong>Life Balance</strong>
+          <span>Five Elements Tracker</span>
+        </div>
+      </div>
+      <span class="pi-status" id="pi-status">Checking Pi Browser…</span>
+    </div>
+  </header>
+
+  <a class="journal-back" href="index.html"><span class="journal-back__arrow" aria-hidden="true">←</span> Connect</a>
+
+  <section class="journal-hero" style="--current-element: var(--tier-silver); --current-element-tint: var(--tier-silver-tint);">
+    <div class="journal-hero__icon">🎯</div>
+    <h1 class="journal-hero__title">Pháo Đài Anh Hùng</h1>
+    <p class="journal-hero__dimension">Bắn pháo theo lượt</p>
+  </section>
+
+  <section class="artillery" style="--current-element: var(--tier-silver); --current-element-tint: var(--tier-silver-tint);" aria-label="Trò chơi Pháo Đài Anh Hùng">
+
+    <!-- HUD: character portraits + HP bars, turn/round counter, wind -->
+    <div class="artillery__hud">
+      <div class="artillery__hp-block artillery__hp-block--player">
+        <div class="artillery__portrait" aria-hidden="true">
+          <span class="artillery__portrait-face">🐹</span>
+          <span class="artillery__portrait-badge" id="artillery-player-badge">1</span>
+        </div>
+        <div class="artillery__hp-info">
+          <span class="artillery__hp-label">Bạn</span>
+          <div class="artillery__hp-bar"><div class="artillery__hp-bar-fill" id="artillery-player-hp-fill"></div></div>
+          <span class="artillery__hp-value" id="artillery-player-hp-value">100</span>
+          <div class="artillery__noiluc-bar" aria-label="Nội lực"><div class="artillery__noiluc-bar-fill" id="artillery-player-noiluc-fill"></div></div>
+          <span class="artillery__noiluc-value" id="artillery-player-noiluc-value">⚡100</span>
+          <span class="artillery__stat-line" id="artillery-player-stat">Đạn: Thường</span>
+        </div>
+      </div>
+      <div class="artillery__turn-wind">
+        <span class="artillery__round" id="artillery-round">Lượt 1</span>
+        <span class="artillery__turn-indicator" id="artillery-turn-indicator" aria-live="polite">Lượt của bạn</span>
+        <div class="artillery__wind-dial" aria-hidden="true">
+          <span class="artillery__wind-arrow" id="artillery-wind-arrow">➤</span>
+        </div>
+        <span class="artillery__wind" id="artillery-wind" aria-live="polite">Gió: 0.0</span>
+      </div>
+      <div class="artillery__hp-block artillery__hp-block--ai">
+        <div class="artillery__hp-info">
+          <span class="artillery__hp-label">Đối thủ</span>
+          <div class="artillery__hp-bar"><div class="artillery__hp-bar-fill" id="artillery-ai-hp-fill"></div></div>
+          <span class="artillery__hp-value" id="artillery-ai-hp-value">100</span>
+          <div class="artillery__noiluc-bar" aria-label="Nội lực"><div class="artillery__noiluc-bar-fill" id="artillery-ai-noiluc-fill"></div></div>
+          <span class="artillery__noiluc-value" id="artillery-ai-noiluc-value">⚡100</span>
+          <span class="artillery__stat-line" id="artillery-ai-stat">Đạn: Thường</span>
+        </div>
+        <div class="artillery__portrait artillery__portrait--ai" aria-hidden="true">
+          <span class="artillery__portrait-face">👹</span>
+          <span class="artillery__portrait-badge" id="artillery-ai-badge">1</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weapon (ammo type) selection — each is a real tactical trade-off, not
+         cosmetic. Stat bar widths are computed at boot from the real
+         WEAPON_TYPES numbers in js/game-artillery.js (renderWeaponStatBars),
+         never hardcoded here, so they can't drift out of sync. -->
+    <div class="artillery__weapons" role="group" aria-label="Chọn loại đạn">
+      <button type="button" class="artillery__weapon-btn" id="artillery-weapon-normal" data-weapon="normal" aria-pressed="true">
+        <span class="artillery__weapon-icon-ring"><span class="artillery__weapon-icon" aria-hidden="true">💣</span><span class="artillery__weapon-cost" data-cost></span></span>
+        <span class="artillery__weapon-name">Đạn Thường</span>
+        <span class="artillery__weapon-stats">
+          <span class="artillery__weapon-stat"><span class="artillery__weapon-stat-icon" aria-hidden="true">💥</span><span class="artillery__weapon-stat-bar"><span class="artillery__weapon-stat-fill" data-stat="damage"></span></span></span>
+          <span class="artillery__weapon-stat"><span class="artillery__weapon-stat-icon" aria-hidden="true">🌊</span><span class="artillery__weapon-stat-bar"><span class="artillery__weapon-stat-fill" data-stat="blast"></span></span></span>
+        </span>
+      </button>
+      <button type="button" class="artillery__weapon-btn" id="artillery-weapon-piercing" data-weapon="piercing" aria-pressed="false">
+        <span class="artillery__weapon-icon-ring"><span class="artillery__weapon-icon" aria-hidden="true">🗡️</span><span class="artillery__weapon-cost" data-cost></span></span>
+        <span class="artillery__weapon-name">Đạn Xuyên</span>
+        <span class="artillery__weapon-stats">
+          <span class="artillery__weapon-stat"><span class="artillery__weapon-stat-icon" aria-hidden="true">💥</span><span class="artillery__weapon-stat-bar"><span class="artillery__weapon-stat-fill" data-stat="damage"></span></span></span>
+          <span class="artillery__weapon-stat"><span class="artillery__weapon-stat-icon" aria-hidden="true">🌊</span><span class="artillery__weapon-stat-bar"><span class="artillery__weapon-stat-fill" data-stat="blast"></span></span></span>
+        </span>
+      </button>
+      <button type="button" class="artillery__weapon-btn" id="artillery-weapon-cluster" data-weapon="cluster" aria-pressed="false">
+        <span class="artillery__weapon-icon-ring"><span class="artillery__weapon-icon" aria-hidden="true">🌪️</span><span class="artillery__weapon-cost" data-cost></span></span>
+        <span class="artillery__weapon-name">Đạn Chùm</span>
+        <span class="artillery__weapon-stats">
+          <span class="artillery__weapon-stat"><span class="artillery__weapon-stat-icon" aria-hidden="true">💥</span><span class="artillery__weapon-stat-bar"><span class="artillery__weapon-stat-fill" data-stat="damage"></span></span></span>
+          <span class="artillery__weapon-stat"><span class="artillery__weapon-stat-icon" aria-hidden="true">🌊</span><span class="artillery__weapon-stat-bar"><span class="artillery__weapon-stat-fill" data-stat="blast"></span></span></span>
+        </span>
+      </button>
+    </div>
+
+    <!-- Battlefield canvas -->
+    <div class="artillery__canvas-wrap">
+      <canvas id="artillery-canvas" width="900" height="420" role="img" aria-label="Chiến trường: địa hình, pháo đài của bạn bên trái, đối thủ bên phải"></canvas>
+      <div class="artillery__overlay" id="artillery-overlay" hidden>
+        <div class="artillery__overlay-card">
+          <h2 id="artillery-overlay-title">Chiến thắng!</h2>
+          <p id="artillery-overlay-text">Bạn đã hạ gục đối thủ.</p>
+          <button class="btn btn-primary" id="artillery-restart-btn" type="button">Chơi lại</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aim controls: angle + power sliders, fire button -->
+    <div class="artillery__controls">
+      <div class="artillery__control-row">
+        <label for="artillery-angle">Góc bắn <span id="artillery-angle-value">45°</span></label>
+        <input type="range" id="artillery-angle" min="0" max="90" step="1" value="45" />
+      </div>
+      <div class="artillery__control-row">
+        <label for="artillery-power">Lực bắn <span id="artillery-power-value">50%</span></label>
+        <input type="range" id="artillery-power" min="1" max="100" step="1" value="50" />
+      </div>
+      <button class="btn btn-primary artillery__fire-btn" id="artillery-fire-btn" type="button">🔥 Bắn</button>
+    </div>
+
+  </section>
+
+  <footer class="site-footer" role="contentinfo">
+    <p>&copy; 2026 <strong>Life Balance</strong> — built for Pi Network App Studio.</p>
+  </footer>
+
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script src="js/common.js?v=10"></script>
+  <script src="js/game-artillery.js?v=6"></script>
+</body>
+</html>

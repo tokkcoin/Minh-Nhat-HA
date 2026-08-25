@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đại Chiến Anh Hùng — Life Balance</title>
+  <meta name="description" content="Connect tab game — simplified 1-lane arena battler, scaffold stage." />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23b98cff'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
+  <link rel="stylesheet" href="css/style.css?v=52" />
+  <link rel="stylesheet" href="css/game-arena.css?v=1" />
+</head>
+<body>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="logo">
+        <div class="logo-mark">LB</div>
+        <div class="logo-text">
+          <strong>Life Balance</strong>
+          <span>Five Elements Tracker</span>
+        </div>
+      </div>
+      <span class="pi-status" id="pi-status">Checking Pi Browser…</span>
+    </div>
+  </header>
+
+  <a class="journal-back" href="index.html"><span class="journal-back__arrow" aria-hidden="true">←</span> Connect</a>
+
+  <section class="journal-hero" style="--current-element: var(--tier-epic); --current-element-tint: var(--tier-epic-tint);">
+    <div class="journal-hero__icon">🛡️</div>
+    <h1 class="journal-hero__title">Đại Chiến Anh Hùng</h1>
+    <p class="journal-hero__dimension">Đấu trường · Đối kháng 1 đường</p>
+  </section>
+
+  <!-- Đại Chiến Anh Hùng — 1-lane arena battler (see js/game-arena.js) -->
+  <main class="arena" id="arena">
+
+    <!-- Base + tower HP HUD -->
+    <div class="arena__hud">
+      <div class="arena-hud-side arena-hud-side--player">
+        <span class="arena-hud-label">Căn cứ của bạn</span>
+        <div class="arena-bar arena-bar--base"><div class="arena-bar__fill" id="arena-player-base-fill"></div></div>
+        <span class="arena-hud-label arena-hud-label--sub">Trụ phòng thủ</span>
+        <div class="arena-bar arena-bar--tower"><div class="arena-bar__fill" id="arena-player-tower-fill"></div></div>
+      </div>
+      <span class="arena-hud-vs" aria-hidden="true">VS</span>
+      <div class="arena-hud-side arena-hud-side--enemy">
+        <span class="arena-hud-label">Căn cứ đối phương</span>
+        <div class="arena-bar arena-bar--base"><div class="arena-bar__fill" id="arena-enemy-base-fill"></div></div>
+        <span class="arena-hud-label arena-hud-label--sub">Trụ phòng thủ</span>
+        <div class="arena-bar arena-bar--tower"><div class="arena-bar__fill" id="arena-enemy-tower-fill"></div></div>
+      </div>
+    </div>
+
+    <!-- Lane scene -->
+    <div class="arena__canvas-wrap">
+      <canvas id="arena-canvas" role="img" aria-label="Sa bàn đấu trường một đường: căn cứ, trụ phòng thủ, lính và anh hùng hai phe"></canvas>
+    </div>
+    <p class="arena__hint">Chạm/nhấp vào đấu trường để di chuyển anh hùng của bạn.</p>
+
+    <!-- Ability buttons -->
+    <div class="arena__abilities">
+      <button type="button" class="arena-ability" id="arena-ability-nuke" aria-label="Chiêu thức: Đòn hủy diệt">
+        <span class="arena-ability__icon" aria-hidden="true">💥</span>
+        <span class="arena-ability__name">Đòn hủy diệt</span>
+        <span class="arena-ability__cd" id="arena-ability-nuke-cd"></span>
+      </button>
+      <button type="button" class="arena-ability" id="arena-ability-heal" aria-label="Chiêu thức: Khiên hồi phục">
+        <span class="arena-ability__icon" aria-hidden="true">✨</span>
+        <span class="arena-ability__name">Khiên hồi phục</span>
+        <span class="arena-ability__cd" id="arena-ability-heal-cd"></span>
+      </button>
+    </div>
+
+    <!-- Result overlay -->
+    <div class="arena__result" id="arena-result" role="dialog" aria-modal="true" aria-labelledby="arena-result-title" hidden>
+      <div class="arena__result-card">
+        <h2 class="arena__result-title" id="arena-result-title">Chiến thắng!</h2>
+        <p class="arena__result-text" id="arena-result-text"></p>
+        <button type="button" class="arena__restart" id="arena-restart">Chơi lại</button>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <p>&copy; 2026 <strong>Life Balance</strong> — built for Pi Network App Studio.</p>
+  </footer>
+
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script src="js/common.js?v=10"></script>
+  <script src="js/game-arena.js?v=2"></script>
+</body>
+</html>

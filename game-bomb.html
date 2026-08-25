@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đại Chiến Bom — Life Balance</title>
+  <meta name="description" content="Connect tab game — maze bomb-placing arcade game, scaffold stage." />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23a9754f'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
+  <link rel="stylesheet" href="css/style.css?v=52" />
+  <link rel="stylesheet" href="css/game-bomb.css?v=1" />
+</head>
+<body>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="logo">
+        <div class="logo-mark">LB</div>
+        <div class="logo-text">
+          <strong>Life Balance</strong>
+          <span>Five Elements Tracker</span>
+        </div>
+      </div>
+      <span class="pi-status" id="pi-status">Checking Pi Browser…</span>
+    </div>
+  </header>
+
+  <a class="journal-back" href="index.html"><span class="journal-back__arrow" aria-hidden="true">←</span> Connect</a>
+
+  <section class="journal-hero" style="--current-element: var(--tier-bronze); --current-element-tint: var(--tier-bronze-tint);">
+    <div class="journal-hero__icon">💣</div>
+    <h1 class="journal-hero__title">Đại Chiến Bom</h1>
+    <p class="journal-hero__dimension">Mê cung · Đặt bom</p>
+  </section>
+
+  <div class="bomb-game" style="--current-element: var(--tier-bronze); --current-element-tint: var(--tier-bronze-tint);">
+
+    <div class="bomb-hud">
+      <div class="bomb-hud__stat" aria-live="polite">
+        <span class="bomb-hud__label">Mạng</span>
+        <span class="bomb-hud__value" id="bomb-lives">❤️❤️❤️</span>
+      </div>
+      <div class="bomb-hud__stat" aria-live="polite">
+        <span class="bomb-hud__label">Địch còn lại</span>
+        <span class="bomb-hud__value" id="bomb-enemies">3</span>
+      </div>
+    </div>
+
+    <div class="bomb-board-wrap">
+      <div class="bomb-board" id="bomb-board" role="img" aria-label="Bàn cờ mê cung đặt bom"></div>
+
+      <div class="bomb-overlay" id="bomb-overlay" hidden>
+        <div class="bomb-overlay__card">
+          <p class="bomb-overlay__icon" id="bomb-overlay-icon" aria-hidden="true">🏆</p>
+          <h2 class="bomb-overlay__title" id="bomb-overlay-title">Chiến thắng!</h2>
+          <p class="bomb-overlay__text" id="bomb-overlay-text"></p>
+          <button class="bomb-overlay__btn" id="bomb-restart-btn" type="button">Chơi lại</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bomb-controls">
+      <div class="bomb-dpad" role="group" aria-label="Điều khiển di chuyển">
+        <button type="button" class="bomb-dpad__btn bomb-dpad__btn--up" id="bomb-btn-up" aria-label="Di chuyển lên">▲</button>
+        <button type="button" class="bomb-dpad__btn bomb-dpad__btn--left" id="bomb-btn-left" aria-label="Di chuyển trái">◀</button>
+        <button type="button" class="bomb-dpad__btn bomb-dpad__btn--right" id="bomb-btn-right" aria-label="Di chuyển phải">▶</button>
+        <button type="button" class="bomb-dpad__btn bomb-dpad__btn--down" id="bomb-btn-down" aria-label="Di chuyển xuống">▼</button>
+      </div>
+      <button type="button" class="bomb-btn-place" id="bomb-btn-place" aria-label="Đặt bom">💣</button>
+    </div>
+
+    <p class="bomb-hint">Di chuyển: phím mũi tên / WASD hoặc nút D-pad · Đặt bom: phím Space hoặc nút 💣</p>
+  </div>
+
+  <footer class="site-footer" role="contentinfo">
+    <p>&copy; 2026 <strong>Life Balance</strong> — built for Pi Network App Studio.</p>
+  </footer>
+
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script src="js/common.js?v=10"></script>
+  <script src="js/game-bomb.js?v=2"></script>
+</body>
+</html>

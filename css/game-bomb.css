@@ -1,0 +1,223 @@
+/* ============================================================
+   Life Balance — game-bomb.css
+   "Đại Chiến Bom" — original bomb-placing maze arcade mini-game.
+   Board rendering, HUD, on-screen D-pad, win/lose overlay.
+   Scoped entirely to game-bomb.html; only ever reads design tokens
+   from css/style.css's :root (see .claude/rules/design.md) — never
+   introduces a hardcoded hex color.
+   ============================================================ */
+
+/* ── 1. Game Shell ── */
+.bomb-game {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-md) var(--space-lg) var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* ── 2. HUD ── */
+.bomb-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm) var(--space-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.bomb-hud__stat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.bomb-hud__label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--text-muted);
+}
+
+.bomb-hud__value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ── 3. Board ── */
+.bomb-board-wrap {
+  position: relative;
+}
+
+.bomb-board {
+  display: grid;
+  grid-template-columns: repeat(13, 1fr);
+  grid-template-rows: repeat(11, 1fr);
+  gap: 1px;
+  width: 100%;
+  aspect-ratio: 13 / 11;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.bomb-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  background: var(--bg-page);
+}
+
+/* Terrain */
+.bomb-cell--floor { background: var(--bg-page); }
+.bomb-cell--wall   { background: var(--text-muted); }
+.bomb-cell--soft   { background: var(--earth); }
+
+/* Entities (font-size bump so the emoji glyph reads clearly at
+   small cell sizes; background color is inherited from the
+   terrain class already applied alongside these) */
+.bomb-cell--player,
+.bomb-cell--enemy {
+  font-size: 14px;
+}
+
+.bomb-cell--bomb {
+  font-size: 13px;
+  animation: bomb-pulse .5s ease-in-out infinite;
+}
+
+/* Blast highlight — declared last so it wins the cascade over any
+   terrain/entity class also present on the same cell during the
+   brief detonation window, without resorting to !important */
+.bomb-cell--blast {
+  background: var(--danger);
+  font-size: 13px;
+}
+
+@keyframes bomb-pulse {
+  0%, 100% { box-shadow: inset 0 0 0 1px var(--danger); }
+  50%      { box-shadow: inset 0 0 6px 2px var(--danger); }
+}
+
+/* ── 4. Overlay (win / lose) ── */
+.bomb-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 10, .85);
+  border-radius: var(--radius-md);
+  z-index: 5;
+}
+
+.bomb-overlay[hidden] { display: none; }
+
+.bomb-overlay__card {
+  text-align: center;
+  padding: var(--space-lg);
+}
+
+.bomb-overlay__icon {
+  font-size: 40px;
+  margin-bottom: var(--space-sm);
+}
+
+.bomb-overlay__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-xs);
+}
+
+.bomb-overlay__text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 auto var(--space-md);
+  max-width: 260px;
+}
+
+.bomb-overlay__btn {
+  background: var(--tier-bronze);
+  color: var(--text-primary);
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.bomb-overlay__btn:hover  { filter: brightness(1.15); }
+.bomb-overlay__btn:active { filter: brightness(.9); }
+
+/* ── 5. Controls (D-pad + bomb button) ── */
+.bomb-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding: var(--space-sm) 0;
+}
+
+.bomb-dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 44px);
+  grid-template-rows: repeat(3, 44px);
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.bomb-dpad__btn {
+  background: var(--bg-card);
+  border: 1.5px solid var(--tier-bronze);
+  color: var(--tier-bronze);
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.bomb-dpad__btn:active { background: var(--tier-bronze-tint); }
+
+.bomb-dpad__btn--up    { grid-column: 2; grid-row: 1; }
+.bomb-dpad__btn--left  { grid-column: 1; grid-row: 2; }
+.bomb-dpad__btn--right { grid-column: 3; grid-row: 2; }
+.bomb-dpad__btn--down  { grid-column: 2; grid-row: 3; }
+
+.bomb-btn-place {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--tier-bronze);
+  background: var(--tier-bronze-tint);
+  font-size: 26px;
+  cursor: pointer;
+  transition: all var(--transition);
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.bomb-btn-place:active { background: var(--tier-bronze); }
+
+/* ── 6. Hint text ── */
+.bomb-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}

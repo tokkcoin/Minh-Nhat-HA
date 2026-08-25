@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weapon Prototype — Life Balance</title>
+  <meta name="description" content="Feasibility demo: skill practice hours evolve into a weapon through 5 rarity tiers." />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234dabf7'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
+  <link rel="stylesheet" href="css/style.css?v=52" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════════
+       TOAST NOTIFICATION
+  ══════════════════════════════════════════════════ -->
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ══════════════════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════════════════ -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="logo">
+        <div class="logo-mark">LB</div>
+        <div class="logo-text">
+          <strong>Life Balance</strong>
+          <span>Five Elements Tracker</span>
+        </div>
+      </div>
+      <span class="pi-status" id="pi-status">Checking Pi Browser…</span>
+    </div>
+  </header>
+
+  <a class="journal-back" href="skills.html"><span class="journal-back__arrow">←</span>Trang Kỹ năng</a>
+
+  <!-- ══════════════════════════════════════════════════
+       MAIN — WEAPON PROTOTYPE
+  ══════════════════════════════════════════════════ -->
+  <main class="page-main" role="main">
+    <h2 class="page-title">Weapon Prototype</h2>
+    <p class="page-subtitle">Demo kiểm tra tính khả thi: mỗi kỹ năng bạn kiên trì luyện tập (dữ liệu thật từ trang Thuỷ — Kỹ năng) sẽ hiện ra như một "vũ khí" tiến hoá qua 5 cấp độ hiếm — Sơ cấp → Rèn luyện → Thành thạo → Tinh anh → Huyền thoại — đúng theo mốc giờ luyện tập đã có (5h / 35h / 150h / 365h / 500h). Trang này chưa gắn vào app chính — chỉ để cảm nhận trước khi quyết định đầu tư tiếp.</p>
+
+    <p class="chart-note" id="weapon-data-note">Đang tải dữ liệu…</p>
+
+    <div class="weapon-grid" id="weapon-grid"></div>
+  </main>
+
+  <script src="js/common.js?v=10"></script>
+  <script src="js/weaponPrototype.js?v=1"></script>
+</body>
+</html>

@@ -7,7 +7,7 @@
   <meta name="description" content="Track your balance across Money, Health, Talent, Mood, and Situation through the Five Elements." />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234caf50'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
-  <link rel="stylesheet" href="css/style.css?v=49" />
+  <link rel="stylesheet" href="css/style.css?v=52" />
 </head>
 <body>
 
@@ -323,12 +323,40 @@
        TAB 3 — CONNECT (coming soon)
   ══════════════════════════════════════════════════ -->
   <div id="tab-connect" class="tab-content" hidden>
-    <div class="connect-placeholder">
-      <div class="connect-placeholder__icon">🌐</div>
-      <h2 class="connect-placeholder__title">Connect</h2>
-      <p class="connect-placeholder__text">Tính năng kết nối cộng đồng sẽ sớm ra mắt — chia sẻ hành trình, theo dõi người dùng khác, cùng cân bằng cuộc sống.</p>
-      <span class="element-placeholder__badge">Đang phát triển</span>
-    </div>
+    <main class="page-main" role="main">
+      <div class="game-hub-intro">
+        <div class="connect-placeholder__icon">🎮</div>
+        <h2 class="page-title">Connect — Trung tâm Game</h2>
+        <p class="page-subtitle">Nơi những nỗ lực rèn luyện thật của bạn (Kim/Mộc/Thuỷ/Hoả/Thổ) sẽ đổi thành sức mạnh trong các trò chơi dưới đây. Từng game một, bắt đầu từ khung sườn — chọn một ô để xem tiến độ.</p>
+      </div>
+
+      <div class="game-grid">
+        <a class="game-card" href="game-bomb.html" style="--game-accent: var(--tier-bronze);">
+          <div class="game-card__icon">💣</div>
+          <div class="game-card__name">Đại Chiến Bom</div>
+          <div class="game-card__genre">Mê cung · Đặt bom</div>
+          <span class="game-card__status">Sắp ra mắt</span>
+        </a>
+        <a class="game-card" href="game-artillery.html" style="--game-accent: var(--tier-silver);">
+          <div class="game-card__icon">🎯</div>
+          <div class="game-card__name">Pháo Đài Anh Hùng</div>
+          <div class="game-card__genre">Bắn pháo theo lượt</div>
+          <span class="game-card__status">Sắp ra mắt</span>
+        </a>
+        <a class="game-card" href="game-wulin.html" style="--game-accent: var(--tier-gold);">
+          <div class="game-card__icon">⚔️</div>
+          <div class="game-card__name">Ngũ Hành Giang Hồ</div>
+          <div class="game-card__genre">Luyện công · Đánh quái</div>
+          <span class="game-card__status">Sắp ra mắt</span>
+        </a>
+        <a class="game-card" href="game-arena.html" style="--game-accent: var(--tier-epic);">
+          <div class="game-card__icon">🛡️</div>
+          <div class="game-card__name">Đại Chiến Anh Hùng</div>
+          <div class="game-card__genre">Đấu trường · Đối kháng</div>
+          <span class="game-card__status">Sắp ra mắt</span>
+        </a>
+      </div>
+    </main>
   </div>
 
   <!-- STORY VIEWER (fixed overlay — shared across all tabs) -->

@@ -1,0 +1,473 @@
+/* ============================================================
+   Life Balance — game-wulin.js
+   "Ngũ Hành Giang Hồ" — wuxia-flavored turn-based RPG (Connect tab).
+
+   The whole point of this game: combat stats are DERIVED from the
+   player's real Five Elements tracking data, using the exact same
+   read-only localStorage-key pattern as js/characterPanel.js's
+   compute*Stat() readers (never writes to those keys, never invents
+   a parallel data model). Unlike characterPanel.js's placeholder
+   "no data yet" text, every formula here has a floor/base value so
+   a brand-new user with zero tracked data can still fight — see
+   WULIN_BASE below. Which stats are real vs. baseline is shown in
+   the stats panel for honesty (see renderStatsPanel).
+   ============================================================ */
+
+'use strict';
+
+// ── 1. Real-data readers (same keys/pattern as characterPanel.js) ──
+
+const WULIN_KEYS = {
+  finance: 'lifebalance_finance_state',
+  health: 'lifebalance_health_quests',
+  skills: 'lifebalance_skills',
+  mood: 'lifebalance_mood_quests',
+  situation: 'lifebalance_situation_units',
+};
+
+// Baseline floors so a fresh user (all keys empty) still gets a fully
+// playable character instead of getting stuck at 0.
+const WULIN_BASE = { hp: 80, attack: 12, skillPower: 15, crit: 5, defense: 8, evasion: 5 };
+
+function wulinReadJson(key, fallback) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key));
+    return parsed == null ? fallback : parsed;
+  } catch {
+    return fallback;
+  }
+}
+
+// Mirrors skills.js's STAR_THRESHOLDS / characterPanel.js's
+// CHARACTER_STAR_THRESHOLDS — skills only ever persist totalSeconds,
+// stars are always derived, never stored.
+const WULIN_STAR_THRESHOLDS = [
+  { hours: 500, stars: 5 },
+  { hours: 365, stars: 4 },
+  { hours: 150, stars: 3 },
+  { hours: 35, stars: 2 },
+  { hours: 5, stars: 1 },
+];
+
+function wulinComputeStars(totalSeconds) {
+  const hours = (totalSeconds || 0) / 3600;
+  for (const t of WULIN_STAR_THRESHOLDS) if (hours >= t.hours) return t.stars;
+  return 0;
+}
+
+function wulinSumQuestXp(quests) {
+  return quests.reduce((sum, q) => sum + ((q.completedPeriods?.length || 0) * (q.xp || 0)), 0);
+}
+
+// ── 2. Stat derivation — formulas documented per element ──
+//
+// Wood (health quests, XP)  -> Max HP: base 80 + 10 per level (level =
+//   floor(totalXp/100)+1, same level formula as characterPanel.js's
+//   computeWoodStat) + a small direct XP bonus, capped so grinding
+//   XP can't runaway-inflate HP.
+// Fire (mood quests, "Hoả Khí" XP) -> Attack: base 12 + totalXp/6.
+// Water (skills, 0-5 star avg) -> Skill Power + Crit%: base 15 skill
+//   power / 5% crit, +9 skill power and +4% crit per average star.
+// Metal (finance pools, total allocated capital) -> Defense: base 8
+//   + 5*log10(1+totalCapital) so a huge capital figure doesn't trivially
+//   dominate combat (log-scaled per spec).
+// Earth (situation units count) -> Evasion%: base 5% + 2% per unit,
+//   capped at 30% so a dodge-everything build isn't possible.
+function computeWulinStats() {
+  const healthQuests = wulinReadJson(WULIN_KEYS.health, []);
+  const woodXp = wulinSumQuestXp(healthQuests);
+  const woodLevel = Math.floor(woodXp / 100) + 1;
+  const woodHasData = healthQuests.some(q => (q.completedPeriods?.length || 0) > 0);
+  const maxHp = WULIN_BASE.hp + woodLevel * 10 + Math.min(150, Math.floor(woodXp / 8));
+
+  const moodQuests = wulinReadJson(WULIN_KEYS.mood, []);
+  const fireXp = wulinSumQuestXp(moodQuests);
+  const fireHasData = moodQuests.some(q => (q.completedPeriods?.length || 0) > 0);
+  const attack = WULIN_BASE.attack + Math.floor(fireXp / 6);
+
+  const skills = wulinReadJson(WULIN_KEYS.skills, []);
+  const starList = skills.map(s => wulinComputeStars(s.totalSeconds || 0));
+  const avgStars = starList.length ? starList.reduce((a, b) => a + b, 0) / starList.length : 0;
+  const waterHasData = avgStars > 0;
+  const skillPower = WULIN_BASE.skillPower + Math.round(avgStars * 9);
+  const critChance = Math.round(WULIN_BASE.crit + avgStars * 4);
+
+  const financeState = wulinReadJson(WULIN_KEYS.finance, null);
+  const pools = financeState?.pools;
+  const totalCapital = pools ? Object.values(pools).reduce((sum, p) => sum + (p.principal || 0), 0) : 0;
+  const metalHasData = totalCapital > 0;
+  const defense = WULIN_BASE.defense + Math.round(5 * Math.log10(1 + totalCapital));
+
+  const units = wulinReadJson(WULIN_KEYS.situation, []);
+  const earthHasData = units.length > 0;
+  const evasion = Math.min(30, WULIN_BASE.evasion + units.length * 2);
+
+  return {
+    maxHp, attack, skillPower, critChance, defense, evasion,
+    sources: {
+      wood: { hasData: woodHasData, label: woodHasData ? `Cấp ${woodLevel} · ${woodXp} EXP` : 'Chưa có nhiệm vụ Mộc' },
+      fire: { hasData: fireHasData, label: fireHasData ? `${fireXp} Hoả Khí` : 'Chưa luyện Hoả' },
+      water: { hasData: waterHasData, label: waterHasData ? `${skills.length} kỹ năng · TB ${avgStars.toFixed(1)}★` : 'Chưa có kỹ năng Thuỷ' },
+      metal: { hasData: metalHasData, label: metalHasData ? `${totalCapital.toLocaleString('vi-VN')}đ vốn` : 'Chưa phân bổ vốn Kim' },
+      earth: { hasData: earthHasData, label: earthHasData ? `${units.length} mục tiêu Thổ` : 'Chưa có mục tiêu Thổ' },
+    },
+  };
+}
+
+// ── 3. Monster roster — original names/flavor, no real IP references ──
+
+const WULIN_MONSTERS = [
+  {
+    id: 'fox-mist', icon: '🦊', name: 'Hồ Ly Sương Sớm', tier: 'Dễ',
+    hp: 70, attack: 9, defense: 4, skillName: 'Miên Sương Trảo', skillMult: 1.4,
+    skillChance: .25, reward: 20,
+  },
+  {
+    id: 'wraith-valley', icon: '👻', name: 'Quỷ Ảnh Cốc Sâu', tier: 'Trung bình',
+    hp: 110, attack: 13, defense: 9, skillName: 'Ám Ảnh Trảm', skillMult: 1.5,
+    skillChance: .3, reward: 35,
+  },
+  {
+    id: 'serpent-ancient', icon: '🐍', name: 'Xà Tinh Vạn Niên', tier: 'Trung bình',
+    hp: 95, attack: 16, defense: 6, skillName: 'Độc Nha Phệ', skillMult: 1.6,
+    skillChance: .3, reward: 35,
+  },
+  {
+    id: 'demon-general', icon: '🛡️', name: 'Ma Tướng Thiết Giáp', tier: 'Khó',
+    hp: 150, attack: 17, defense: 16, skillName: 'Cuồng Phong Trảm', skillMult: 1.5,
+    skillChance: .32, reward: 55,
+  },
+  {
+    id: 'dragonling-hidden', icon: '🐉', name: 'Hắc Long Ẩn Thế', tier: 'Khó',
+    hp: 170, attack: 20, defense: 12, skillName: 'Long Diễm Khí', skillMult: 1.7,
+    skillChance: .35, reward: 65,
+  },
+];
+
+// ── 4. Combat state + math ──
+
+const wulinState = {
+  player: null,
+  monster: null,
+  playerStats: null,
+  inCombat: false,
+  actionLocked: false,
+};
+
+function wulinRandRange(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function wulinDamage(atk, def, mult = 1) {
+  const raw = (atk * mult) - def * 0.5;
+  return Math.max(1, Math.round(raw * wulinRandRange(0.85, 1.15)));
+}
+
+// ── 5. Log helper ──
+
+function wulinLog(message, kind = '') {
+  const logEl = document.getElementById('wulin-log');
+  if (!logEl) return;
+  const entry = document.createElement('div');
+  entry.className = `wulin-log__entry${kind ? ` wulin-log__entry--${kind}` : ''}`;
+  entry.textContent = message;
+  logEl.appendChild(entry);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ── 6. Render: stats panel ──
+
+const WULIN_STAT_CARDS = [
+  { key: 'metal', icon: '⛏️', element: 'metal', label: 'Phòng thủ (Kim)', valueKey: 'defense' },
+  { key: 'wood', icon: '🌳', element: 'wood', label: 'Sinh lực (Mộc)', valueKey: 'maxHp' },
+  { key: 'water', icon: '💧', element: 'water', label: 'Chiêu thức (Thuỷ)', valueKey: 'skillPower', suffixKey: 'critChance' },
+  { key: 'fire', icon: '🔥', element: 'fire', label: 'Công kích (Hoả)', valueKey: 'attack' },
+  { key: 'earth', icon: '⛰️', element: 'earth', label: 'Né tránh (Thổ)', valueKey: 'evasion', isPercent: true },
+];
+
+function renderStatsPanel(stats) {
+  const grid = document.getElementById('wulin-stats-grid');
+  const hint = document.getElementById('wulin-stats-hint');
+  if (!grid) return;
+
+  const anyReal = Object.values(stats.sources).some(s => s.hasData);
+  if (hint) {
+    hint.textContent = anyReal
+      ? 'Chỉ số bên dưới lấy từ dữ liệu thật của bạn trên trang chủ — luyện tập càng nhiều, nhân vật càng mạnh. Ô "Mặc định" là chỉ số nền dùng khi chưa có dữ liệu.'
+      : 'Bạn chưa có dữ liệu nào ở Kim/Mộc/Thuỷ/Hoả/Thổ — nhân vật đang dùng chỉ số nền để vẫn luyện công được. Hãy ghé các trang Ngũ Hành để chỉ số tăng lên thật.';
+  }
+
+  grid.innerHTML = WULIN_STAT_CARDS.map(card => {
+    const src = stats.sources[card.element];
+    const value = stats[card.valueKey];
+    const valueText = card.isPercent ? `${value}%` : value;
+    const suffixText = card.suffixKey ? ` · ${stats[card.suffixKey]}% chí mạng` : '';
+    const badgeClass = src.hasData ? 'wulin-stat-card__badge--real' : 'wulin-stat-card__badge--baseline';
+    const badgeText = src.hasData ? 'Dữ liệu thật' : 'Mặc định';
+    return `
+      <div class="wulin-stat-card wulin-stat-card--${card.element}">
+        <div class="wulin-stat-card__head">${card.icon} ${card.label}</div>
+        <div class="wulin-stat-card__value">${valueText}${suffixText}</div>
+        <div class="wulin-stat-card__source">${src.label}</div>
+        <span class="wulin-stat-card__badge ${badgeClass}">${badgeText}</span>
+      </div>`;
+  }).join('');
+}
+
+// ── 7. Render: monster select ──
+
+function renderMonsterGrid() {
+  const grid = document.getElementById('wulin-monster-grid');
+  if (!grid) return;
+  grid.innerHTML = WULIN_MONSTERS.map(m => `
+    <button type="button" class="wulin-monster-card" data-monster-id="${m.id}">
+      <div class="wulin-monster-card__icon">${m.icon}</div>
+      <div class="wulin-monster-card__name">${m.name}</div>
+      <span class="wulin-monster-card__tier">${m.tier}</span>
+      <div class="wulin-monster-card__stats">
+        <span>❤️ ${m.hp}</span><span>⚔️ ${m.attack}</span><span>🛡️ ${m.defense}</span>
+      </div>
+      <div class="wulin-monster-card__reward">Thắng: Nội lực +${m.reward}</div>
+    </button>
+  `).join('');
+
+  grid.querySelectorAll('[data-monster-id]').forEach(btn => {
+    btn.addEventListener('click', () => startCombat(btn.dataset.monsterId));
+  });
+}
+
+// ── 8. Combat: start / bars / actions ──
+
+function wulinShowScreen(screen) {
+  const statsPanel = document.getElementById('wulin-stats-panel');
+  const monsterSelect = document.getElementById('wulin-monster-select');
+  const combat = document.getElementById('wulin-combat');
+  if (!statsPanel || !monsterSelect || !combat) return;
+  statsPanel.hidden = screen !== 'select';
+  monsterSelect.hidden = screen !== 'select';
+  combat.hidden = screen !== 'combat';
+}
+
+function startCombat(monsterId) {
+  const def = WULIN_MONSTERS.find(m => m.id === monsterId);
+  if (!def || !wulinState.playerStats) return;
+
+  const stats = wulinState.playerStats;
+  wulinState.player = {
+    hp: stats.maxHp, maxHp: stats.maxHp,
+    attack: stats.attack, skillPower: stats.skillPower,
+    critChance: stats.critChance, defense: stats.defense, evasion: stats.evasion,
+    defending: false, skillCooldown: 0,
+  };
+  wulinState.monster = { ...def, maxHp: def.hp, skillCooldown: 0 };
+  wulinState.inCombat = true;
+  wulinState.actionLocked = false;
+
+  const nameEl = document.getElementById('wulin-monster-name');
+  const iconEl = document.getElementById('wulin-monster-icon');
+  if (nameEl) nameEl.textContent = def.name;
+  if (iconEl) iconEl.textContent = def.icon;
+
+  const logEl = document.getElementById('wulin-log');
+  if (logEl) logEl.innerHTML = '';
+  wulinLog(`Trận đấu bắt đầu! Bạn chạm trán ${def.name}.`);
+
+  wulinShowScreen('combat');
+  updateCombatBars();
+  updateActionButtons();
+}
+
+function updateCombatBars() {
+  const p = wulinState.player;
+  const m = wulinState.monster;
+  if (!p || !m) return;
+
+  const pFill = document.getElementById('wulin-player-hp-fill');
+  const pText = document.getElementById('wulin-player-hp-text');
+  const mFill = document.getElementById('wulin-monster-hp-fill');
+  const mText = document.getElementById('wulin-monster-hp-text');
+
+  const pPct = Math.max(0, Math.round((p.hp / p.maxHp) * 100));
+  const mPct = Math.max(0, Math.round((m.hp / m.maxHp) * 100));
+  if (pFill) pFill.style.width = `${pPct}%`;
+  if (mFill) mFill.style.width = `${mPct}%`;
+  if (pText) pText.textContent = `${Math.max(0, p.hp)} / ${p.maxHp} HP`;
+  if (mText) mText.textContent = `${Math.max(0, m.hp)} / ${m.maxHp} HP`;
+}
+
+function updateActionButtons() {
+  const p = wulinState.player;
+  const skillBtn = document.getElementById('wulin-action-skill');
+  const cdBadge = document.getElementById('wulin-skill-cd');
+  const locked = wulinState.actionLocked || !wulinState.inCombat;
+
+  document.querySelectorAll('.wulin-action-btn').forEach(btn => { btn.disabled = locked; });
+
+  if (skillBtn && p) {
+    const onCooldown = p.skillCooldown > 0;
+    skillBtn.disabled = locked || onCooldown;
+    if (cdBadge) {
+      cdBadge.hidden = !onCooldown;
+      cdBadge.textContent = p.skillCooldown;
+    }
+  }
+}
+
+// ── 9. Combat: turn resolution ──
+
+function handlePlayerAction(action) {
+  if (wulinState.actionLocked || !wulinState.inCombat) return;
+  const p = wulinState.player;
+  const m = wulinState.monster;
+  if (!p || !m) return;
+
+  p.defending = false;
+
+  if (action === 'attack') {
+    const crit = Math.random() * 100 < p.critChance;
+    const dmg = wulinDamage(p.attack, m.defense, crit ? 1.5 : 1);
+    m.hp -= dmg;
+    wulinLog(crit ? `⚔️ Bạn tung đòn chí mạng, gây ${dmg} sát thương!` : `⚔️ Bạn tấn công, gây ${dmg} sát thương.`, crit ? 'crit' : 'hit');
+  } else if (action === 'skill') {
+    if (p.skillCooldown > 0) { wulinLog('Chiêu thức đang hồi khí, chưa thể dùng.'); return; }
+    const crit = Math.random() * 100 < (p.critChance + 15);
+    const dmg = wulinDamage(p.attack + p.skillPower, m.defense, (crit ? 1.5 : 1) * 1.3);
+    m.hp -= dmg;
+    p.skillCooldown = 3;
+    wulinLog(crit ? `✨ Chiêu thức đả trúng yếu điểm, gây ${dmg} sát thương!` : `✨ Bạn thi triển chiêu thức, gây ${dmg} sát thương.`, crit ? 'crit' : 'hit');
+  } else if (action === 'defend') {
+    p.defending = true;
+    wulinLog('🛡️ Bạn thủ thế, giảm sát thương lượt này.');
+  }
+
+  updateCombatBars();
+
+  if (m.hp <= 0) {
+    endCombat('win');
+    return;
+  }
+
+  wulinState.actionLocked = true;
+  updateActionButtons();
+  window.setTimeout(resolveMonsterTurn, 550);
+}
+
+function resolveMonsterTurn() {
+  const p = wulinState.player;
+  const m = wulinState.monster;
+  if (!p || !m || !wulinState.inCombat) return;
+
+  const useSkill = m.skillCooldown <= 0 && Math.random() < m.skillChance;
+  let dmg;
+  if (useSkill) {
+    dmg = wulinDamage(m.attack, p.defense, m.skillMult);
+    m.skillCooldown = 2;
+  } else {
+    dmg = wulinDamage(m.attack, p.defense, 1);
+  }
+  if (m.skillCooldown > 0 && !useSkill) m.skillCooldown -= 1;
+
+  const dodged = Math.random() * 100 < p.evasion;
+  if (dodged) {
+    wulinLog(`💨 Bạn né được đòn ${useSkill ? `chiêu "${m.skillName}"` : 'tấn công'} của ${m.name}!`, 'good');
+  } else {
+    let finalDmg = dmg;
+    if (p.defending) finalDmg = Math.round(finalDmg * 0.5);
+    p.hp -= finalDmg;
+    wulinLog(
+      useSkill
+        ? `💥 ${m.name} thi triển "${m.skillName}", gây ${finalDmg} sát thương${p.defending ? ' (đã giảm nhờ phòng thủ)' : ''}!`
+        : `👊 ${m.name} phản công, gây ${finalDmg} sát thương${p.defending ? ' (đã giảm nhờ phòng thủ)' : ''}.`,
+      useSkill ? 'danger' : ''
+    );
+  }
+
+  p.defending = false;
+  if (p.skillCooldown > 0) p.skillCooldown -= 1;
+  updateCombatBars();
+
+  if (p.hp <= 0) {
+    endCombat('lose');
+    return;
+  }
+
+  wulinState.actionLocked = false;
+  updateActionButtons();
+}
+
+// ── 10. Result overlay ──
+
+function endCombat(result) {
+  wulinState.inCombat = false;
+  wulinState.actionLocked = true;
+  updateActionButtons();
+
+  const overlay = document.getElementById('wulin-result-overlay');
+  const icon = document.getElementById('wulin-result-icon');
+  const title = document.getElementById('wulin-result-title');
+  const desc = document.getElementById('wulin-result-desc');
+  const rewardBox = document.getElementById('wulin-result-reward');
+  const rewardText = document.getElementById('wulin-result-reward-text');
+  const retryBtn = document.getElementById('wulin-result-retry');
+  if (!overlay) return;
+
+  const m = wulinState.monster;
+
+  if (result === 'win') {
+    if (icon) icon.textContent = '🏆';
+    if (title) title.textContent = 'Chiến thắng!';
+    if (desc) desc.textContent = `Bạn đã đánh bại ${m?.name || 'đối thủ'}.`;
+    if (rewardBox) rewardBox.hidden = false;
+    if (rewardText) rewardText.textContent = `Nội lực +${m?.reward ?? 0}`;
+    if (retryBtn) retryBtn.textContent = 'Đấu tiếp';
+    wulinLog(`🎉 ${m?.name || 'Đối thủ'} đã gục ngã. Nội lực +${m?.reward ?? 0}!`, 'good');
+  } else {
+    if (icon) icon.textContent = '💀';
+    if (title) title.textContent = 'Bạn đã gục ngã…';
+    if (desc) desc.textContent = 'Không sao cả — luyện thêm ở các trang Ngũ Hành rồi quay lại thử sức.';
+    if (rewardBox) rewardBox.hidden = true;
+    if (retryBtn) retryBtn.textContent = 'Thử lại';
+    wulinLog('☠️ Bạn đã kiệt sức trong trận đấu này.', 'danger');
+  }
+
+  overlay.hidden = false;
+}
+
+function hideResultOverlay() {
+  const overlay = document.getElementById('wulin-result-overlay');
+  if (overlay) overlay.hidden = true;
+}
+
+// ── 11. Boot / wiring ──
+
+function initWulinGame() {
+  wulinState.playerStats = computeWulinStats();
+  renderStatsPanel(wulinState.playerStats);
+  renderMonsterGrid();
+  wulinShowScreen('select');
+
+  document.querySelectorAll('.wulin-action-btn').forEach(btn => {
+    btn.addEventListener('click', () => handlePlayerAction(btn.dataset.action));
+  });
+
+  document.getElementById('wulin-retreat-btn')?.addEventListener('click', () => {
+    wulinState.inCombat = false;
+    wulinState.actionLocked = false;
+    wulinShowScreen('select');
+  });
+
+  document.getElementById('wulin-result-retry')?.addEventListener('click', () => {
+    hideResultOverlay();
+    if (wulinState.monster) startCombat(wulinState.monster.id);
+  });
+
+  document.getElementById('wulin-result-select')?.addEventListener('click', () => {
+    hideResultOverlay();
+    wulinShowScreen('select');
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  runBootStep(initPiSdk);
+  runBootStep(initWulinGame);
+});
