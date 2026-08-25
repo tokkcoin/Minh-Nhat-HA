@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ngũ Hành Giang Hồ — Life Balance</title>
+  <meta name="description" content="Connect tab game — wuxia-style turn-based RPG, scaffold stage." />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23e6c15c'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
+  <link rel="stylesheet" href="css/style.css?v=53" />
+  <link rel="stylesheet" href="css/game-wulin.css?v=1" />
+</head>
+<body>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="logo">
+        <div class="logo-mark">LB</div>
+        <div class="logo-text">
+          <strong>Life Balance</strong>
+          <span>Five Elements Tracker</span>
+        </div>
+      </div>
+      <span class="pi-status" id="pi-status">Checking Pi Browser…</span>
+    </div>
+  </header>
+
+  <a class="journal-back" href="index.html"><span class="journal-back__arrow" aria-hidden="true">←</span> Connect</a>
+
+  <section class="journal-hero" style="--current-element: var(--tier-gold); --current-element-tint: var(--tier-gold-tint);">
+    <div class="journal-hero__icon">⚔️</div>
+    <h1 class="journal-hero__title">Ngũ Hành Giang Hồ</h1>
+    <p class="journal-hero__dimension">Luyện công · Đánh quái theo lượt</p>
+  </section>
+
+  <div class="wulin-game" id="wulin-game" style="--current-element: var(--tier-gold); --current-element-tint: var(--tier-gold-tint);">
+
+    <!-- ── Player stats panel (derived from real Five Elements data) ── -->
+    <section class="wulin-stats" id="wulin-stats-panel" aria-label="Chỉ số nhân vật">
+      <h2 class="wulin-section-title">Chỉ số của bạn</h2>
+      <p class="wulin-stats__hint" id="wulin-stats-hint">Đang tính chỉ số từ dữ liệu Ngũ Hành của bạn…</p>
+      <div class="wulin-stats__grid" id="wulin-stats-grid"></div>
+    </section>
+
+    <!-- ── Monster select ── -->
+    <section class="wulin-monsters" id="wulin-monster-select" aria-label="Chọn đối thủ">
+      <h2 class="wulin-section-title">Chọn đối thủ</h2>
+      <div class="wulin-monster-grid" id="wulin-monster-grid"></div>
+    </section>
+
+    <!-- ── Combat screen ── -->
+    <section class="wulin-combat" id="wulin-combat" hidden aria-label="Giao đấu">
+      <div class="wulin-combat__top">
+        <div class="wulin-fighter" id="wulin-player-fighter">
+          <div class="wulin-fighter__head">
+            <span class="wulin-fighter__icon">🧑‍🎤</span>
+            <span class="wulin-fighter__name">Bạn</span>
+          </div>
+          <div class="wulin-hp-bar">
+            <div class="wulin-hp-bar__fill wulin-hp-bar__fill--player" id="wulin-player-hp-fill"></div>
+          </div>
+          <div class="wulin-hp-bar__text" id="wulin-player-hp-text">0 / 0 HP</div>
+        </div>
+        <div class="wulin-vs" aria-hidden="true">⚔️</div>
+        <div class="wulin-fighter" id="wulin-monster-fighter">
+          <div class="wulin-fighter__head">
+            <span class="wulin-fighter__icon" id="wulin-monster-icon">👹</span>
+            <span class="wulin-fighter__name" id="wulin-monster-name">Quái vật</span>
+          </div>
+          <div class="wulin-hp-bar">
+            <div class="wulin-hp-bar__fill wulin-hp-bar__fill--monster" id="wulin-monster-hp-fill"></div>
+          </div>
+          <div class="wulin-hp-bar__text" id="wulin-monster-hp-text">0 / 0 HP</div>
+        </div>
+      </div>
+
+      <div class="wulin-log" id="wulin-log" role="log" aria-live="polite"></div>
+
+      <div class="wulin-actions">
+        <button type="button" class="wulin-action-btn" id="wulin-action-attack" data-action="attack">
+          <span class="wulin-action-btn__icon">⚔️</span> Đánh
+        </button>
+        <button type="button" class="wulin-action-btn" id="wulin-action-skill" data-action="skill">
+          <span class="wulin-action-btn__icon">✨</span> Chiêu thức
+          <span class="wulin-action-btn__cd" id="wulin-skill-cd" hidden></span>
+        </button>
+        <button type="button" class="wulin-action-btn" id="wulin-action-defend" data-action="defend">
+          <span class="wulin-action-btn__icon">🛡️</span> Phòng thủ
+        </button>
+      </div>
+
+      <button type="button" class="wulin-retreat-btn" id="wulin-retreat-btn">↩ Rút lui</button>
+    </section>
+
+    <!-- ── Result overlay (win / lose) ── -->
+    <div class="wulin-result-overlay" id="wulin-result-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="wulin-result-title">
+      <div class="wulin-result-card">
+        <div class="wulin-result-icon" id="wulin-result-icon">🏆</div>
+        <h2 id="wulin-result-title">Chiến thắng!</h2>
+        <p id="wulin-result-desc"></p>
+        <div class="wulin-result-reward" id="wulin-result-reward" hidden>
+          <span class="wulin-result-reward__icon">💠</span>
+          <span id="wulin-result-reward-text">Nội lực +0</span>
+        </div>
+        <div class="wulin-result-actions">
+          <button type="button" class="btn btn-primary" id="wulin-result-retry">Đấu tiếp</button>
+          <button type="button" class="wulin-btn-outline" id="wulin-result-select">Chọn quái khác</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="site-footer" role="contentinfo">
+    <p>&copy; 2026 <strong>Life Balance</strong> — built for Pi Network App Studio.</p>
+  </footer>
+
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script src="js/common.js?v=10"></script>
+  <script src="js/game-wulin.js?v=2"></script>
+</body>
+</html>

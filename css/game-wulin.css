@@ -1,0 +1,377 @@
+/* ============================================================
+   Life Balance — game-wulin.css
+   "Ngũ Hành Giang Hồ" (wuxia-style turn-based RPG, Connect tab).
+   Uses only design tokens from css/style.css's :root — no
+   hardcoded hex, matches this app's dark theme + existing
+   element-page layout conventions (max-width 700px content column,
+   card/border/radius/shadow tokens). Accent color for this game is
+   var(--tier-gold), set on .wulin-game via inline --current-element.
+   ============================================================ */
+
+/* ── 1. Game shell ── */
+.wulin-game {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg) var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.wulin-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+/* ── 2. Stats panel ── */
+.wulin-stats {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-lg);
+}
+
+.wulin-stats__hint {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-md);
+}
+
+.wulin-stats__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-sm);
+}
+
+.wulin-stat-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-page);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wulin-stat-card__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+.wulin-stat-card__value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.wulin-stat-card__source {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.wulin-stat-card__badge {
+  display: inline-block;
+  width: fit-content;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-xl);
+  margin-top: 2px;
+}
+.wulin-stat-card__badge--real {
+  background: rgba(39, 174, 96, .16);
+  color: var(--success);
+}
+.wulin-stat-card__badge--baseline {
+  background: var(--border);
+  color: var(--text-muted);
+}
+
+/* Per-element accent stripe, left border only — mirrors the
+   "each element card uses its own --<element> color" rule. */
+.wulin-stat-card--metal { border-left: 3px solid var(--metal); }
+.wulin-stat-card--wood { border-left: 3px solid var(--wood); }
+.wulin-stat-card--water { border-left: 3px solid var(--water); }
+.wulin-stat-card--fire { border-left: 3px solid var(--fire); }
+.wulin-stat-card--earth { border-left: 3px solid var(--earth); }
+
+/* ── 3. Monster select grid ── */
+.wulin-monster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-md);
+}
+
+.wulin-monster-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-md);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all var(--transition);
+}
+.wulin-monster-card:hover,
+.wulin-monster-card:focus-visible {
+  background: var(--bg-card-hover);
+  border-color: var(--tier-gold);
+  outline: none;
+}
+
+.wulin-monster-card__icon { font-size: 34px; line-height: 1; margin-bottom: 4px; }
+.wulin-monster-card__name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.wulin-monster-card__tier {
+  display: inline-block;
+  width: fit-content;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-xl);
+  background: var(--tier-gold-tint);
+  color: var(--tier-gold);
+  margin: 2px 0 4px;
+}
+.wulin-monster-card__stats {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+.wulin-monster-card__reward {
+  font-size: 11.5px;
+  color: var(--tier-gold);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* ── 4. Combat screen ── */
+.wulin-combat {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.wulin-combat__top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.wulin-fighter { flex: 1; min-width: 0; }
+.wulin-fighter__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.wulin-fighter__icon { font-size: 22px; line-height: 1; }
+.wulin-fighter__name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wulin-vs { font-size: 20px; flex: 0 0 auto; }
+
+.wulin-hp-bar {
+  height: 10px;
+  border-radius: var(--radius-xl);
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.wulin-hp-bar__fill {
+  height: 100%;
+  width: 100%;
+  transition: width .3s ease;
+}
+.wulin-hp-bar__fill--player { background: var(--wood); }
+.wulin-hp-bar__fill--monster { background: var(--fire); }
+
+.wulin-hp-bar__text {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.wulin-log {
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  height: 140px;
+  overflow-y: auto;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.wulin-log__entry { line-height: 1.5; }
+.wulin-log__entry--hit { color: var(--text-primary); }
+.wulin-log__entry--crit { color: var(--tier-gold); font-weight: 600; }
+.wulin-log__entry--danger { color: var(--danger); }
+.wulin-log__entry--good { color: var(--success); }
+
+.wulin-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+}
+
+.wulin-action-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-page);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  transition: all var(--transition);
+}
+.wulin-action-btn:hover:not(:disabled) {
+  border-color: var(--tier-gold);
+  background: var(--tier-gold-tint);
+}
+.wulin-action-btn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+.wulin-action-btn__icon { font-size: 18px; }
+.wulin-action-btn__cd {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--danger);
+  color: var(--text-primary);
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wulin-retreat-btn {
+  align-self: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 4px 8px;
+}
+.wulin-retreat-btn:hover { color: var(--text-secondary); }
+
+/* ── 5. Result overlay ── */
+.wulin-result-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  z-index: 1000;
+}
+
+.wulin-result-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-xl) var(--space-lg);
+  max-width: 340px;
+  width: 100%;
+  text-align: center;
+  animation: wulin-pop .25s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+@keyframes wulin-pop {
+  from { transform: scale(.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.wulin-result-icon { font-size: 44px; margin-bottom: var(--space-sm); }
+#wulin-result-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-xs); }
+#wulin-result-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+.wulin-result-reward {
+  margin-top: var(--space-md);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tier-gold);
+  background: var(--tier-gold-tint);
+  border-radius: var(--radius-xl);
+  padding: 6px 16px;
+}
+
+.wulin-result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+}
+
+.wulin-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: var(--radius-md);
+  padding: 12px 22px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text-secondary);
+  transition: all var(--transition);
+}
+.wulin-btn-outline:hover { border-color: var(--tier-gold); color: var(--text-primary); }
+
+/* ── 6. [hidden] override — .wulin-combat and .wulin-result-overlay both
+   set their own `display` (flex), which has the same specificity as the
+   browser's default `[hidden] { display: none }` UA rule, so a plain
+   `hidden` attribute alone would NOT actually hide them once our
+   stylesheet loads. This rule wins by specificity to guarantee `hidden`
+   always works inside the game. ── */
+.wulin-game [hidden] { display: none; }
+
+/* ── 7. Responsive (768 / 480, matches project convention) ── */
+@media (max-width: 768px) {
+  .wulin-stats__grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+}
+
+@media (max-width: 480px) {
+  .wulin-combat__top { flex-wrap: wrap; }
+  .wulin-vs { order: 3; margin: 0 auto; }
+  .wulin-actions { grid-template-columns: 1fr; }
+}

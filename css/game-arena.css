@@ -1,0 +1,200 @@
+/* ============================================================
+   Life Balance — game-arena.css
+   "Đại Chiến Anh Hùng" — styling for game-arena.html's real game
+   UI chrome (HUD bars, ability buttons, result overlay). Canvas
+   internals are drawn in JS (js/game-arena.js), not styled here.
+   All colors/spacing/radius reuse the shared tokens from
+   css/style.css's :root — see .claude/rules/design.md. The page's
+   accent is --tier-epic (purple), per game-arena.html's hero
+   section, and is reused as this file's primary UI accent.
+   ============================================================ */
+
+/* ── 1. Arena Layout ── */
+.arena {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg) var(--space-xl);
+}
+
+/* ── 2. HUD (base + tower HP bars) ── */
+.arena__hud {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+.arena-hud-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.arena-hud-side--enemy { align-items: flex-end; }
+.arena-hud-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.arena-hud-label--sub {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.arena-hud-vs {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tier-epic);
+  flex: 0 0 auto;
+  padding: 0 var(--space-xs);
+}
+
+.arena-bar {
+  width: 100%;
+  height: 10px;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.arena-bar--tower { height: 7px; }
+.arena-bar__fill {
+  height: 100%;
+  width: 100%;
+  transition: width var(--transition);
+}
+.arena-bar--dead .arena-bar__fill { background: var(--text-muted) !important; }
+
+#arena-player-base-fill,
+#arena-player-tower-fill { background: var(--water); }
+#arena-enemy-base-fill,
+#arena-enemy-tower-fill { background: var(--fire); }
+
+/* ── 3. Canvas ── */
+.arena__canvas-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-md);
+}
+#arena-canvas {
+  width: 100%;
+  max-width: 900px;
+  height: 240px;
+  display: block;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.arena__hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: var(--space-md);
+}
+
+/* ── 4. Ability Buttons ── */
+.arena__abilities {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+  margin-bottom: var(--space-sm);
+}
+.arena-ability {
+  position: relative;
+  flex: 1 1 0;
+  max-width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--tier-epic);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.arena-ability:hover:not(.is-cooldown) {
+  background: var(--tier-epic-tint);
+  box-shadow: 0 0 16px var(--tier-epic-tint);
+}
+.arena-ability:active:not(.is-cooldown) { transform: scale(.97); }
+.arena-ability.is-cooldown {
+  opacity: .5;
+  cursor: not-allowed;
+  border-color: var(--border);
+}
+.arena-ability__icon { font-size: 22px; line-height: 1; }
+.arena-ability__name { font-size: 12px; font-weight: 600; }
+.arena-ability__cd {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--tier-epic);
+}
+
+/* ── 5. Result Overlay ── */
+.arena__result {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  z-index: 60;
+}
+.arena__result[hidden] { display: none; }
+.arena__result-card {
+  background: var(--bg-card);
+  border: 1px solid var(--tier-epic);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg), 0 0 30px var(--tier-epic-tint);
+  padding: var(--space-lg);
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+}
+.arena__result-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--tier-epic);
+  margin-bottom: var(--space-sm);
+}
+.arena__result-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-lg);
+}
+.arena__restart {
+  background: var(--tier-epic);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-lg);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.arena__restart:hover { opacity: .88; }
+.arena__restart:active { transform: scale(.97); }
+
+/* ── 6. Responsive ── */
+@media (max-width: 768px) {
+  #arena-canvas { height: 200px; }
+}
+@media (max-width: 480px) {
+  .arena { padding: 0 var(--space-md) var(--space-xl); }
+  #arena-canvas { height: 170px; }
+  .arena-hud-label { font-size: 10px; }
+  .arena__abilities { gap: var(--space-sm); }
+  .arena-ability__name { font-size: 10px; }
+}

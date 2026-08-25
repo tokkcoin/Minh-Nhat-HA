@@ -1,0 +1,347 @@
+/* ============================================================
+   Life Balance — game-artillery.css
+   "Pháo Đài Anh Hùng" (turn-based artillery duel) — game UI.
+   Only chrome around the <canvas> lives here (HUD, controls,
+   win/lose overlay). Everything drawn *inside* the canvas is
+   painted by js/game-artillery.js, which reads these same
+   design-system CSS custom properties at boot so the rendered
+   scene still stays within the app's dark-theme palette.
+   Scoped to the .artillery block only — does not touch any
+   shared selector from css/style.css.
+   ============================================================ */
+
+/* ── 1. Layout Shell ── */
+.artillery {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg) var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* ── 2. HUD (HP bars + turn/wind indicator) ── */
+.artillery__hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-md);
+}
+.artillery__hp-block {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.artillery__hp-block--ai { flex-direction: row-reverse; text-align: right; }
+.artillery__hp-info {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.artillery__hp-block--ai .artillery__hp-info { align-items: flex-end; }
+
+/* ── Character portrait — avatar + level badge, entirely original
+   (emoji + CSS ring), not modeled on any specific game's character art. ── */
+.artillery__portrait {
+  position: relative;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bg-page);
+  border: 2px solid var(--current-element, var(--tier-silver));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px var(--current-element-tint, transparent);
+}
+.artillery__portrait--ai { border-color: var(--fire); box-shadow: 0 0 10px rgba(255,107,91,.25); }
+.artillery__portrait-face { font-size: 20px; line-height: 1; }
+.artillery__portrait-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: var(--radius-xl);
+  background: var(--tier-gold);
+  color: var(--bg-page);
+  font-size: 10px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--bg-card);
+}
+.artillery__stat-line { font-size: 11px; color: var(--text-muted); }
+
+/* Nội Lực (inner-power) bar — a second, smaller resource bar under HP,
+   in --tier-epic purple so it reads as a distinct "energy" resource,
+   never confusable with the HP bar's own accent color. */
+.artillery__noiluc-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-top: 2px;
+}
+.artillery__noiluc-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--tier-epic);
+  transition: width .3s ease;
+}
+.artillery__hp-block--ai .artillery__noiluc-bar-fill { margin-left: auto; }
+.artillery__noiluc-value { font-size: 10px; font-weight: 700; color: var(--tier-epic); }
+.artillery__hp-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+}
+.artillery__hp-bar {
+  width: 100%;
+  height: 10px;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.artillery__hp-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--current-element, var(--tier-silver));
+  transition: width .3s ease, background .3s ease;
+}
+.artillery__hp-block--ai .artillery__hp-bar-fill { background: var(--fire); margin-left: auto; }
+.artillery__hp-value { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+
+.artillery__turn-wind {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  min-width: 120px;
+}
+.artillery__round { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+.artillery__turn-indicator { font-size: 13px; font-weight: 700; color: var(--current-element, var(--tier-silver)); }
+.artillery__wind { font-size: 12px; color: var(--text-secondary); }
+
+/* Wind dial — a small circular badge with a rotating arrow (rotation set
+   inline by JS based on the current wind value); original design, not a
+   reproduction of any specific game's wind widget. */
+.artillery__wind-dial {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--bg-page);
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.artillery__wind-arrow {
+  display: inline-block;
+  font-size: 15px;
+  color: var(--water);
+  transition: transform .3s ease;
+}
+
+/* ── 3. Canvas + Win/Lose Overlay ── */
+.artillery__canvas-wrap {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  background: var(--bg-page);
+}
+#artillery-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 900 / 420;
+  touch-action: none;
+}
+
+.artillery__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 10, .72);
+}
+.artillery__overlay[hidden] { display: none; }
+.artillery__overlay-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-lg);
+  text-align: center;
+  max-width: 320px;
+}
+.artillery__overlay-card h2 { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-sm); }
+.artillery__overlay-card p { font-size: 14px; color: var(--text-secondary); margin-bottom: var(--space-md); }
+
+/* ── 3b. Weapon (ammo type) selection — original icons/names, real
+   gameplay trade-offs (see js/game-artillery.js's WEAPON_TYPES), not a
+   cosmetic-only row. ── */
+.artillery__weapons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+}
+.artillery__weapon-btn {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.artillery__weapon-btn:hover { background: var(--bg-card-hover); }
+.artillery__weapon-btn:disabled { opacity: .5; cursor: not-allowed; }
+.artillery__weapon-name { font-size: 12px; font-weight: 700; color: var(--text-primary); }
+
+/* Icon ring — a colored circular badge behind each weapon's emoji, same
+   visual language as the character portraits above. Color is keyed off
+   each button's own data-weapon so every weapon reads as its own "kind"
+   at a glance (silver=balanced, fire=aggressive, water=wide-area) rather
+   than all 3 sharing one generic accent. */
+.artillery__weapon-icon-ring {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-page);
+  border: 2px solid var(--tier-silver);
+}
+.artillery__weapon-icon { font-size: 18px; line-height: 1; }
+.artillery__weapon-cost {
+  position: absolute;
+  bottom: -4px;
+  right: -6px;
+  min-width: 20px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: var(--radius-xl);
+  background: var(--tier-epic);
+  color: var(--bg-page);
+  font-size: 9px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--bg-card);
+}
+.artillery__weapon-icon-ring { position: relative; }
+.artillery__weapon-btn:disabled .artillery__weapon-cost { background: var(--text-muted); }
+.artillery__weapon-btn[data-weapon="piercing"] .artillery__weapon-icon-ring { border-color: var(--fire); }
+.artillery__weapon-btn[data-weapon="cluster"] .artillery__weapon-icon-ring { border-color: var(--water); }
+
+.artillery__weapon-btn[aria-pressed="true"] {
+  background: var(--bg-card-hover);
+}
+.artillery__weapon-btn[aria-pressed="true"] .artillery__weapon-icon-ring {
+  box-shadow: 0 0 12px 1px currentColor;
+}
+.artillery__weapon-btn[data-weapon="normal"][aria-pressed="true"] .artillery__weapon-icon-ring { color: var(--tier-silver); }
+.artillery__weapon-btn[data-weapon="piercing"][aria-pressed="true"] .artillery__weapon-icon-ring { color: var(--fire); }
+.artillery__weapon-btn[data-weapon="cluster"][aria-pressed="true"] .artillery__weapon-icon-ring { color: var(--water); }
+.artillery__weapon-btn[data-weapon="normal"][aria-pressed="true"] { border-color: var(--tier-silver); }
+.artillery__weapon-btn[data-weapon="piercing"][aria-pressed="true"] { border-color: var(--fire); }
+.artillery__weapon-btn[data-weapon="cluster"][aria-pressed="true"] { border-color: var(--water); }
+
+/* Mini stat-comparison bars (Sát thương / Nổ rộng) — widths set inline by
+   renderWeaponStatBars() in js/game-artillery.js from the real WEAPON_TYPES
+   numbers, replacing the old plain description text with something that
+   actually communicates the trade-off at a glance. */
+.artillery__weapon-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  margin-top: 2px;
+}
+.artillery__weapon-stat { display: flex; align-items: center; gap: 4px; }
+.artillery__weapon-stat-icon { font-size: 9px; flex: 0 0 auto; }
+.artillery__weapon-stat-bar {
+  flex: 1 1 auto;
+  height: 5px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-page);
+  overflow: hidden;
+}
+.artillery__weapon-stat-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-sm);
+  width: 0%;
+  transition: width .3s ease;
+}
+.artillery__weapon-stat-fill[data-stat="damage"] { background: var(--fire); }
+.artillery__weapon-stat-fill[data-stat="blast"] { background: var(--water); }
+
+/* ── 4. Aim Controls (angle/power sliders + fire button) ── */
+.artillery__controls {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.artillery__control-row { display: flex; flex-direction: column; gap: 6px; }
+.artillery__control-row label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.artillery__control-row label span { color: var(--current-element, var(--tier-silver)); font-weight: 700; }
+.artillery__control-row input[type="range"] {
+  width: 100%;
+  height: 28px;
+  accent-color: var(--current-element, var(--tier-silver));
+}
+.artillery__control-row input[type="range"]:disabled { opacity: .5; }
+
+.artillery__fire-btn {
+  width: 100%;
+  font-size: 16px;
+  padding: 14px;
+  letter-spacing: .4px;
+}
+.artillery__fire-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── 5. Responsive ── */
+@media (max-width: 480px) {
+  .artillery__hud { flex-wrap: wrap; }
+  .artillery__turn-wind { order: -1; width: 100%; }
+}

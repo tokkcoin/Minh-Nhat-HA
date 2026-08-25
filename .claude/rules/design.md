@@ -110,6 +110,26 @@ separate pastel hex, since flat light tints don't read well on a dark background
 
 ---
 
+## Weapon Rarity Tiers (feasibility prototype, `weapon-prototype.html`)
+
+> ⚠️ New system, added 2026-07-26 for a standalone feasibility demo — not yet wired into
+> the main app. See `.claude/memory.md` (2026-07-26) for the full rationale.
+
+Reuses `skills.js`'s existing 5 star thresholds as rarity tiers, so no new data model —
+same `totalSeconds` per skill, just a different visual treatment.
+
+| Tier | Hours | Token | Usage |
+|------|-------|-------|-------|
+| Chưa rèn luyện | < 5h | `var(--border)` / `var(--text-muted)` (no new token) | Dim, grayscale icon, plain border |
+| Sơ cấp | 5h+ | `--tier-bronze` `#a9754f` | |
+| Rèn luyện | 35h+ | `--tier-silver` `#c7ccd1` | |
+| Thành thạo | 150h+ | `--tier-gold` `#e6c15c` | Soft glow via `--tier-gold-tint` |
+| Tinh anh | 365h+ | `--tier-epic` `#b98cff` | Stronger glow via `--tier-epic-tint` |
+| Huyền thoại | 500h+ | `--tier-legendary` `#ffd447` | Rotating conic-gradient ring + pulsing icon — **explicit exception** to the "no animation > 1.5s" rule below, same precedent as the hero orbit nodes (earned/rare state, not a default) |
+
+These tier colors are deliberately distinct from the 5 element colors (`--metal`/`--wood`/etc.)
+— a skill's rarity tier is not tied to which of the 5 elements it belongs to.
+
 ## Do NOT
 - ❌ Use Tailwind utility classes
 - ❌ Use hardcoded colors outside of `:root` definitions
