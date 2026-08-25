@@ -21,6 +21,26 @@
   --earth-tint: rgba(201,160,121,.12);
   --accent-gradient: linear-gradient(135deg, var(--fire), var(--metal));
 
+  /* General (non-element-specific) UI accent — active nav state, count
+     badges, generic links. Was referenced in ~15 places but never actually
+     defined (leftover from this project's PTE-sibling scaffold, which does
+     define its own --primary); aliased to --water since it's the most
+     neutral/legible "interactive accent" among the 5 element colors. */
+  --primary:         var(--water);
+  --primary-xlight:  var(--water-tint);
+
+  /* Weapon rarity tiers (see .claude/rules/design.md, "Weapon Rarity Tiers") */
+  --tier-bronze:      #a9754f;
+  --tier-bronze-tint: rgba(169,117,79,.18);
+  --tier-silver:      #c7ccd1;
+  --tier-silver-tint: rgba(199,204,209,.18);
+  --tier-gold:        #e6c15c;
+  --tier-gold-tint:   rgba(230,193,92,.22);
+  --tier-epic:        #b98cff;
+  --tier-epic-tint:   rgba(185,140,255,.24);
+  --tier-legendary:      #ffd447;
+  --tier-legendary-tint: rgba(255,212,71,.28);
+
   /* Status */
   --danger:  #e74c3c;
   --success: #27ae60;
@@ -1850,7 +1870,11 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 /* Fallback "sign in again" banner — shown when this page has no Pi username
    to save/restore with (e.g. after a Pi Browser storage wipe). */
 .backup-signin-banner {
-  position: fixed; left: var(--space-md); right: var(--space-md); bottom: var(--space-md);
+  position: fixed; left: var(--space-md); right: var(--space-md);
+  /* Sit above the fixed bottom-nav (64px + safe-area), not on top of it —
+     previously both used the same viewport-bottom corner, so this banner
+     (higher z-index) silently ate every tap meant for the nav tabs underneath. */
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px) + var(--space-md));
   z-index: 9000;
   background: var(--primary); color: #fff;
   border: none; border-radius: var(--radius-md);
@@ -2086,15 +2110,7 @@ body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 }
 .bottom-nav__label { line-height: 1; }
 
-.connect-placeholder {
-  max-width: 420px;
-  margin: 0 auto;
-  padding: var(--space-xl) var(--space-lg) calc(var(--space-xl) * 2);
-  text-align: center;
-}
 .connect-placeholder__icon { font-size: 48px; margin-bottom: var(--space-md); }
-.connect-placeholder__title { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-sm); }
-.connect-placeholder__text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; margin-bottom: var(--space-md); }
 
 /* ── 25. Character Sheet (home hero) — ported from the Ngũ Hành mockup.
    ⚠️ Interface test only: the stat/sinh-khắc/phân bổ numbers below are
@@ -2292,7 +2308,142 @@ body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 
 .daily-quest-seed-btn { display: block; font-size: 12px; margin: var(--space-sm) 0 var(--space-lg); text-align: left; }
 
-/* ── 27. Responsive ── */
+/* ── 27. Weapon Prototype (feasibility demo — weapon-prototype.html, not
+   linked from nav). Skill icons from skills.html evolve through 5 rarity
+   tiers as real practice hours grow. See .claude/rules/design.md and
+   .claude/memory.md (2026-07-26) for the tier system's rationale. ── */
+
+.weapon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-lg);
+  margin-top: var(--space-lg);
+}
+
+.weapon-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg) var(--space-md);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.weapon-card__slot {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto var(--space-sm);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-page);
+  border: 2px solid var(--border);
+  position: relative;
+}
+
+.weapon-card__icon { font-size: 32px; filter: grayscale(1); opacity: .5; transition: var(--transition); }
+.weapon-card__name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+.weapon-card__tier { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .6px; margin-bottom: var(--space-xs); }
+.weapon-card__hours { font-size: 12px; color: var(--text-muted); margin-bottom: var(--space-sm); }
+.weapon-card__progress { height: 6px; border-radius: var(--radius-sm); background: var(--bg-page); overflow: hidden; margin-bottom: 4px; }
+.weapon-card__progress-fill { height: 100%; background: var(--text-secondary); border-radius: var(--radius-sm); transition: width .4s ease; }
+.weapon-card__next { font-size: 11px; color: var(--text-muted); }
+.weapon-card__next--maxed { color: var(--tier-legendary); font-weight: 600; }
+
+/* Tier 1 — Sơ cấp (bronze) */
+.weapon-card--bronze .weapon-card__slot { border-color: var(--tier-bronze); }
+.weapon-card--bronze .weapon-card__icon { filter: none; opacity: 1; }
+.weapon-card--bronze .weapon-card__tier { color: var(--tier-bronze); }
+.weapon-card--bronze .weapon-card__progress-fill { background: var(--tier-bronze); }
+
+/* Tier 2 — Rèn luyện (silver) */
+.weapon-card--silver .weapon-card__slot { border-color: var(--tier-silver); box-shadow: 0 0 10px var(--tier-silver-tint); }
+.weapon-card--silver .weapon-card__icon { filter: none; opacity: 1; }
+.weapon-card--silver .weapon-card__tier { color: var(--tier-silver); }
+.weapon-card--silver .weapon-card__progress-fill { background: var(--tier-silver); }
+
+/* Tier 3 — Thành thạo (gold) */
+.weapon-card--gold { border-color: var(--tier-gold); }
+.weapon-card--gold .weapon-card__slot { border-color: var(--tier-gold); box-shadow: 0 0 16px var(--tier-gold-tint); }
+.weapon-card--gold .weapon-card__icon { filter: none; opacity: 1; }
+.weapon-card--gold .weapon-card__tier { color: var(--tier-gold); }
+.weapon-card--gold .weapon-card__progress-fill { background: var(--tier-gold); }
+
+/* Tier 4 — Tinh anh (epic) */
+.weapon-card--epic { border-color: var(--tier-epic); box-shadow: var(--shadow-md), 0 0 22px var(--tier-epic-tint); }
+.weapon-card--epic .weapon-card__slot { border-color: var(--tier-epic); box-shadow: 0 0 20px var(--tier-epic-tint); }
+.weapon-card--epic .weapon-card__icon { filter: none; opacity: 1; }
+.weapon-card--epic .weapon-card__tier { color: var(--tier-epic); }
+.weapon-card--epic .weapon-card__progress-fill { background: var(--tier-epic); }
+
+/* Tier 5 — Huyền thoại (legendary/Master) — the one deliberate exception to
+   design.md's "no animation longer than 1.5s" rule, same precedent as the
+   hero orbit nodes (continuous decorative motion on an explicitly earned,
+   rare state, not a default). */
+.weapon-card--legendary { border-color: var(--tier-legendary); box-shadow: var(--shadow-lg), 0 0 30px var(--tier-legendary-tint); }
+.weapon-card--legendary .weapon-card__slot { border-color: var(--tier-legendary); overflow: visible; }
+.weapon-card--legendary .weapon-card__slot::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: conic-gradient(var(--tier-legendary), var(--fire), var(--metal), var(--tier-legendary));
+  z-index: -1;
+  animation: weapon-legendary-spin 3s linear infinite;
+}
+.weapon-card--legendary .weapon-card__icon { filter: none; opacity: 1; animation: weapon-legendary-pulse 1.4s ease-in-out infinite; }
+.weapon-card--legendary .weapon-card__tier { color: var(--tier-legendary); }
+.weapon-card--legendary .weapon-card__progress-fill { background: var(--tier-legendary); }
+
+@keyframes weapon-legendary-spin { to { transform: rotate(360deg); } }
+@keyframes weapon-legendary-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+
+/* ── 28. Game Hub (Connect tab) — all 4 games are real and playable. Card
+   accent colors reuse the Weapon Rarity tier tokens (section 27) as generic
+   non-element genre accents, not weapon rarity — see .claude/rules/design.md. ── */
+
+.game-hub-intro { max-width: 640px; margin: 0 auto var(--space-lg); text-align: center; }
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-lg);
+}
+
+.game-card {
+  display: block;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  text-decoration: none;
+  color: inherit;
+}
+.game-card:hover { background: var(--bg-card-hover); border-color: var(--game-accent, var(--border)); }
+.game-card__icon { font-size: 40px; margin-bottom: var(--space-sm); }
+.game-card__name { font-weight: 700; font-size: 16px; margin-bottom: 4px; }
+.game-card__genre { font-size: 12px; color: var(--game-accent, var(--text-secondary)); text-transform: uppercase; letter-spacing: .6px; margin-bottom: var(--space-sm); }
+.game-card__status {
+  display: inline-block;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: var(--radius-xl);
+  background: var(--bg-page);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.game-card__status--ready {
+  color: var(--success);
+  border-color: var(--success);
+  background: rgba(39, 174, 96, .12);
+}
+
+/* ── 29. Responsive ── */
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; text-align: center; }
   .hero-subtitle { margin-left: auto; margin-right: auto; }
