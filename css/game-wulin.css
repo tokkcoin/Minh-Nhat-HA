@@ -35,7 +35,7 @@
 }
 
 .wulin-stats__hint {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: var(--space-md);
@@ -75,7 +75,7 @@
 }
 
 .wulin-stat-card__source {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
@@ -206,7 +206,7 @@
 .wulin-monster-card__tier {
   display: inline-block;
   width: fit-content;
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
   padding: 2px 8px;
   border-radius: var(--radius-xl);
@@ -215,14 +215,14 @@
   margin: 2px 0 4px;
 }
 .wulin-monster-card__stats {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-secondary);
   display: flex;
   gap: var(--space-sm);
   flex-wrap: wrap;
 }
 .wulin-monster-card__reward {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--tier-gold);
   font-weight: 600;
   margin-top: 4px;
@@ -281,7 +281,7 @@
 .wulin-hp-bar__fill--monster { background: var(--fire); }
 
 .wulin-hp-bar__text {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   margin-top: 3px;
 }
@@ -293,7 +293,7 @@
   padding: var(--space-sm) var(--space-md);
   height: 140px;
   overflow-y: auto;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-secondary);
   display: flex;
   flex-direction: column;
@@ -317,7 +317,7 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
   background: var(--bg-page);

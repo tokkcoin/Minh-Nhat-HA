@@ -141,26 +141,22 @@ let playerNoiLucFill, playerNoiLucValue, aiNoiLucFill, aiNoiLucValue;
 let weaponBtns = [];
 let COLORS = {};
 
-function readColor(varName, fallback) {
-  const v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-  return v || fallback;
-}
-
 function loadPaletteColors() {
+  const v = CanvasUtils.readCssVar;
   COLORS = {
-    bgPage:     readColor('--bg-page', '#0a0a0a'),
-    bgCard:     readColor('--bg-card', '#141414'),
-    bgCardHover:readColor('--bg-card-hover', '#1c1c1c'),
-    border:     readColor('--border', '#2a2a2a'),
-    tierSilver: readColor('--tier-silver', '#c7ccd1'),
-    tierGold:   readColor('--tier-gold', '#e6c15c'),
-    tierEpic:   readColor('--tier-epic', '#b98cff'),
-    fire:       readColor('--fire', '#ff6b5b'),
-    water:      readColor('--water', '#4dabf7'),
-    earth:      readColor('--earth', '#c9a079'),
-    success:    readColor('--success', '#27ae60'),
-    danger:     readColor('--danger', '#e74c3c'),
-    textSecondary: readColor('--text-secondary', '#a3a3a3'),
+    bgPage:     v('--bg-page', '#0a0a0a'),
+    bgCard:     v('--bg-card', '#141414'),
+    bgCardHover:v('--bg-card-hover', '#1c1c1c'),
+    border:     v('--border', '#2a2a2a'),
+    tierSilver: v('--tier-silver', '#c7ccd1'),
+    tierGold:   v('--tier-gold', '#e6c15c'),
+    tierEpic:   v('--tier-epic', '#b98cff'),
+    fire:       v('--fire', '#ff6b5b'),
+    water:      v('--water', '#4dabf7'),
+    earth:      v('--earth', '#c9a079'),
+    success:    v('--success', '#27ae60'),
+    danger:     v('--danger', '#e74c3c'),
+    textSecondary: v('--text-secondary', '#a3a3a3'),
   };
 }
 
@@ -333,13 +329,7 @@ function computeAiAim() {
 // ── 10. Rendering ────────────────────────────────────────────────
 
 function roundRectPath(x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
+  CanvasUtils.roundRectPath(ctx, x, y, w, h, r);
 }
 
 // Cute emoji avatars (5x the old plain rounded-rect body) — text glyphs

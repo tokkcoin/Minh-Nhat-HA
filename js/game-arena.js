@@ -394,8 +394,7 @@ function laneY() {
 }
 
 function readColors() {
-  const style = getComputedStyle(document.documentElement);
-  const v = (name, fallback) => (style.getPropertyValue(name).trim() || fallback);
+  const v = CanvasUtils.readCssVar;
   colors = {
     player: v('--water', '#4dabf7'),
     enemy: v('--fire', '#ff6b5b'),
@@ -423,13 +422,7 @@ function resizeCanvas() {
 // ── 10. Rendering ─────────────────────────────────────────────────
 
 function roundRectPath(x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
+  CanvasUtils.roundRectPath(ctx, x, y, w, h, r);
 }
 
 function drawHpBar(x, y, w, h, hp, maxHp, color) {

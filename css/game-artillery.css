@@ -83,7 +83,7 @@
   justify-content: center;
   border: 1.5px solid var(--bg-card);
 }
-.artillery__stat-line { font-size: 11px; color: var(--text-muted); }
+.artillery__stat-line { font-size: 12px; color: var(--text-muted); }
 
 /* Nội Lực (inner-power) bar — a second, smaller resource bar under HP,
    in --tier-epic purple so it reads as a distinct "energy" resource,
@@ -138,7 +138,7 @@
   text-align: center;
   min-width: 120px;
 }
-.artillery__round { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+.artillery__round { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
 .artillery__turn-indicator { font-size: 13px; font-weight: 700; color: var(--current-element, var(--tier-silver)); }
 .artillery__wind { font-size: 12px; color: var(--text-secondary); }
 
@@ -250,7 +250,7 @@
   border-radius: var(--radius-xl);
   background: var(--tier-epic);
   color: var(--bg-page);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -287,7 +287,7 @@
   margin-top: 2px;
 }
 .artillery__weapon-stat { display: flex; align-items: center; gap: 4px; }
-.artillery__weapon-stat-icon { font-size: 9px; flex: 0 0 auto; }
+.artillery__weapon-stat-icon { font-size: 10px; flex: 0 0 auto; }
 .artillery__weapon-stat-bar {
   flex: 1 1 auto;
   height: 5px;
