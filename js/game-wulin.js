@@ -12,6 +12,17 @@
    data can still fight — see WULIN_BASE below. Which stats are real
    vs. baseline is shown in the stats panel for honesty (see
    renderStatsPanel).
+
+   2026-08-26: gear-tier system from weapon-prototype.html wired into
+   real combat (backlog item #3) — the player can equip one real
+   skill (from skills.html) as a "weapon". Its rarity tier (same
+   ElementStats.tierFor()/STAR_TIERS thresholds weapon-prototype.html
+   already visualizes) grants a real Công kích/Chiêu thức/Chí mạng
+   bonus, applied inside computeWulinStats() below. Equip choice
+   persists in its own localStorage key (lifebalance_wulin_equipped,
+   just the chosen skill's id) — read-only against the skills array
+   itself, same "never invent a parallel data model" rule as the rest
+   of this file.
    ============================================================ */
 
 'use strict';
@@ -24,6 +35,46 @@
 // Baseline floors so a fresh user (all keys empty) still gets a fully
 // playable character instead of getting stuck at 0.
 const WULIN_BASE = { hp: 80, attack: 12, skillPower: 15, crit: 5, defense: 8, evasion: 5 };
+
+// ── Equipped weapon (gear-tier system from weapon-prototype.html) ──
+// Only stores the equipped skill's id — the skill itself, and its
+// tier, are always re-derived live from ElementStats/skills.js, never
+// duplicated here.
+const WULIN_EQUIPPED_KEY = 'lifebalance_wulin_equipped';
+
+// % bonus to attack/skillPower per tier, keyed to ElementStats.STAR_TIERS'
+// `key` values (plus 'none' for ElementStats.STAR_TIER_NONE). Crit gets
+// a flat +2% per star instead (see computeWulinStats below).
+const WULIN_WEAPON_BONUS_PCT = { none: 0, bronze: .06, silver: .12, gold: .20, epic: .30, legendary: .45 };
+
+function loadEquippedWeaponId() {
+  try {
+    return localStorage.getItem(WULIN_EQUIPPED_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+function equipWeapon(skillId) {
+  safeSetItem(WULIN_EQUIPPED_KEY, skillId);
+}
+
+function unequipWeapon() {
+  try { localStorage.removeItem(WULIN_EQUIPPED_KEY); } catch { /* storage unavailable — nothing to clean up */ }
+}
+
+// Resolves the stored id against the real, current skills array so a
+// deleted/renamed skill never leaves a stale weapon equipped.
+function getEquippedWeapon(skills) {
+  const id = loadEquippedWeaponId();
+  if (!id) return null;
+  return skills.find(s => s.id === id) || null;
+}
+
+function wulinFormatHours(totalSeconds) {
+  const hours = (totalSeconds || 0) / 3600;
+  return hours >= 10 ? `${Math.round(hours)}h` : `${hours.toFixed(1)}h`;
+}
 
 // ── 2. Stat derivation — formulas documented per element ──
 //
@@ -46,12 +97,12 @@ function computeWulinStats() {
 
   const { totalXp: fireXp, doneCount: fireDone } = ElementStats.readFire();
   const fireHasData = fireDone > 0;
-  const attack = WULIN_BASE.attack + Math.floor(fireXp / 6);
+  let attack = WULIN_BASE.attack + Math.floor(fireXp / 6);
 
   const { skills, avgStars } = ElementStats.readWater();
   const waterHasData = avgStars > 0;
-  const skillPower = WULIN_BASE.skillPower + Math.round(avgStars * 9);
-  const critChance = Math.round(WULIN_BASE.crit + avgStars * 4);
+  let skillPower = WULIN_BASE.skillPower + Math.round(avgStars * 9);
+  let critChance = Math.round(WULIN_BASE.crit + avgStars * 4);
 
   const { total: totalCapital } = ElementStats.readMetal();
   const metalHasData = totalCapital > 0;
@@ -61,8 +112,22 @@ function computeWulinStats() {
   const earthHasData = units.length > 0;
   const evasion = Math.min(30, WULIN_BASE.evasion + units.length * 2);
 
+  // Equipped weapon (gear-tier system, backlog item #3) — a real skill's
+  // rarity tier boosts attack/skillPower by a % and adds flat crit.
+  const equippedSkill = getEquippedWeapon(skills);
+  const weaponTier = equippedSkill ? ElementStats.tierFor(equippedSkill.totalSeconds) : ElementStats.STAR_TIER_NONE;
+  const weaponBonusPct = WULIN_WEAPON_BONUS_PCT[weaponTier.key] || 0;
+  if (equippedSkill) {
+    attack = Math.round(attack * (1 + weaponBonusPct));
+    skillPower = Math.round(skillPower * (1 + weaponBonusPct));
+    critChance += weaponTier.stars * 2;
+  }
+
   return {
     maxHp, attack, skillPower, critChance, defense, evasion,
+    weapon: equippedSkill
+      ? { id: equippedSkill.id, icon: equippedSkill.icon, name: equippedSkill.name, tier: weaponTier, bonusPct: weaponBonusPct }
+      : null,
     sources: {
       wood: { hasData: woodHasData, label: woodHasData ? `Cấp ${woodLevel} · ${woodXp} EXP` : 'Chưa có nhiệm vụ Mộc' },
       fire: { hasData: fireHasData, label: fireHasData ? `${fireXp} Hoả Khí` : 'Chưa luyện Hoả' },
@@ -173,6 +238,78 @@ function renderStatsPanel(stats) {
   }).join('');
 }
 
+// ── 6b. Render: equipped weapon panel + picker modal ──
+
+function renderWeaponPanel(stats) {
+  const box = document.getElementById('wulin-weapon-current');
+  if (!box) return;
+  const w = stats.weapon;
+
+  if (!w) {
+    box.innerHTML = '<p class="wulin-weapon__empty">Chưa trang bị vũ khí — trang bị một kỹ năng thật từ trang Thuỷ (Kỹ năng) để cộng thêm sức mạnh khi giao đấu.</p>';
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="wulin-weapon-card wulin-weapon-card--${w.tier.key}">
+      <span class="wulin-weapon-card__icon">${w.icon || '❔'}</span>
+      <div class="wulin-weapon-card__info">
+        <div class="wulin-weapon-card__name">${escapeHtml(w.name)}</div>
+        <div class="wulin-weapon-card__tier">${w.tier.label} · +${Math.round(w.bonusPct * 100)}% Công/Chiêu thức, +${w.tier.stars * 2}% chí mạng</div>
+      </div>
+      <button type="button" class="wulin-weapon-card__unequip" id="wulin-weapon-unequip-btn">Bỏ trang bị</button>
+    </div>`;
+
+  document.getElementById('wulin-weapon-unequip-btn')?.addEventListener('click', () => {
+    unequipWeapon();
+    refreshWulinCharacterPanels();
+    showToast('Đã bỏ trang bị vũ khí');
+  });
+}
+
+function buildWulinWeaponOption(skill, isEquipped) {
+  const tier = ElementStats.tierFor(skill.totalSeconds);
+  return `
+    <button type="button" class="weapon-card weapon-card--${tier.key} wulin-weapon-option${isEquipped ? ' wulin-weapon-option--equipped' : ''}" data-weapon-id="${skill.id}">
+      <div class="weapon-card__slot"><span class="weapon-card__icon">${skill.icon || '❔'}</span></div>
+      <div class="weapon-card__name">${escapeHtml(skill.name)}</div>
+      <div class="weapon-card__tier">${tier.label}</div>
+      <div class="weapon-card__hours">${wulinFormatHours(skill.totalSeconds)} luyện tập</div>
+      ${isEquipped ? '<div class="wulin-weapon-option__badge">✓ Đang trang bị</div>' : ''}
+    </button>`;
+}
+
+function openWeaponModal() {
+  const modal = document.getElementById('wulin-weapon-modal');
+  const grid = document.getElementById('wulin-weapon-grid');
+  const hint = document.getElementById('wulin-weapon-modal-hint');
+  if (!modal || !grid) return;
+
+  const { skills } = ElementStats.readWater();
+  const equippedId = loadEquippedWeaponId();
+
+  if (!skills.length) {
+    if (hint) hint.textContent = 'Bạn chưa có kỹ năng nào ở trang Thuỷ (Kỹ năng) — hãy thêm và luyện tập ít nhất 1 kỹ năng để có vũ khí trang bị.';
+    grid.innerHTML = '';
+  } else {
+    if (hint) hint.textContent = 'Chọn một kỹ năng để trang bị làm vũ khí — cấp bậc (theo giờ luyện tập thật) sẽ cộng thêm Công kích/Chiêu thức/Chí mạng khi giao đấu.';
+    grid.innerHTML = skills.map(s => buildWulinWeaponOption(s, s.id === equippedId)).join('');
+  }
+
+  modal.hidden = false;
+}
+
+function closeWeaponModal() {
+  const modal = document.getElementById('wulin-weapon-modal');
+  if (modal) modal.hidden = true;
+}
+
+function refreshWulinCharacterPanels() {
+  wulinState.playerStats = computeWulinStats();
+  renderStatsPanel(wulinState.playerStats);
+  renderWeaponPanel(wulinState.playerStats);
+}
+
 // ── 7. Render: monster select ──
 
 function renderMonsterGrid() {
@@ -199,10 +336,12 @@ function renderMonsterGrid() {
 
 function wulinShowScreen(screen) {
   const statsPanel = document.getElementById('wulin-stats-panel');
+  const weaponPanel = document.getElementById('wulin-weapon-panel');
   const monsterSelect = document.getElementById('wulin-monster-select');
   const combat = document.getElementById('wulin-combat');
-  if (!statsPanel || !monsterSelect || !combat) return;
+  if (!statsPanel || !weaponPanel || !monsterSelect || !combat) return;
   statsPanel.hidden = screen !== 'select';
+  weaponPanel.hidden = screen !== 'select';
   monsterSelect.hidden = screen !== 'select';
   combat.hidden = screen !== 'combat';
 }
@@ -400,10 +539,23 @@ function hideResultOverlay() {
 // ── 11. Boot / wiring ──
 
 function initWulinGame() {
-  wulinState.playerStats = computeWulinStats();
-  renderStatsPanel(wulinState.playerStats);
+  refreshWulinCharacterPanels();
   renderMonsterGrid();
   wulinShowScreen('select');
+
+  document.getElementById('wulin-weapon-choose-btn')?.addEventListener('click', openWeaponModal);
+  document.getElementById('wulin-weapon-modal-close')?.addEventListener('click', closeWeaponModal);
+  document.getElementById('wulin-weapon-modal')?.addEventListener('click', e => {
+    if (e.target.id === 'wulin-weapon-modal') closeWeaponModal();
+  });
+  document.getElementById('wulin-weapon-grid')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-weapon-id]');
+    if (!btn) return;
+    equipWeapon(btn.dataset.weaponId);
+    closeWeaponModal();
+    refreshWulinCharacterPanels();
+    showToast(`Đã trang bị ${wulinState.playerStats.weapon?.name || 'vũ khí'}`);
+  });
 
   document.querySelectorAll('.wulin-action-btn').forEach(btn => {
     btn.addEventListener('click', () => handlePlayerAction(btn.dataset.action));

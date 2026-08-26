@@ -105,7 +105,77 @@
 .wulin-stat-card--fire { border-left: 3px solid var(--fire); }
 .wulin-stat-card--earth { border-left: 3px solid var(--earth); }
 
-/* ── 3. Monster select grid ── */
+/* ── 3. Equipped weapon panel (wires weapon-prototype.html's gear-tier
+   system into real combat — reuses .weapon-card/.weapon-grid from
+   style.css's Weapon Prototype section (27) for the picker modal) ── */
+.wulin-weapon {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.wulin-weapon__current { min-height: 0; }
+
+.wulin-weapon__empty {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.wulin-weapon-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-page);
+}
+.wulin-weapon-card__icon { font-size: 32px; line-height: 1; }
+.wulin-weapon-card__info { flex: 1; min-width: 0; }
+.wulin-weapon-card__name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.wulin-weapon-card__tier { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.wulin-weapon-card__unequip {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  flex: 0 0 auto;
+}
+.wulin-weapon-card__unequip:hover { color: var(--danger); }
+
+.wulin-weapon-card--bronze { border-color: var(--tier-bronze); }
+.wulin-weapon-card--bronze .wulin-weapon-card__tier { color: var(--tier-bronze); }
+.wulin-weapon-card--silver { border-color: var(--tier-silver); }
+.wulin-weapon-card--silver .wulin-weapon-card__tier { color: var(--tier-silver); }
+.wulin-weapon-card--gold { border-color: var(--tier-gold); box-shadow: 0 0 12px var(--tier-gold-tint); }
+.wulin-weapon-card--gold .wulin-weapon-card__tier { color: var(--tier-gold); }
+.wulin-weapon-card--epic { border-color: var(--tier-epic); box-shadow: 0 0 16px var(--tier-epic-tint); }
+.wulin-weapon-card--epic .wulin-weapon-card__tier { color: var(--tier-epic); }
+.wulin-weapon-card--legendary { border-color: var(--tier-legendary); box-shadow: 0 0 20px var(--tier-legendary-tint); }
+.wulin-weapon-card--legendary .wulin-weapon-card__tier { color: var(--tier-legendary); }
+
+.wulin-weapon-modal__hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-md);
+}
+
+.wulin-weapon-option { cursor: pointer; width: 100%; }
+.wulin-weapon-option--equipped { border-color: var(--success); box-shadow: 0 0 0 2px var(--success) inset; }
+.wulin-weapon-option__badge {
+  margin-top: var(--space-xs);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--success);
+}
+
+/* ── 4. Monster select grid ── */
 .wulin-monster-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -158,7 +228,7 @@
   margin-top: 4px;
 }
 
-/* ── 4. Combat screen ── */
+/* ── 5. Combat screen ── */
 .wulin-combat {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -289,7 +359,7 @@
 }
 .wulin-retreat-btn:hover { color: var(--text-secondary); }
 
-/* ── 5. Result overlay ── */
+/* ── 6. Result overlay ── */
 .wulin-result-overlay {
   position: fixed;
   inset: 0;
@@ -357,7 +427,7 @@
 }
 .wulin-btn-outline:hover { border-color: var(--tier-gold); color: var(--text-primary); }
 
-/* ── 6. [hidden] override — .wulin-combat and .wulin-result-overlay both
+/* ── 7. [hidden] override — .wulin-combat and .wulin-result-overlay both
    set their own `display` (flex), which has the same specificity as the
    browser's default `[hidden] { display: none }` UA rule, so a plain
    `hidden` attribute alone would NOT actually hide them once our
@@ -365,7 +435,7 @@
    always works inside the game. ── */
 .wulin-game [hidden] { display: none; }
 
-/* ── 7. Responsive (768 / 480, matches project convention) ── */
+/* ── 8. Responsive (768 / 480, matches project convention) ── */
 @media (max-width: 768px) {
   .wulin-stats__grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 }

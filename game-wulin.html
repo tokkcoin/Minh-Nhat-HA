@@ -8,7 +8,7 @@
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23e6c15c'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
   <link rel="stylesheet" href="css/style.css?v=53" />
-  <link rel="stylesheet" href="css/game-wulin.css?v=1" />
+  <link rel="stylesheet" href="css/game-wulin.css?v=2" />
 </head>
 <body>
 
@@ -42,6 +42,15 @@
       <h2 class="wulin-section-title">Chỉ số của bạn</h2>
       <p class="wulin-stats__hint" id="wulin-stats-hint">Đang tính chỉ số từ dữ liệu Ngũ Hành của bạn…</p>
       <div class="wulin-stats__grid" id="wulin-stats-grid"></div>
+    </section>
+
+    <!-- ── Equipped weapon (wires weapon-prototype.html's gear-tier system
+         into real combat — an equipped skill's rarity tier boosts Công
+         kích/Chiêu thức/Chí mạng) ── -->
+    <section class="wulin-weapon" id="wulin-weapon-panel" aria-label="Vũ khí trang bị">
+      <h2 class="wulin-section-title">Vũ khí trang bị</h2>
+      <div class="wulin-weapon__current" id="wulin-weapon-current"></div>
+      <button type="button" class="wulin-btn-outline" id="wulin-weapon-choose-btn">Chọn vũ khí</button>
     </section>
 
     <!-- ── Monster select ── -->
@@ -111,6 +120,17 @@
       </div>
     </div>
 
+    <!-- ── Weapon picker modal (real skills from skills.html only — no
+         demo fallback, since combat should reflect real progress) ── -->
+    <div id="wulin-weapon-modal" class="finance-modal" hidden>
+      <div class="finance-modal__inner">
+        <button type="button" id="wulin-weapon-modal-close" class="finance-modal__close" aria-label="Đóng">✕</button>
+        <h3 class="finance-modal__title">⚔️ Chọn vũ khí</h3>
+        <p class="wulin-weapon-modal__hint" id="wulin-weapon-modal-hint"></p>
+        <div class="weapon-grid" id="wulin-weapon-grid"></div>
+      </div>
+    </div>
+
   </div>
 
   <footer class="site-footer" role="contentinfo">
@@ -120,6 +140,6 @@
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <script src="js/common.js?v=10"></script>
   <script src="js/elementStats.js?v=1"></script>
-  <script src="js/game-wulin.js?v=3"></script>
+  <script src="js/game-wulin.js?v=4"></script>
 </body>
 </html>
