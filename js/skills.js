@@ -31,14 +31,6 @@ const SKILL_ICONS = [
 
 const DEFAULT_ICON = SKILL_ICONS[0];
 
-const STAR_THRESHOLDS = [
-  { hours: 500, stars: 5 },
-  { hours: 365, stars: 4 },
-  { hours: 150, stars: 3 },
-  { hours:  35, stars: 2 },
-  { hours:   5, stars: 1 },
-];
-
 // ── 2. Module-level state ─────────────────────────────────
 
 let skillEditingId      = null;
@@ -77,10 +69,10 @@ function migrateSkillsSchema() {
 
 // ── 4. Helpers ──────────────────────────────────────────────
 
+// Thresholds now live in js/elementStats.js (shared with characterPanel.js,
+// game-wulin.js, weaponPrototype.js) — this just delegates.
 function computeStars(totalSeconds) {
-  const h = totalSeconds / 3600;
-  for (const t of STAR_THRESHOLDS) if (h >= t.hours) return t.stars;
-  return 0;
+  return ElementStats.computeStars(totalSeconds);
 }
 
 function formatTime(seconds) {

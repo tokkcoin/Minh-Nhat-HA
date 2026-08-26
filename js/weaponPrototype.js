@@ -6,25 +6,15 @@
    grow. Reads the same `lifebalance_skills` data skills.js owns;
    never writes to it. Falls back to a labeled demo set when no
    real skills exist yet, matching chart-concepts.html's convention.
+
+   2026-08-25: tier thresholds now come from js/elementStats.js
+   (shared with skills.js/characterPanel.js/game-wulin.js) instead of
+   its own copy — requires elementStats.js loaded first.
    ============================================================ */
 
 'use strict';
 
 const WEAPON_SKILLS_KEY = 'lifebalance_skills';
-
-// Mirrors skills.js's STAR_THRESHOLDS — duplicated here (not imported)
-// since this page doesn't load skills.js itself (that file's own
-// DOMContentLoaded expects skill-grid/skill-detail-modal elements this
-// page doesn't have). Keep in sync manually if thresholds ever change.
-// Ordered highest-first so weaponTierFor() can just take the first match.
-const WEAPON_TIERS = [
-  { minHours: 500, stars: 5, key: 'legendary', label: 'Huyền thoại' },
-  { minHours: 365, stars: 4, key: 'epic',      label: 'Tinh anh' },
-  { minHours: 150, stars: 3, key: 'gold',      label: 'Thành thạo' },
-  { minHours: 35,  stars: 2, key: 'silver',    label: 'Rèn luyện' },
-  { minHours: 5,   stars: 1, key: 'bronze',    label: 'Sơ cấp' },
-];
-const WEAPON_TIER_NONE = { minHours: 0, stars: 0, key: 'none', label: 'Chưa rèn luyện' };
 
 const WEAPON_DEMO_SKILLS = [
   { id: 'demo-1', icon: '🎸', name: 'Guitar (demo)',    totalSeconds: 520 * 3600 },
@@ -35,15 +25,15 @@ const WEAPON_DEMO_SKILLS = [
 ];
 
 function weaponTierFor(totalSeconds) {
-  const hours = (totalSeconds || 0) / 3600;
-  return WEAPON_TIERS.find(t => hours >= t.minHours) || WEAPON_TIER_NONE;
+  return ElementStats.tierFor(totalSeconds);
 }
 
 // Next (higher) tier to progress toward, or null once already maxed.
 function weaponNextTier(tier) {
-  if (tier.key === 'none') return WEAPON_TIERS[WEAPON_TIERS.length - 1];
-  const idx = WEAPON_TIERS.findIndex(t => t.key === tier.key);
-  return idx > 0 ? WEAPON_TIERS[idx - 1] : null;
+  const tiers = ElementStats.STAR_TIERS;
+  if (tier.key === 'none') return tiers[tiers.length - 1];
+  const idx = tiers.findIndex(t => t.key === tier.key);
+  return idx > 0 ? tiers[idx - 1] : null;
 }
 
 function loadWeaponSkills() {
@@ -65,7 +55,7 @@ function buildWeaponCard(skill) {
   const next = weaponNextTier(tier);
   const hours = (skill.totalSeconds || 0) / 3600;
   const progressPct = next
-    ? Math.max(0, Math.min(100, Math.round(((hours - tier.minHours) / (next.minHours - tier.minHours)) * 100)))
+    ? Math.max(0, Math.min(100, Math.round(((hours - tier.hours) / (next.hours - tier.hours)) * 100)))
     : 100;
 
   return `
@@ -80,7 +70,7 @@ function buildWeaponCard(skill) {
         <div class="weapon-card__progress" role="progressbar" aria-valuenow="${progressPct}" aria-valuemin="0" aria-valuemax="100" aria-label="Tiến độ tới ${next.label}">
           <div class="weapon-card__progress-fill" style="width:${progressPct}%"></div>
         </div>
-        <div class="weapon-card__next">→ ${next.label} tại ${next.minHours}h</div>
+        <div class="weapon-card__next">→ ${next.label} tại ${next.hours}h</div>
       ` : `<div class="weapon-card__next weapon-card__next--maxed">🏆 Cấp tối đa</div>`}
     </div>`;
 }
