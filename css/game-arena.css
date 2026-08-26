@@ -176,7 +176,7 @@
 }
 .arena__restart {
   background: var(--tier-epic);
-  color: #fff;
+  color: var(--text-primary);
   font-weight: 600;
   font-size: 14px;
   border-radius: var(--radius-md);
