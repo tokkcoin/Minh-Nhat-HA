@@ -2,10 +2,12 @@
    Life Balance — game-bomb.js
    "Đại Chiến Bom" — original bomb-placing maze arcade game.
    Grid-based maze (13x11), destructible/indestructible blocks,
-   1 active bomb at a time with a "+" blast radius of 1 tile,
-   3 random-walk enemies, 3 player lives. Keyboard (arrows/WASD)
-   + on-screen D-pad/bomb button, both wired to the same movement
-   logic. No persistence — a fresh board is generated on every
+   a "+" blast that starts at 1 tile/1 bomb and grows via
+   power-ups (bigger radius, more simultaneous bombs, faster
+   movement) dropped by destroyed blocks, 3 random-walk enemies,
+   3 player lives. Keyboard (arrows/WASD) + on-screen D-pad/bomb
+   button, both wired to the same movement logic. No persistence —
+   a fresh board (and power-up levels) is generated on every
    load/restart, matching the "single play session" scope agreed
    for this mini-game.
    ============================================================ */
@@ -23,6 +25,23 @@ const ENEMY_TICK_MS = 500;
 const MOVE_COOLDOWN_MS = 140;
 const SOFT_BLOCK_MIN_DENSITY = 0.55;
 const SOFT_BLOCK_MAX_DENSITY = 0.65;
+
+// Power-ups: dropped from a destroyed soft block with this chance,
+// sit on the floor until the player walks onto them. Each type has
+// a cap so a single game can't scale forever.
+const POWERUP_SPAWN_CHANCE = 0.3;
+const POWERUP_MAX_RADIUS = 4; // base 1 + up to 3 pickups
+const POWERUP_MAX_BOMBS = 4;  // base 1 + up to 3 pickups
+const POWERUP_MAX_SPEED_LEVEL = 3;
+const SPEED_STEP_MS = 25;
+const MIN_MOVE_COOLDOWN_MS = 60;
+
+const POWERUP_INFO = {
+  radius: { glyph: '💥', label: 'Tầm nổ' },
+  bombs:  { glyph: '🧨', label: 'Số bom' },
+  speed:  { glyph: '👟', label: 'Tốc độ' },
+};
+const POWERUP_TYPES = Object.keys(POWERUP_INFO);
 
 // Player spawn + the 3 enemy spawn corners. Each corner cell plus
 // its 2 orthogonal neighbors must stay clear of soft blocks so no
@@ -46,10 +65,11 @@ const BOMB_DIRECTIONS = [
 // ── 2. Game State ───────────────────────────────────────────────
 
 let bombGrid = [];          // bombGrid[r][c] = 'wall' | 'floor' | 'soft'
-let bombPlayer = null;      // { r, c, lives, visible, respawning, lastMoveAt }
+let bombPlayer = null;      // { r, c, lives, visible, respawning, lastMoveAt, blastRadius, maxBombs, speedLevel, moveCooldownMs }
 let bombEnemies = [];       // [{ id, r, c, alive }]
-let bombActive = null;      // { r, c } of the single active bomb, or null
-let bombBlastCells = [];    // cells currently showing the blast highlight
+let bombActiveBombs = [];   // [{ r, c, radius }] — one entry per bomb currently ticking
+let bombBlastCells = [];    // cells currently showing the blast highlight (may hold overlapping blasts from separate bombs)
+let bombPowerUps = {};      // { 'r,c': 'radius' | 'bombs' | 'speed' } — pickups sitting on the floor
 let bombGameState = 'playing'; // 'playing' | 'won' | 'lost'
 let bombEnemyIntervalId = null;
 let bombCellEls = [];       // bombCellEls[r][c] -> the cell's <div>
@@ -58,6 +78,7 @@ let bombCellEls = [];       // bombCellEls[r][c] -> the cell's <div>
 let bombBoardEl = null;
 let bombLivesEl = null;
 let bombEnemiesEl = null;
+let bombPowerEl = null;
 let bombOverlayEl = null;
 let bombOverlayIconEl = null;
 let bombOverlayTitleEl = null;
@@ -104,7 +125,7 @@ function isBombWalkable(r, c) {
   if (r < 0 || r >= BOMB_ROWS || c < 0 || c >= BOMB_COLS) return false;
   const terrain = bombGrid[r][c];
   if (terrain === 'wall' || terrain === 'soft') return false;
-  if (bombActive && bombActive.r === r && bombActive.c === c) return false;
+  if (bombActiveBombs.some((b) => b.r === r && b.c === c)) return false;
   return true;
 }
 
@@ -134,7 +155,13 @@ function renderBombBoard() {
       let cls = `bomb-cell bomb-cell--${terrain}`;
       let glyph = '';
 
-      if (bombActive && bombActive.r === r && bombActive.c === c) {
+      const powerUpType = bombPowerUps[`${r},${c}`];
+      if (powerUpType) {
+        cls += ' bomb-cell--powerup';
+        glyph = POWERUP_INFO[powerUpType].glyph;
+      }
+
+      if (bombActiveBombs.some((b) => b.r === r && b.c === c)) {
         cls += ' bomb-cell--bomb';
         glyph = '💣';
       }
@@ -169,6 +196,13 @@ function updateBombHud() {
   if (bombEnemiesEl) {
     bombEnemiesEl.textContent = String(bombEnemies.filter((e) => e.alive).length);
   }
+  if (bombPowerEl) {
+    const parts = [];
+    if (bombPlayer.blastRadius > 1) parts.push(`💥×${bombPlayer.blastRadius}`);
+    if (bombPlayer.maxBombs > 1) parts.push(`🧨×${bombPlayer.maxBombs}`);
+    if (bombPlayer.speedLevel > 0) parts.push(`👟×${bombPlayer.speedLevel}`);
+    bombPowerEl.textContent = parts.length ? parts.join(' ') : '–';
+  }
 }
 
 // ── 6. Player Actions ────────────────────────────────────────────
@@ -176,40 +210,64 @@ function updateBombHud() {
 function moveBombPlayer(dr, dc) {
   if (bombGameState !== 'playing' || bombPlayer.respawning) return;
   const now = performance.now();
-  if (now - bombPlayer.lastMoveAt < MOVE_COOLDOWN_MS) return;
+  if (now - bombPlayer.lastMoveAt < bombPlayer.moveCooldownMs) return;
   const nr = bombPlayer.r + dr;
   const nc = bombPlayer.c + dc;
   if (!isBombWalkable(nr, nc)) return;
   bombPlayer.r = nr;
   bombPlayer.c = nc;
   bombPlayer.lastMoveAt = now;
+  collectPowerUpAt(nr, nc);
   renderBombBoard();
 }
 
 function placeBomb() {
-  if (bombGameState !== 'playing' || bombPlayer.respawning || bombActive) return;
-  bombActive = { r: bombPlayer.r, c: bombPlayer.c };
+  if (bombGameState !== 'playing' || bombPlayer.respawning) return;
+  if (bombActiveBombs.length >= bombPlayer.maxBombs) return;
+  if (bombActiveBombs.some((b) => b.r === bombPlayer.r && b.c === bombPlayer.c)) return;
+  const bomb = { r: bombPlayer.r, c: bombPlayer.c, radius: bombPlayer.blastRadius };
+  bombActiveBombs.push(bomb);
   renderBombBoard();
-  setTimeout(explodeBomb, BOMB_FUSE_MS);
+  setTimeout(() => explodeBomb(bomb), BOMB_FUSE_MS);
 }
 
-function explodeBomb() {
-  if (!bombActive) return;
-  const { r: br, c: bc } = bombActive;
+// Walks outward from the bomb in all 4 directions up to its own
+// radius, stopping at a wall (blocks it entirely) or right after a
+// soft block (the blast destroys it but doesn't punch through).
+function explodeBomb(bomb) {
+  const idx = bombActiveBombs.indexOf(bomb);
+  if (idx === -1) return; // already resolved (shouldn't happen, defensive)
+  bombActiveBombs.splice(idx, 1);
 
+  // A bomb whose fuse outlives the round (e.g. placed right before
+  // the player's last life was lost) shouldn't still deal damage,
+  // spawn power-ups, or re-trigger the win/lose overlay.
+  if (bombGameState !== 'playing') {
+    renderBombBoard();
+    return;
+  }
+
+  const { r: br, c: bc, radius } = bomb;
   const tiles = [{ r: br, c: bc }];
+
   BOMB_DIRECTIONS.forEach(({ dr, dc }) => {
-    const nr = br + dr, nc = bc + dc;
-    if (nr < 0 || nr >= BOMB_ROWS || nc < 0 || nc >= BOMB_COLS) return;
-    if (bombGrid[nr][nc] === 'wall') return;
-    tiles.push({ r: nr, c: nc });
+    for (let step = 1; step <= radius; step++) {
+      const nr = br + dr * step;
+      const nc = bc + dc * step;
+      if (nr < 0 || nr >= BOMB_ROWS || nc < 0 || nc >= BOMB_COLS) break;
+      if (bombGrid[nr][nc] === 'wall') break;
+      tiles.push({ r: nr, c: nc });
+      if (bombGrid[nr][nc] === 'soft') break;
+    }
   });
 
-  bombActive = null;
-  bombBlastCells = tiles;
+  bombBlastCells = bombBlastCells.concat(tiles);
 
   tiles.forEach(({ r, c }) => {
-    if (bombGrid[r][c] === 'soft') bombGrid[r][c] = 'floor';
+    if (bombGrid[r][c] === 'soft') {
+      bombGrid[r][c] = 'floor';
+      maybeSpawnPowerUp(r, c);
+    }
     if (bombPlayer.visible && bombPlayer.r === r && bombPlayer.c === c) damageBombPlayer();
     bombEnemies.forEach((enemy) => {
       if (enemy.alive && enemy.r === r && enemy.c === c) killBombEnemy(enemy);
@@ -220,9 +278,43 @@ function explodeBomb() {
   renderBombBoard();
 
   setTimeout(() => {
-    bombBlastCells = [];
+    bombBlastCells = bombBlastCells.filter((cell) => !tiles.includes(cell));
     if (bombGameState === 'playing') renderBombBoard();
   }, BLAST_DURATION_MS);
+}
+
+// ── 6b. Power-Ups ────────────────────────────────────────────────
+
+function maybeSpawnPowerUp(r, c) {
+  if (Math.random() >= POWERUP_SPAWN_CHANCE) return;
+  const type = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+  bombPowerUps[`${r},${c}`] = type;
+}
+
+function collectPowerUpAt(r, c) {
+  const key = `${r},${c}`;
+  const type = bombPowerUps[key];
+  if (!type) return;
+  delete bombPowerUps[key];
+  applyPowerUp(type);
+}
+
+function applyPowerUp(type) {
+  if (type === 'radius') {
+    if (bombPlayer.blastRadius >= POWERUP_MAX_RADIUS) { showToast('💥 Tầm nổ đã đạt mức tối đa!'); return; }
+    bombPlayer.blastRadius += 1;
+    showToast(`💥 Tầm nổ bom +1! (${bombPlayer.blastRadius})`);
+  } else if (type === 'bombs') {
+    if (bombPlayer.maxBombs >= POWERUP_MAX_BOMBS) { showToast('🧨 Số bom tối đa đã đạt mức cao nhất!'); return; }
+    bombPlayer.maxBombs += 1;
+    showToast(`🧨 Số bom tối đa +1! (${bombPlayer.maxBombs})`);
+  } else if (type === 'speed') {
+    if (bombPlayer.speedLevel >= POWERUP_MAX_SPEED_LEVEL) { showToast('👟 Tốc độ đã đạt mức tối đa!'); return; }
+    bombPlayer.speedLevel += 1;
+    bombPlayer.moveCooldownMs = Math.max(MOVE_COOLDOWN_MS - bombPlayer.speedLevel * SPEED_STEP_MS, MIN_MOVE_COOLDOWN_MS);
+    showToast(`👟 Tốc độ di chuyển +1! (${bombPlayer.speedLevel})`);
+  }
+  updateBombHud();
 }
 
 function damageBombPlayer() {
@@ -307,6 +399,10 @@ function resetBombGame() {
     visible: true,
     respawning: false,
     lastMoveAt: 0,
+    blastRadius: 1,
+    maxBombs: 1,
+    speedLevel: 0,
+    moveCooldownMs: MOVE_COOLDOWN_MS,
   };
   bombEnemies = BOMB_SPAWN_CORNERS.slice(1).map((pos, i) => ({
     id: i,
@@ -314,8 +410,9 @@ function resetBombGame() {
     c: pos.c,
     alive: true,
   }));
-  bombActive = null;
+  bombActiveBombs = [];
   bombBlastCells = [];
+  bombPowerUps = {};
   bombGameState = 'playing';
 
   hideBombOverlay();
@@ -370,6 +467,7 @@ function initBombGame() {
   bombBoardEl = document.getElementById('bomb-board');
   bombLivesEl = document.getElementById('bomb-lives');
   bombEnemiesEl = document.getElementById('bomb-enemies');
+  bombPowerEl = document.getElementById('bomb-power');
   bombOverlayEl = document.getElementById('bomb-overlay');
   bombOverlayIconEl = document.getElementById('bomb-overlay-icon');
   bombOverlayTitleEl = document.getElementById('bomb-overlay-title');
