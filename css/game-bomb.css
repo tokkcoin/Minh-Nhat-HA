@@ -95,6 +95,16 @@
   animation: bomb-pulse .5s ease-in-out infinite;
 }
 
+.bomb-cell--powerup {
+  font-size: 13px;
+  animation: bomb-powerup-pulse 1s ease-in-out infinite;
+}
+
+@keyframes bomb-powerup-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .55; }
+}
+
 /* Blast highlight — declared last so it wins the cascade over any
    terrain/entity class also present on the same cell during the
    brief detonation window, without resorting to !important */

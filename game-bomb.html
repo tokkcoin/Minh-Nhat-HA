@@ -8,7 +8,7 @@
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23a9754f'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
   <link rel="stylesheet" href="css/style.css?v=53" />
-  <link rel="stylesheet" href="css/game-bomb.css?v=1" />
+  <link rel="stylesheet" href="css/game-bomb.css?v=2" />
 </head>
 <body>
 
@@ -46,6 +46,10 @@
         <span class="bomb-hud__label">Địch còn lại</span>
         <span class="bomb-hud__value" id="bomb-enemies">3</span>
       </div>
+      <div class="bomb-hud__stat" aria-live="polite">
+        <span class="bomb-hud__label">Sức mạnh</span>
+        <span class="bomb-hud__value" id="bomb-power">–</span>
+      </div>
     </div>
 
     <div class="bomb-board-wrap">
@@ -71,7 +75,7 @@
       <button type="button" class="bomb-btn-place" id="bomb-btn-place" aria-label="Đặt bom">💣</button>
     </div>
 
-    <p class="bomb-hint">Di chuyển: phím mũi tên / WASD hoặc nút D-pad · Đặt bom: phím Space hoặc nút 💣</p>
+    <p class="bomb-hint">Di chuyển: phím mũi tên / WASD hoặc nút D-pad · Đặt bom: phím Space hoặc nút 💣 · Phá khối để rơi vật phẩm: 💥 tầm nổ, 🧨 số bom, 👟 tốc độ</p>
   </div>
 
   <footer class="site-footer" role="contentinfo">
@@ -80,6 +84,6 @@
 
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <script src="js/common.js?v=10"></script>
-  <script src="js/game-bomb.js?v=2"></script>
+  <script src="js/game-bomb.js?v=3"></script>
 </body>
 </html>
