@@ -52,6 +52,36 @@ const WEAPON_TYPES = {
 };
 const CHEAPEST_WEAPON_COST = Math.min(...Object.values(WEAPON_TYPES).map((w) => w.cost));
 
+// ── Pet/mount (roadmap item: "a pet/mount system for game-artillery.html
+// fed by Wood/health data, Gunny-style") ────────────────────────────────
+// The pet is never a separate thing the player builds *in* this game —
+// it's a live readout of health.js's real quest level (js/elementStats.js's
+// ElementStats.readWood(), the same reader game-wulin.js/characterPanel.js
+// already use), same "never invent a parallel data model" rule as the
+// gear-tier wiring in game-wulin.js. Higher real Mộc/Health quest level ->
+// a further-evolved pet/mount -> a real combat bonus (extra max HP, plus a
+// flat % damage bonus once the pet becomes rideable). Ordered highest
+// minLevel first so PET_STAGES.find() below returns the first (highest)
+// stage the player currently qualifies for, mirroring
+// ElementStats.STAR_TIERS'/game-wulin.js's WULIN_WEAPON_BONUS_PCT's own
+// "ordered highest-first, take the first match" convention. A brand-new
+// user with zero health quests is still level 1 (elementStatsQuestLevel's
+// floor(0/100)+1), which correctly lands on the zero-bonus "Trứng" stage
+// below rather than crashing or falling through to nothing.
+const PET_STAGES = [
+  { minLevel: 25, key: 'divine',    emoji: '🐉', label: 'Thần thú',  hpBonus: 60, dmgBonusPct: .18 },
+  { minLevel: 13, key: 'mount',     emoji: '🐴', label: 'Thú cưỡi',  hpBonus: 35, dmgBonusPct: .10 },
+  { minLevel: 7,  key: 'pet',       emoji: '🐕', label: 'Thú cưng',  hpBonus: 20, dmgBonusPct: .05 },
+  { minLevel: 3,  key: 'hatchling', emoji: '🐣', label: 'Thú non',   hpBonus: 10, dmgBonusPct: 0 },
+  { minLevel: 1,  key: 'egg',       emoji: '🥚', label: 'Trứng',     hpBonus: 0,  dmgBonusPct: 0 },
+];
+
+function computeArtilleryPetStage() {
+  const { level } = ElementStats.readWood();
+  const stage = PET_STAGES.find((s) => level >= s.minLevel) || PET_STAGES[PET_STAGES.length - 1];
+  return { ...stage, level };
+}
+
 const CRATER_RADIUS = 26;
 const CRATER_DEPTH  = 34;
 
@@ -121,13 +151,14 @@ const state = {
   width: LOGICAL_W,
   height: LOGICAL_H,
   terrain: null,
-  player: { x: 0, hp: 100, aimAngle: 45, weapon: 'normal', hits: 0, noiLuc: NOI_LUC_MAX },
-  ai: { x: 0, hp: 100, aimAngle: 135, weapon: 'normal', hits: 0, noiLuc: NOI_LUC_MAX },
+  player: { x: 0, hp: 100, maxHp: 100, aimAngle: 45, weapon: 'normal', hits: 0, noiLuc: NOI_LUC_MAX },
+  ai: { x: 0, hp: 100, maxHp: 100, aimAngle: 135, weapon: 'normal', hits: 0, noiLuc: NOI_LUC_MAX },
   round: 1,
   wind: 0,
   turn: 'player', // 'player' | 'ai'
   busy: false,    // true while a projectile is flying or it's the AI's turn
   over: false,
+  pet: null,      // current pet/mount stage, set by newGame() from real Wood/health data
 };
 
 // ── 5. DOM Refs + Colors (filled in by initArtilleryGame) ──────
@@ -137,6 +168,7 @@ let angleInput, powerInput, angleValueEl, powerValueEl, fireBtn;
 let playerHpFill, playerHpValue, aiHpFill, aiHpValue, turnEl, windEl;
 let overlayEl, overlayTitleEl, overlayTextEl, restartBtn;
 let roundEl, windArrowEl, playerBadgeEl, aiBadgeEl, playerStatEl, aiStatEl;
+let playerPetBadgeEl, playerPetLineEl;
 let playerNoiLucFill, playerNoiLucValue, aiNoiLucFill, aiNoiLucValue;
 let weaponBtns = [];
 let COLORS = {};
@@ -194,23 +226,27 @@ function carveCrater(x, y) {
 
 // ── 7. Damage Application ───────────────────────────────────────
 
-function applyDirectHit(charState, key, x, y, weapon) {
-  const damage = randInt(weapon.directMin, weapon.directMax);
-  charState.hp = clamp(charState.hp - damage, 0, 100);
+// `dmgMult` is the *shooter's* pet/mount damage bonus (1 = no bonus) —
+// always derived from state.pet at fire time in simulateShot(), never
+// stored on the weapon/target, since it's a property of who fired the
+// shot, not of the weapon type or who it hits.
+function applyDirectHit(charState, key, x, y, weapon, dmgMult = 1) {
+  const damage = Math.round(randInt(weapon.directMin, weapon.directMax) * dmgMult);
+  charState.hp = clamp(charState.hp - damage, 0, charState.maxHp);
   charState.hits += 1;
   return { type: 'direct', target: key, damage, x, y };
 }
 
-function applyTerrainImpact(x, y, weapon) {
+function applyTerrainImpact(x, y, weapon, dmgMult = 1) {
   carveCrater(x, y);
   const info = { type: 'splash', hits: [], x, y };
   [['player', state.player], ['ai', state.ai]].forEach(([key, c]) => {
     const cy = getSurfaceY(c.x) - CHAR_ANCHOR_Y;
     const d = dist(x, y, c.x, cy);
     if (d <= weapon.splashRadius) {
-      const damage = Math.round(weapon.splashDamage * (1 - d / weapon.splashRadius));
+      const damage = Math.round(weapon.splashDamage * (1 - d / weapon.splashRadius) * dmgMult);
       if (damage > 0) {
-        c.hp = clamp(c.hp - damage, 0, 100);
+        c.hp = clamp(c.hp - damage, 0, c.maxHp);
         info.hits.push({ target: key, damage });
       }
     }
@@ -224,6 +260,10 @@ function simulateShot(side, angleDeg, power) {
   return new Promise((resolve) => {
     const shooter = side === 'player' ? state.player : state.ai;
     const weapon = WEAPON_TYPES[shooter.weapon] || WEAPON_TYPES.normal;
+    // Only the player's shots carry the pet/mount damage bonus — it's a
+    // reward for the real user's own tracked habit progress, not something
+    // the local AI opponent should also benefit from.
+    const dmgMult = side === 'player' ? 1 + (state.pet?.dmgBonusPct || 0) : 1;
     const dir = side === 'player' ? 1 : -1;
     const rad = (angleDeg * Math.PI) / 180;
     const speed = MIN_SPEED + (power / 100) * (MAX_SPEED - MIN_SPEED);
@@ -279,14 +319,14 @@ function simulateShot(side, angleDeg, power) {
         const targetCy = getSurfaceY(target.x) - CHAR_ANCHOR_Y;
         if (dist(proj.x, proj.y, target.x, targetCy) < HIT_RADIUS) {
           resolved = true;
-          hitInfo = applyDirectHit(target, targetKey, proj.x, proj.y, weapon);
+          hitInfo = applyDirectHit(target, targetKey, proj.x, proj.y, weapon, dmgMult);
           break;
         }
 
         const ground = getSurfaceY(clamp(proj.x, 0, state.width - 1));
         if (proj.y >= ground) {
           resolved = true;
-          hitInfo = applyTerrainImpact(clamp(proj.x, 0, state.width - 1), ground, weapon);
+          hitInfo = applyTerrainImpact(clamp(proj.x, 0, state.width - 1), ground, weapon, dmgMult);
           break;
         }
       }
@@ -351,7 +391,7 @@ function drawFloatingBars(c, centerX, aboveY, accentColor) {
   ctx.fill();
   ctx.globalAlpha = 1;
 
-  const hpPct = clamp(c.hp, 0, 100) / 100;
+  const hpPct = clamp(c.hp, 0, c.maxHp) / c.maxHp;
   if (hpPct > 0) {
     ctx.fillStyle = accentColor;
     roundRectPath(centerX - w / 2, hpY, w * hpPct, 5, 2);
@@ -672,11 +712,25 @@ function windLabel(wind) {
 }
 
 function updateHud() {
-  playerHpFill.style.width = `${state.player.hp}%`;
-  playerHpValue.textContent = state.player.hp;
-  aiHpFill.style.width = `${state.ai.hp}%`;
+  playerHpFill.style.width = `${(state.player.hp / state.player.maxHp) * 100}%`;
+  // Only spell out "current/max" once a pet bonus actually raised maxHp
+  // above the default 100 — keeps the common/no-bonus-yet case looking
+  // exactly as it always has.
+  playerHpValue.textContent = state.player.maxHp !== 100
+    ? `${state.player.hp}/${state.player.maxHp}`
+    : state.player.hp;
+  aiHpFill.style.width = `${(state.ai.hp / state.ai.maxHp) * 100}%`;
   aiHpValue.textContent = state.ai.hp;
   windEl.textContent = windLabel(state.wind);
+
+  if (playerPetBadgeEl && playerPetLineEl && state.pet) {
+    playerPetBadgeEl.textContent = state.pet.emoji;
+    const bonusBits = [];
+    if (state.pet.hpBonus) bonusBits.push(`+${state.pet.hpBonus} HP`);
+    if (state.pet.dmgBonusPct) bonusBits.push(`+${Math.round(state.pet.dmgBonusPct * 100)}% ST`);
+    const bonusText = bonusBits.length ? ` (${bonusBits.join(', ')})` : '';
+    playerPetLineEl.textContent = `Thú cưỡi: ${state.pet.emoji} ${state.pet.label} Lv.${state.pet.level}${bonusText}`;
+  }
 
   if (playerNoiLucFill) playerNoiLucFill.style.width = `${state.player.noiLuc}%`;
   if (playerNoiLucValue) playerNoiLucValue.textContent = `⚡${state.player.noiLuc}`;
@@ -896,8 +950,16 @@ function startIdleAnimation() {
 function newGame() {
   state.terrain = generateTerrain(LOGICAL_W, LOGICAL_H);
   generateBackdrop();
-  state.player = { x: Math.round(LOGICAL_W * (0.10 + Math.random() * 0.04)), hp: 100, aimAngle: 45, weapon: 'normal', hits: 0, noiLuc: NOI_LUC_MAX };
-  state.ai = { x: Math.round(LOGICAL_W * (0.86 + Math.random() * 0.04)), hp: 100, aimAngle: 135, weapon: 'normal', hits: 0, noiLuc: NOI_LUC_MAX };
+  // Re-derived from real Wood/health data on every new game/restart (not
+  // just once at boot) so finishing a health quest in another tab and
+  // coming back to restart immediately reflects the new stage — same
+  // "never stale, always re-read live" spirit as game-wulin.js's equipped
+  // weapon, just resolved once per game instead of once per render since
+  // mid-battle maxHp changes would be confusing, not useful.
+  state.pet = computeArtilleryPetStage();
+  const playerMaxHp = 100 + state.pet.hpBonus;
+  state.player = { x: Math.round(LOGICAL_W * (0.10 + Math.random() * 0.04)), hp: playerMaxHp, maxHp: playerMaxHp, aimAngle: 45, weapon: 'normal', hits: 0, noiLuc: NOI_LUC_MAX };
+  state.ai = { x: Math.round(LOGICAL_W * (0.86 + Math.random() * 0.04)), hp: 100, maxHp: 100, aimAngle: 135, weapon: 'normal', hits: 0, noiLuc: NOI_LUC_MAX };
   state.round = 1;
   state.turn = 'player';
   state.wind = randomWind();
@@ -954,6 +1016,8 @@ function initArtilleryGame() {
   aiBadgeEl = document.getElementById('artillery-ai-badge');
   playerStatEl = document.getElementById('artillery-player-stat');
   aiStatEl = document.getElementById('artillery-ai-stat');
+  playerPetBadgeEl = document.getElementById('artillery-player-pet-badge');
+  playerPetLineEl = document.getElementById('artillery-player-pet-line');
   playerNoiLucFill = document.getElementById('artillery-player-noiluc-fill');
   playerNoiLucValue = document.getElementById('artillery-player-noiluc-value');
   aiNoiLucFill = document.getElementById('artillery-ai-noiluc-fill');

@@ -8,7 +8,7 @@
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23c7ccd1'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
   <link rel="stylesheet" href="css/style.css?v=53" />
-  <link rel="stylesheet" href="css/game-artillery.css?v=5" />
+  <link rel="stylesheet" href="css/game-artillery.css?v=6" />
 </head>
 <body>
 
@@ -43,6 +43,7 @@
         <div class="artillery__portrait" aria-hidden="true">
           <span class="artillery__portrait-face">🐹</span>
           <span class="artillery__portrait-badge" id="artillery-player-badge">1</span>
+          <span class="artillery__pet-badge" id="artillery-player-pet-badge" title="Thú cưỡi — nuôi lớn bằng dữ liệu Mộc/Sức khoẻ thật">🥚</span>
         </div>
         <div class="artillery__hp-info">
           <span class="artillery__hp-label">Bạn</span>
@@ -51,6 +52,7 @@
           <div class="artillery__noiluc-bar" aria-label="Nội lực"><div class="artillery__noiluc-bar-fill" id="artillery-player-noiluc-fill"></div></div>
           <span class="artillery__noiluc-value" id="artillery-player-noiluc-value">⚡100</span>
           <span class="artillery__stat-line" id="artillery-player-stat">Đạn: Thường</span>
+          <span class="artillery__stat-line" id="artillery-player-pet-line">Thú cưỡi: 🥚 Trứng</span>
         </div>
       </div>
       <div class="artillery__turn-wind">
@@ -142,6 +144,7 @@
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <script src="js/common.js?v=10"></script>
   <script src="js/canvasUtils.js?v=1"></script>
-  <script src="js/game-artillery.js?v=7"></script>
+  <script src="js/elementStats.js?v=1"></script>
+  <script src="js/game-artillery.js?v=8"></script>
 </body>
 </html>
