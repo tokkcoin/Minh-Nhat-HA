@@ -85,6 +85,31 @@
 }
 .artillery__stat-line { font-size: 12px; color: var(--text-muted); }
 
+/* Pet/mount badge — mirrors .artillery__portrait-badge's corner-circle
+   look but sits on the opposite corner (top-left) so it never collides
+   with the existing hit-count badge. Uses --wood (not --tier-*) on
+   purpose: this badge specifically signals a bonus sourced from the
+   player's real Mộc/Health quest data (see js/game-artillery.js's
+   PET_STAGES), the same "color = data source" logic characterPanel.js's
+   equip slots already use, not a rarity-tier color. */
+.artillery__pet-badge {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: var(--radius-xl);
+  background: var(--wood);
+  color: var(--bg-page);
+  font-size: 10px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--bg-card);
+}
+
 /* Nội Lực (inner-power) bar — a second, smaller resource bar under HP,
    in --tier-epic purple so it reads as a distinct "energy" resource,
    never confusable with the HP bar's own accent color. */
