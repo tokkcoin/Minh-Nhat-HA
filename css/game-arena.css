@@ -42,6 +42,10 @@
   color: var(--text-muted);
   margin-top: 2px;
 }
+/* Ngũ Hành balance line (see js/game-arena.js's computeArenaBalance) —
+   reuses --tier-epic, the page's existing accent color, since the bonus
+   isn't tied to any one element's own token. */
+.arena-hud-label--balance { color: var(--tier-epic); font-weight: 600; }
 .arena-hud-vs {
   font-size: 13px;
   font-weight: 700;

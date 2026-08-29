@@ -68,6 +68,42 @@ const AI_AWARENESS_RADIUS  = 260;
 // automated testing, without changing any real gameplay-facing constant.
 const TIME_SCALE = (typeof window !== 'undefined' && window.__ARENA_TIME_SCALE__) || 1;
 
+// ── Ngũ Hành Balance bonus (roadmap: "reshape game-arena.html into
+// stats-based PvP-lite") ────────────────────────────────────────────
+// game-wulin.js's gear tiers reward depth in one skill; game-artillery.js's
+// pet rewards depth in Wood/Health alone. Arena is deliberately different:
+// it reads all 5 elements and rewards *breadth* — how many of them the
+// player has any real data in at all — which is this app's actual central
+// idea ("life balance") and keeps this game's identity distinct from
+// game-wulin.js's single-skill PvE gear loop rather than duplicating it.
+// Never a parallel data model: activeCount is derived fresh from
+// ElementStats on every match start, same "read real data, don't invent a
+// second one" rule game-wulin.js's/game-artillery.js's own hooks follow.
+// Ordered highest-first so ARENA_BALANCE_TIERS.find() below returns the
+// first (highest) tier the player currently qualifies for.
+const ARENA_BALANCE_TIERS = [
+  { minActive: 5, key: 'harmony', emoji: '☯️', label: 'Cân bằng toàn diện', hpBonus: 150, atkBonusPct: .30 },
+  { minActive: 4, key: 'near',    emoji: '🌗', label: 'Gần cân bằng',       hpBonus: 90,  atkBonusPct: .18 },
+  { minActive: 3, key: 'triad',   emoji: '🌓', label: 'Tam hành',           hpBonus: 50,  atkBonusPct: .10 },
+  { minActive: 2, key: 'pair',    emoji: '🌒', label: 'Song hành',          hpBonus: 24,  atkBonusPct: .05 },
+  { minActive: 1, key: 'single',  emoji: '🌑', label: 'Khởi đầu',           hpBonus: 8,   atkBonusPct: 0 },
+  { minActive: 0, key: 'none',    emoji: '⚪', label: 'Chưa bắt đầu',       hpBonus: 0,   atkBonusPct: 0 },
+];
+
+function computeArenaBalance() {
+  const activeFlags = [
+    ElementStats.readMetal().total > 0,
+    ElementStats.readWood().doneCount > 0,
+    ElementStats.readWater().skills.length > 0,
+    ElementStats.readFire().doneCount > 0,
+    ElementStats.readEarth().units.length > 0,
+  ];
+  const activeCount = activeFlags.filter(Boolean).length;
+  const tier = ARENA_BALANCE_TIERS.find((t) => activeCount >= t.minActive)
+    || ARENA_BALANCE_TIERS[ARENA_BALANCE_TIERS.length - 1];
+  return { ...tier, activeCount };
+}
+
 // ── 2. State ────────────────────────────────────────────────────
 
 let state = null;
@@ -91,12 +127,19 @@ function makeTower(side) {
   };
 }
 
-function makeHero(side) {
+// `balance` (from computeArenaBalance()) only ever boosts the player's own
+// hero — the enemy AI hero always fights at the flat baseline stats, same
+// "bonus only applies to the shooter's own side" rule game-artillery.js's
+// pet dmgMult follows.
+function makeHero(side, balance) {
+  const bonus = side === 'player' && balance ? balance : null;
+  const maxHp = HERO_MAX_HP + (bonus?.hpBonus || 0);
+  const atk = Math.round(HERO_ATK * (1 + (bonus?.atkBonusPct || 0)));
   return {
     id: newId(), type: 'hero', side,
     x: side === 'player' ? PLAYER_HERO_START_X : ENEMY_HERO_START_X,
-    hp: HERO_MAX_HP, maxHp: HERO_MAX_HP, alive: true, shield: 0, shieldTimer: 0,
-    atk: HERO_ATK, range: HERO_RANGE, speed: HERO_SPEED,
+    hp: maxHp, maxHp, alive: true, shield: 0, shieldTimer: 0,
+    atk, range: HERO_RANGE, speed: HERO_SPEED,
     atkInterval: HERO_ATK_INTERVAL, atkTimer: 0,
     nukeCd: 0, healCd: 0, moveTargetX: null, respawnTimer: 0, aiTimer: 0,
   };
@@ -114,7 +157,8 @@ function makeMinion(side, x) {
 
 function createInitialState() {
   nextUnitId = 1;
-  const playerHero = makeHero('player');
+  const balance = computeArenaBalance();
+  const playerHero = makeHero('player', balance);
   const enemyHero = makeHero('enemy');
   return {
     playerBase: makeBase('player'),
@@ -128,6 +172,7 @@ function createInitialState() {
     spawnTimer: MINION_SPAWN_INTERVAL,
     gameOver: false,
     winner: null,
+    balance,
   };
 }
 
@@ -357,6 +402,7 @@ function endGame(winnerSide) {
 function resetGame() {
   state = createInitialState();
   hideResult();
+  updateBalanceHud();
   lastTs = null;
   requestAnimationFrame(loop);
 }
@@ -556,7 +602,17 @@ function render() {
 
 // ── 11. HUD / Result Overlay DOM Updates ───────────────────────────
 
-let nukeBtn, healBtn, nukeCdEl, healCdEl, resultEl, resultTitleEl, resultTextEl, restartBtn;
+let nukeBtn, healBtn, nukeCdEl, healCdEl, resultEl, resultTitleEl, resultTextEl, restartBtn, balanceLineEl;
+
+function updateBalanceHud() {
+  if (!balanceLineEl || !state?.balance) return;
+  const b = state.balance;
+  const bonusBits = [];
+  if (b.hpBonus) bonusBits.push(`+${b.hpBonus} HP`);
+  if (b.atkBonusPct) bonusBits.push(`+${Math.round(b.atkBonusPct * 100)}% ST`);
+  const bonusText = bonusBits.length ? ` (${bonusBits.join(', ')})` : '';
+  balanceLineEl.textContent = `Cân bằng Ngũ Hành: ${b.emoji} ${b.label} ${b.activeCount}/5${bonusText}`;
+}
 
 function setBarFill(id, hp, maxHp, alive) {
   const fill = document.getElementById(id);
@@ -660,6 +716,7 @@ function initArena() {
   resultTitleEl = document.getElementById('arena-result-title');
   resultTextEl = document.getElementById('arena-result-text');
   restartBtn = document.getElementById('arena-restart');
+  balanceLineEl = document.getElementById('arena-player-balance-line');
 
   readColors();
   resizeCanvas();
@@ -671,6 +728,7 @@ function initArena() {
   restartBtn?.addEventListener('click', () => runBootStep(resetGame));
 
   state = createInitialState();
+  updateBalanceHud();
   requestAnimationFrame(loop);
 }
 

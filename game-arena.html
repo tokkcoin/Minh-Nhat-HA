@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Đại Chiến Anh Hùng — Life Balance</title>
-  <meta name="description" content="Connect tab game — simplified 1-lane arena battler, scaffold stage." />
+  <meta name="description" content="Connect tab game — 1-lane hero arena battler; your hero's HP/attack are boosted by how many of the 5 real elements you've started tracking." />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23b98cff'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
   <link rel="stylesheet" href="css/style.css?v=53" />
-  <link rel="stylesheet" href="css/game-arena.css?v=2" />
+  <link rel="stylesheet" href="css/game-arena.css?v=3" />
 </head>
 <body>
 
@@ -45,6 +45,7 @@
         <div class="arena-bar arena-bar--base"><div class="arena-bar__fill" id="arena-player-base-fill"></div></div>
         <span class="arena-hud-label arena-hud-label--sub">Trụ phòng thủ</span>
         <div class="arena-bar arena-bar--tower"><div class="arena-bar__fill" id="arena-player-tower-fill"></div></div>
+        <span class="arena-hud-label arena-hud-label--sub arena-hud-label--balance" id="arena-player-balance-line" title="Anh hùng của bạn mạnh hơn khi bạn có dữ liệu thật ở càng nhiều nguyên tố Ngũ Hành (Kim/Mộc/Thuỷ/Hoả/Thổ)">Cân bằng Ngũ Hành: …</span>
       </div>
       <span class="arena-hud-vs" aria-hidden="true">VS</span>
       <div class="arena-hud-side arena-hud-side--enemy">
@@ -93,6 +94,7 @@
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <script src="js/common.js?v=10"></script>
   <script src="js/canvasUtils.js?v=1"></script>
-  <script src="js/game-arena.js?v=4"></script>
+  <script src="js/elementStats.js?v=1"></script>
+  <script src="js/game-arena.js?v=5"></script>
 </body>
 </html>
