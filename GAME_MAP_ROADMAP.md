@@ -170,6 +170,15 @@ consistent with this repo's existing Vietnamese wuxia flavor)
   joystick or tap-to-move, tested at a 390px-class viewport), building
   on this same `game-map.html`/`js/game-map.js`. Keep the tap-vs-hold
   lesson from the bug above in mind for the touch input design.
+- **Backup tag push still blocked** with the same 403 documented in
+  `.claude/memory.md` (2026-08-24) — branch/contents pushes work fine,
+  tag-ref pushes don't, even after 3 retries with backoff. Used the
+  pre-merge `main` SHA as the rollback point instead:
+  `721ec5ec9c4572d88136358357cb687c79f3793b`. This is now a standing
+  gap across at least two sessions a week apart — if it's still broken
+  next time, it's worth flagging to the owner as likely needing a
+  broader GitHub App permission grant rather than re-investigating from
+  scratch each session.
 
 ### 2026-08-31 — Roadmap created
 Owner set the standing direction: concentrate all daily-dev effort on
