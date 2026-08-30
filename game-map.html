@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>World Map Engine — Life Balance</title>
+  <meta name="description" content="Tile-grid world map engine test (GAME_MAP_ROADMAP.md Phase A1) — camera, movement, no real Châu/Huyện content yet." />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23e6c15c'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
+  <link rel="stylesheet" href="css/style.css?v=53" />
+  <link rel="stylesheet" href="css/game-map.css?v=1" />
+</head>
+<body>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="logo">
+        <div class="logo-mark">LB</div>
+        <div class="logo-text">
+          <strong>Life Balance</strong>
+          <span>Five Elements Tracker</span>
+        </div>
+      </div>
+      <span class="pi-status" id="pi-status">Checking Pi Browser…</span>
+    </div>
+  </header>
+
+  <a class="journal-back" href="game-wulin.html"><span class="journal-back__arrow" aria-hidden="true">←</span> Ngũ Hành Giang Hồ</a>
+
+  <main class="map-page" role="main">
+    <h2 class="page-title">World Map Engine (thử nghiệm)</h2>
+    <p class="map-page__note">
+      Trang thử nghiệm engine bản đồ Phase A1 (xem <code>GAME_MAP_ROADMAP.md</code>) — bản đồ đặt chỗ, chưa có nội dung Châu/Huyện thật. Đang kiểm tra: bản đồ dạng lưới ô vuông, camera bám theo nhân vật, di chuyển bằng bàn phím. Chưa có điều khiển cảm ứng (Phase A2) hay va chạm (Phase A3).
+    </p>
+
+    <div class="map-canvas-wrap">
+      <canvas id="map-canvas" role="img" aria-label="Bản đồ thử nghiệm — dùng phím mũi tên hoặc WASD để di chuyển nhân vật"></canvas>
+      <div class="map-hud">
+        <span id="map-hud-pos">Ô: (0, 0)</span>
+        <span>Lưới 20×15, kích thước ô 32px</span>
+      </div>
+      <div class="map-controls-hint">
+        <span><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> hoặc <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> để di chuyển</span>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <p>&copy; 2026 <strong>Life Balance</strong> — built for Pi Network App Studio.</p>
+  </footer>
+
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script src="js/common.js?v=10"></script>
+  <script src="js/canvasUtils.js?v=1"></script>
+  <script src="js/game-map.js?v=1"></script>
+</body>
+</html>

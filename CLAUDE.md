@@ -27,6 +27,7 @@ life-balance/
 ├── journal.html             # Per-element journal (still works standalone via ?el=metal|wood|water|fire|earth, no longer linked from index.html)
 ├── chart-concepts.html      # Design-comparison page: 5 combo (bar+line) growth chart concepts
 ├── pi-test-payment.html     # One-off Mainnet U2A payment page for the Pi Developer Portal checklist (noindex, not linked from nav)
+├── game-map.html            # World map engine test page (GAME_MAP_ROADMAP.md Phase A) — tile-grid render/camera/keyboard-movement proof, no real Châu/Huyện content yet (noindex, not linked from nav until Phase B wires the real world-nav shell in)
 ├── privacy-policy.html      # Public privacy policy (linked from Pi Developer Portal)
 ├── validation-key.txt       # Pi domain-ownership validation file (must stay at root, content from the portal)
 ├── manifest.json            # PWA manifest — lets Pi Browser install the app
@@ -35,7 +36,8 @@ life-balance/
 ├── js/
 │   ├── common.js              # Shared helpers (showToast, initPiSdk, safeSetItem) + shared post model (ELEMENTS, PRIORITY_LEVELS, loadElementPosts/saveElementPosts, timeAgo, escapeHtml, uploadMediaToCloudinary, maxBytesForFile) — loaded on every page
 │   ├── elementStats.js         # window.ElementStats — single shared reader for the 5 elements' raw localStorage data + the skill star/rarity-tier thresholds (design.md's Weapon Rarity Tiers table). Loaded (via its own <script> tag) before characterPanel.js, skills.js, game-wulin.js, game-artillery.js, game-arena.js, and weaponPrototype.js, which all read through it instead of each keeping its own copy of the thresholds/finance-pool-sum/quest-XP-sum logic
-│   ├── canvasUtils.js          # window.CanvasUtils — shared canvas-drawing helpers (CSS-token→canvas-color reader, rounded-rect path) used by game-arena.js and game-artillery.js instead of each keeping its own byte-for-byte copy
+│   ├── canvasUtils.js          # window.CanvasUtils — shared canvas-drawing helpers (CSS-token→canvas-color reader, rounded-rect path) used by game-arena.js, game-artillery.js, and game-map.js instead of each keeping its own byte-for-byte copy
+│   ├── game-map.js             # game-map.html: GAME_MAP_ROADMAP.md's world map engine — tile-grid renderer, camera viewport, grid-snapped keyboard (arrow/WASD) movement with eased inter-tile animation, on a placeholder test map (Phase A1, 2026-08-31)
 │   ├── main.js                 # index.html boot: How-it-works preview + unified composer/feed + Stories tray (create/view/delete) + "Nhiệm vụ hôm nay" panel aggregating all 5 elements' daily quests
 │   ├── characterPanel.js       # index.html only: home-page "character sheet" — Phân bổ values + 5 Ngũ Hành tab chips read real per-element data (finance pools/quest XP/skills/situation units) via elementStats.js; the abstract stat-grid/Sinh-Khắc block above it is still an interface-only mockup, clearly labeled as such
 │   ├── storyEditor.js          # index.html only: CapCut-style Story editor overlay — filters, trim timeline, draggable text/sticker layers, music picker
