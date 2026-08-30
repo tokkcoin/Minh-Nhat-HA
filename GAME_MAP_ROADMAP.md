@@ -61,10 +61,11 @@ never invent a parallel stat system.
 
 ## Phase checklist (update after every session)
 
-- [ ] **A1 — Core render/camera/movement.** Tile-grid renderer, camera
+- [x] **A1 — Core render/camera/movement.** Tile-grid renderer, camera
       viewport following the player sprite, keyboard (arrow/WASD)
       movement, on one small placeholder test map (doesn't need real
-      content yet — just prove the engine works).
+      content yet — just prove the engine works). Done 2026-08-31 —
+      see log entry below.
 - [ ] **A2 — Mobile touch controls.** Virtual joystick or tap-to-move,
       tested at a real mobile viewport width (390px class).
 - [ ] **A3 — Collision / walkability layer.** A per-tile
@@ -101,6 +102,74 @@ consistent with this repo's existing Vietnamese wuxia flavor)
   Vạn Lý Bình Nguyên
 
 ## Log
+
+### 2026-08-31 — Phase A1 done: core render/camera/movement engine
+
+- **New standalone engine test page**, `game-map.html` + `js/game-map.js`
+  + `css/game-map.css` — deliberately **not linked from `index.html` or
+  `game-wulin.html`'s nav** yet (same "standalone feasibility demo, not
+  wired into the main app" pattern `weapon-prototype.html` used before
+  Phase B wires the real world-nav shell in); reachable only by URL, has
+  `<meta name="robots" content="noindex">` and a `journal-back` link
+  back to `game-wulin.html`.
+- **Placeholder test map**: `buildTestMap()` in `js/game-map.js` — a
+  20×15 tile grid (`MAP_COLS`/`MAP_ROWS`), 32px tiles (`TILE_SIZE`), a
+  criss-cross grass/path pattern purely so camera scroll + tile
+  boundaries are visually obvious. `TILE_TYPES` is keyed by tile-type
+  id and already carries a `walkable` boolean per type (currently both
+  types are `true`) — Phase A3 adds a blocked type here, no rewrite
+  needed.
+- **Movement model**: player position is always snapped to an integer
+  grid cell (`player.tx`/`ty`, per the roadmap's "tile-grid based
+  movement" constraint), but the rendered pixel position
+  (`player.px`/`py`) eases smoothly between cells over 140ms
+  (`MOVE_DURATION_MS`, `updateMovement()`) so it doesn't read as a
+  jump-cut. Only map-bounds are checked before a move starts
+  (`isWalkable()`) — no blocked-tile logic yet, that's Phase A3.
+  Arrow keys and WASD both map to the same 4 directions
+  (`KEY_TO_DIRECTION`).
+- **Camera**: `updateCamera()` centers the viewport on the player's
+  pixel position and clamps to the map's pixel bounds; when the map is
+  smaller than the viewport in either axis it centers the map instead
+  of clamping to a degenerate (min > max) range. Verified working in
+  both directions via the corner-walking Playwright test below.
+- **Real bug found + fixed during testing**: movement was originally
+  only started from the game loop's per-frame poll of currently-held
+  keys (`processHeldMovement()`). A `Playwright` `keyboard.press()` (and,
+  it turns out, any sufficiently fast real tap) sends keydown+keyup
+  faster than one animation frame, so `keyup` cleared the pressed-key
+  set before the loop ever saw it — a quick single tap registered zero
+  movement. Fixed by triggering `tryStartMove()` directly from the
+  `keydown` handler on a new press (edge-triggered), while still using
+  the per-frame poll only for repeat-while-held. This is a real
+  precision-control bug that would have shipped invisibly (holding a
+  key always worked, only quick taps were broken) — worth remembering
+  for Phase A2's touch input, which will have the same tap-vs-hold
+  distinction.
+- **Tested via a scratch Playwright script** (same one-off
+  `npm install playwright` in the OS scratch dir pointed at the
+  pre-installed `/opt/pw-browsers/chromium-1194` binary + `file://`
+  path, per this project's established convention): confirmed initial
+  HUD position, single ArrowRight/ArrowDown/A(left) taps each move
+  exactly one tile (this is what caught the bug above), holding
+  ArrowDown for ~700ms produces ~5 tiles of continuous movement,
+  walking into each of the 4 map edges repeatedly clamps exactly at
+  `(0,0)` and `(19,14)` with no overshoot/crash, zero
+  `pageerror`/app-level `console.error` (only the pre-existing sandbox
+  network-block errors for the Pi SDK/fonts, same as every other page),
+  no horizontal overflow at a 375px mobile viewport. Screenshots
+  confirm the tile grid, player sprite, and HUD render correctly at
+  both a top-left and bottom-right map corner.
+- **Not done / deliberately deferred**: no touch/joystick input (A2),
+  no blocked tiles (A3), no interaction triggers (A4), no real
+  Châu/Huyện content (B/C/D) — all per the "one phase at a time"
+  instruction. `js/elementStats.js` is not wired in yet either; real
+  player stats only matter once actual gameplay content exists
+  (Phase C), so this pure-engine page doesn't read them.
+- **Next session**: start Phase A2 (mobile touch controls — virtual
+  joystick or tap-to-move, tested at a 390px-class viewport), building
+  on this same `game-map.html`/`js/game-map.js`. Keep the tap-vs-hold
+  lesson from the bug above in mind for the touch input design.
 
 ### 2026-08-31 — Roadmap created
 Owner set the standing direction: concentrate all daily-dev effort on
