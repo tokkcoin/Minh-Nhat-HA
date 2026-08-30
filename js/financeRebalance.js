@@ -194,7 +194,7 @@ async function handleApplyTotal() {
     state.monthlySalary = Number(document.getElementById('finance-salary')?.value) || 0;
     state.income = Number(document.getElementById('finance-income')?.value) || 0;
     state.expense = Number(document.getElementById('finance-expense')?.value) || 0;
-    const total = Number(document.getElementById('finance-total-capital')?.value) || 0;
+    const total = Math.max(0, Number(document.getElementById('finance-total-capital')?.value) || 0);
     allocatePoolsFromTotal(config, state, total);
     renderFinanceDashboard();
     showToast('Đã áp dụng công thức vào 4 quỹ');

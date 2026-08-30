@@ -88,7 +88,17 @@ function elementStatsQuestLevel(totalXp) {
 function elementStatsReadMetal() {
   const state = elementStatsReadJson(ELEMENT_STATS_KEYS.finance, null);
   const pools = state?.pools || null;
-  const total = pools ? Object.values(pools).reduce((sum, p) => sum + (p.principal || 0), 0) : 0;
+  // Clamp each pool to >=0 before summing: a pool's principal should never
+  // be negative in this app's domain, but nothing on finance.html's own
+  // write path enforced that (a user could type a negative "Tổng vốn" into
+  // an <input min="0"> — the min attribute alone doesn't block typed/pasted
+  // values). A negative total here fed straight into game-wulin.js's
+  // Math.log10(1 + totalCapital) defense formula and produced NaN, silently
+  // soft-locking combat (HP never drops below its NaN "loss" threshold).
+  // Every other consumer of this total (characterPanel.js, game-arena.js)
+  // shares the same risk, so the clamp belongs here, once, not repeated
+  // per-consumer.
+  const total = pools ? Object.values(pools).reduce((sum, p) => sum + Math.max(0, p.principal || 0), 0) : 0;
   return { pools, total };
 }
 
