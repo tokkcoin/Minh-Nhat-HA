@@ -1,19 +1,19 @@
 /* ============================================================
    Life Balance — game-map.js
-   Ngũ Hành Giang Hồ world map engine — Phase A1+A2 (GAME_MAP_ROADMAP.md):
+   Ngũ Hành Giang Hồ world map engine — Phase A1+A2+A3 (GAME_MAP_ROADMAP.md):
    tile-grid renderer, camera viewport following the player, keyboard
-   (arrow/WASD) movement PLUS a virtual joystick for touch, on one
-   small placeholder test map. No real Châu/Huyện content yet, no
-   blocked tiles (A3), no interaction triggers (A4) — this file
-   proves the engine itself works before any of that is layered on.
+   (arrow/WASD) movement, a virtual joystick for touch, and now a
+   blocked-tile collision layer, on one small placeholder test map.
+   No real Châu/Huyện content yet, no interaction triggers (A4) — this
+   file proves the engine itself works before any of that is layered on.
 
    Movement model: the player's logical position is always snapped to
    a grid cell (tx, ty) — per GAME_MAP_ROADMAP.md's "tile-grid based
    movement" constraint — but the on-screen pixel position (px, py)
    animates smoothly between cells so it doesn't feel like a jump-cut.
-   Only bounds are enforced here; a real walkable/blocked flag per
-   tile is Phase A3's job (see TILE_TYPES below, already shaped to
-   take a `walkable` field so A3 slots in without a rewrite).
+   `isWalkable()` (Phase A1) already gated movement on a per-tile
+   `walkable` flag; Phase A3 just adds the first tile TYPE with
+   `walkable: false` so that gate has something real to reject.
 
    Loaded as a plain global, same convention as every other page
    script in this project (no bundler, no ES modules).
@@ -33,7 +33,21 @@ const TILE_SIZE = 32; // logical (CSS) px per tile
 const TILE_TYPES = {
   0: { name: 'grass', walkable: true, color() { return CanvasUtils.readCssVar('--wood-tint', 'rgba(95,208,104,.12)'); } },
   1: { name: 'path',  walkable: true, color() { return CanvasUtils.readCssVar('--earth-tint', 'rgba(201,160,121,.12)'); } },
+  // Phase A3: first blocked tile type — flat, solid-looking fill (no
+  // rgba tint, unlike grass/path) so it visually reads as "obstacle"
+  // even before real building sprites exist (Phase C's job).
+  2: { name: 'wall', walkable: false, color() { return CanvasUtils.readCssVar('--text-muted', '#6b6b6b'); } },
 };
+
+// Fixed obstacle placements for this placeholder test map — a lone
+// isolated tile (open on all 4 sides) so collision can be verified from
+// every direction, plus a small 2x2 cluster for visual variety. Real
+// per-Huyện obstacle layouts come in Phase C; this is just proving the
+// collision gate itself.
+const WALL_TILES = [
+  [10, 4],
+  [15, 10], [16, 10], [15, 11], [16, 11],
+];
 
 function buildTestMap() {
   const tiles = [];
@@ -47,6 +61,7 @@ function buildTestMap() {
     }
     tiles.push(row);
   }
+  WALL_TILES.forEach(([x, y]) => { tiles[y][x] = 2; });
   return tiles;
 }
 

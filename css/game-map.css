@@ -6,6 +6,9 @@
    every other page, no hardcoded hex.
    v2 (Phase A2): added .map-joystick — the on-screen virtual joystick
    overlay for touch/mobile movement.
+   v3 (Phase A3): no new CSS — blocked-tile styling is drawn on canvas
+   (game-map.js), version bumped only to keep the cache-bust convention
+   in step with the paired JS change.
    ============================================================ */
 
 /* ── 1. Page shell ── */
