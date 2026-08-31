@@ -309,15 +309,15 @@ consistent with this repo's existing Vietnamese wuxia flavor)
   map — decide during that session whether `game-map.js`'s engine
   functions generalize to an arbitrary map object/size cleanly, or need
   a small refactor first, before adding the real Kim Châu content.
-- **Backup tag push**: not re-attempted this session — per the 2026-08-31
-  (session 2) note, this is treated as a confirmed standing gap (a full
-  week+ of consecutive `403`/`RPC failed` failures on tag-ref pushes
-  specifically, branch/content pushes unaffected) rather than worth
-  re-testing every session. Still needs a broader GitHub App permission
-  grant only the human owner can make. Used the pre-merge `main` SHA as
-  the rollback point instead (see this session's actual commit history
-  for the exact SHA, since this log entry is written before the merge
-  commit exists).
+- **Backup tag push**: attempted once (`backup-2026-08-31-165002`) —
+  same `403`/`RPC failed`/`send-pack: unexpected disconnect` as every
+  session since 2026-08-24, now well over a week of consecutive
+  failures on tag-ref pushes specifically (branch/content pushes are
+  unaffected). Per the 2026-08-31 (session 2) note, treated as a
+  confirmed standing gap rather than worth full retry-with-backoff
+  every session — still needs a broader GitHub App permission grant
+  only the human owner can make. Used the pre-merge `main` SHA as the
+  rollback point instead: `c25d8b85618a1f741b6b8d48d99a979363efd9af`.
 
 ### 2026-08-31 (session 4) — Phase A3 done: collision/walkability layer
 
