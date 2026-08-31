@@ -4,6 +4,8 @@
    Standalone engine test shell (game-map.html) — not yet wired into
    game-wulin.html's combat flow. Same dark-theme token system as
    every other page, no hardcoded hex.
+   v2 (Phase A2): added .map-joystick — the on-screen virtual joystick
+   overlay for touch/mobile movement.
    ============================================================ */
 
 /* ── 1. Page shell ── */
@@ -36,6 +38,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+}
+
+.map-canvas-inner {
+  position: relative;
 }
 
 #map-canvas {
@@ -76,4 +82,50 @@
   padding: 2px 6px;
   font-family: inherit;
   color: var(--text-secondary);
+}
+
+/* ── 4. Virtual joystick (Phase A2 — touch/mobile movement) ── */
+/* Positioned over the canvas's bottom-left corner. Works with touch
+   AND mouse (Pointer Events) so it's testable on desktop too, but it
+   exists specifically so mobile players who have no keyboard still
+   have a full movement input — not a decorative extra. */
+.map-joystick {
+  position: absolute;
+  left: calc(var(--space-lg) + var(--space-md));
+  bottom: calc(var(--space-lg) + var(--space-md));
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  background: var(--bg-page);
+  border: 1.5px solid var(--border);
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: .85;
+  transition: opacity var(--transition);
+}
+
+.map-joystick--active {
+  opacity: 1;
+  border-color: var(--text-secondary);
+}
+
+.map-joystick__thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bg-card-hover);
+  border: 1.5px solid var(--text-secondary);
+  transform: translate(0, 0);
+  will-change: transform;
+}
+
+@media (max-width: 480px) {
+  .map-joystick {
+    width: 96px;
+    height: 96px;
+    left: var(--space-md);
+    bottom: var(--space-md);
+  }
 }
