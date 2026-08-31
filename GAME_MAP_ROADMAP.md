@@ -162,9 +162,9 @@ game-artillery.js already established:
 - [x] **A1 — Core render/camera/movement.** Done 2026-08-31 — see log.
 - [x] **A2 — Mobile touch controls.** Virtual joystick. Done
       2026-08-31 — see log.
-- [ ] **A3 — Collision / walkability layer.** A per-tile
+- [x] **A3 — Collision / walkability layer.** A per-tile
       walkable/blocked flag; player cannot walk through blocked tiles
-      (buildings, water, map edges).
+      (buildings, water, map edges). Done 2026-08-31 — see log.
 - [ ] **A4 — Interaction/transition triggers.** Player enters a marked
       zone → a confirm prompt appears ("Nhấn để vào Hang Động", not an
       instant auto-transition, to avoid accidental triggers from just
@@ -228,6 +228,61 @@ consistent with this repo's existing Vietnamese wuxia flavor)
   Vạn Lý Bình Nguyên
 
 ## Log
+
+### 2026-08-31 (session 4) — Phase A3 done: collision/walkability layer
+
+- **`isWalkable()`/`tryStartMove()` (from Phase A1) already gated movement
+  on a per-tile `walkable` flag** — verified by reading the actual code
+  before starting, per this roadmap's "code is ground truth" instruction.
+  So A3 needed no new movement-gating logic, only something real for that
+  gate to reject: a first blocked `TILE_TYPES` entry (`js/game-map.js`,
+  id `2`, `name: 'wall'`, `walkable: false`), rendered as a flat solid
+  `--text-muted` fill (no rgba tint, unlike grass/path) so it visually
+  reads as an obstacle even before real building sprites exist.
+- **`WALL_TILES` placements** in `buildTestMap()`: one isolated lone tile
+  at `(10, 4)` — open on all 4 sides regardless of the existing criss-
+  cross grass/path pattern, specifically so collision could be verified
+  from every direction — plus a 2×2 cluster at `(15-16, 10-11)` for
+  visual variety and a second, joystick-driven collision check.
+- **No changes needed to `isWalkable()`, `tryStartMove()`, camera, or
+  either input source** — this phase is intentionally data-only (a new
+  tile type + placements), which is why the diff is small.
+- **Tested via a scratch Playwright script** (same convention as every
+  prior phase): at a 1024px desktop viewport, keyboard-drove the player
+  to approach the isolated wall tile at `(10,4)` from all 4 sides
+  (south, west, east, north in that order, routing around via open
+  tiles between attempts) — every attempted move into the wall tile was
+  rejected, player position unchanged each time; confirmed normal
+  movement onto open tiles and held-key continuous movement both still
+  work unregressed. At a 390×844 mobile viewport with `hasTouch`/
+  `isMobile`, joystick-drove the player to `(14,10)` (adjacent west of
+  the wall cluster) and confirmed an eastward joystick drag into the
+  cluster is also rejected; re-confirmed the A2 sub-dead-zone-drag-
+  produces-zero-movement behavior is unregressed; screenshot-verified
+  the wall cluster renders as a visually distinct solid gray block next
+  to the player. Also screenshot-checked 1024px/768px/480px per
+  `workflow.md`'s responsiveness step — no overflow or joystick/HUD
+  overlap at any width (no layout changed this session, but re-verified
+  since the canvas now renders new tile content). Zero `pageerror` and
+  zero unexpected `console.error` across all runs (filtered out only the
+  same pre-existing sandbox network-block noise for the Pi SDK/fonts
+  every prior session has hit — `ERR_TUNNEL_CONNECTION_FAILED`/
+  `ERR_CONNECTION_RESET` — not app errors).
+- **Not done / deliberately deferred**: no interaction/transition
+  triggers (A4), no real Châu/Huyện content (B/C/D) — same "one phase at
+  a time" discipline as every prior session. The wall tile type and
+  placements here are still placeholder-map-only; Phase C's real per-
+  Huyện obstacle layouts are a separate, later task, not extended from
+  this file's `WALL_TILES` array.
+- **Next session**: start Phase A4 (interaction/transition triggers) —
+  a marked zone the player can walk into that shows a confirm prompt
+  ("Nhấn để vào Hang Động") rather than an instant auto-transition, per
+  the roadmap spec; test with one dummy trigger tile first, confirming
+  the prompt appears on entry, confirming transitions, and declining (or
+  walking away) does not.
+- **Backup tag push**: see this session's note below the git-workflow
+  step in this log entry's follow-up, or the next session's log if this
+  one didn't get updated after the push attempt.
 
 ### 2026-08-31 (session 3) — Roadmap expanded: economy, khu vực mechanics, C split into C1-C5, D ordered
 Owner asked for more detail after reviewing the first draft. Added: a
