@@ -66,8 +66,9 @@ never invent a parallel stat system.
       movement, on one small placeholder test map (doesn't need real
       content yet — just prove the engine works). Done 2026-08-31 —
       see log entry below.
-- [ ] **A2 — Mobile touch controls.** Virtual joystick or tap-to-move,
-      tested at a real mobile viewport width (390px class).
+- [x] **A2 — Mobile touch controls.** Virtual joystick, tested at a real
+      mobile viewport width (390px class). Done 2026-08-31 — see log
+      entry below.
 - [ ] **A3 — Collision / walkability layer.** A per-tile
       walkable/blocked flag; player cannot walk through blocked tiles
       (buildings, water, map edges).
@@ -102,6 +103,91 @@ consistent with this repo's existing Vietnamese wuxia flavor)
   Vạn Lý Bình Nguyên
 
 ## Log
+
+### 2026-08-31 (session 2) — Phase A2 done: virtual joystick touch controls
+
+- **New `.map-joystick`/`.map-joystick__thumb` overlay** in `game-map.html`,
+  positioned absolutely inside a new `.map-canvas-inner` wrapper (added
+  specifically so the joystick anchors to the canvas's own corner, not the
+  whole `.map-canvas-wrap` — the wrap also contains the HUD row and the
+  keyboard-hint text below the canvas, and an earlier version of this
+  overlapped both; screenshot-verified fixed after the `.map-canvas-inner`
+  split). Base circle + draggable thumb, styled with existing tokens only
+  (`--bg-page`/`--bg-card-hover`/`--border`/`--text-secondary`), no new
+  colors.
+- **Input model** (`js/game-map.js`): refactored the Phase A1 keyboard
+  handlers into two shared helpers, `activateDirection()`/
+  `deactivateDirection()`, that both keyboard and joystick now call —
+  neither input source keeps its own parallel state, both just add/remove
+  a direction from the same `mapState.pressed` set and let the existing
+  `tryStartMove()` (edge-triggered on activation) / `processHeldMovement()`
+  (per-frame poll, continuous repeat while held) pipeline from Phase A1
+  handle the rest unchanged. `initJoystickInput()` wires Pointer Events
+  (`pointerdown`/`pointermove`/`pointerup`/`pointercancel`/`pointerleave`)
+  on the joystick base — deliberately Pointer Events rather than Touch
+  Events, so touch AND mouse share one code path (makes it testable with a
+  plain mouse drag, not just real touch).
+- **Direction detection**: drag offset from the base's center, dead zone
+  14px (below that: no direction, thumb still recenters visually but
+  movement doesn't fire — prevents jitter from a barely-moving finger),
+  above that: snaps to whichever axis (dx vs dy) has the larger absolute
+  offset — 4-way only, matching the tile-grid's no-diagonals movement
+  model, thumb visually clamped to a 30px max radius from center.
+- **Real bug found + fixed during testing**: `Element.setPointerCapture()`
+  threw synchronously in one code path during test iteration (Playwright's
+  raw `dispatchEvent()` doesn't create a genuine browser-tracked active
+  pointer, so the capture call had nothing to attach to). Rather than
+  concluding this was purely a test artifact, wrapped the call in
+  try/catch (`console.warn` on failure, movement still works without
+  capture — capture is a nice-to-have for not losing the drag if the
+  finger slides off the base, not a correctness requirement) since this
+  is exactly the kind of platform-quirk risk this app's iOS/Pi-Browser
+  WebKit target could plausibly hit for real. Switched the test itself to
+  drive drags via `page.mouse.move/down/up` (genuine trusted pointer
+  events) instead of `dispatchEvent`, which resolved the artifact and
+  still exercises the real code path.
+- **Test-authoring lesson (not a code bug)**: an early version of the
+  scratch test waited 200-250ms *while still holding* the simulated drag
+  before checking tile position and expected exactly one step — but
+  200-250ms exceeds `MOVE_DURATION_MS` (140ms, from Phase A1), so the
+  per-frame hold-repeat (correctly) fires a second step in that window,
+  same as holding a keyboard key does. Fixed by releasing immediately
+  after the drag for true single-flick assertions, and only holding
+  deliberately (with a wider before/after window) for the continuous-
+  movement assertion. Worth remembering next session: any future test of
+  a discrete "one tap" input must release before ~140ms elapses, or it's
+  indistinguishable from a hold.
+- **Tested via a scratch Playwright script** (same convention as Phase
+  A1): at a 390×844 mobile viewport with `hasTouch`/`isMobile` context
+  options — joystick renders inside the canvas bounds with no horizontal
+  overflow; a single drag-and-release moves exactly one tile in the
+  dragged direction (down and left both verified); holding the drag for
+  ~700ms produces multiple tiles of continuous movement; releasing stops
+  movement immediately and the thumb recenters; a sub-dead-zone drag
+  produces zero movement; a diagonal drag snaps to the dominant axis only
+  (no diagonal moves); at a 1024px desktop viewport, keyboard
+  arrow/WASD movement still works unchanged (both hold-repeat and a
+  quick single tap) — confirms the shared-helper refactor didn't regress
+  Phase A1. Zero `pageerror`/app-level `console.error` across all runs
+  (only the same pre-existing sandbox network-block noise for the Pi
+  SDK/fonts as every prior session). Also screenshot-checked the joystick
+  layout at 1024px/768px/480px per `workflow.md`'s responsiveness step —
+  no overlap with the HUD/hint text at any width after the
+  `.map-canvas-inner` fix.
+- **Not done / deliberately deferred**: no blocked tiles (A3), no
+  interaction triggers (A4), no real Châu/Huyện content (B/C/D) — same
+  "one phase at a time" discipline as every prior session.
+- **Next session**: start Phase A3 (collision/walkability layer) —
+  add a blocked tile type to `TILE_TYPES` (already shaped for this since
+  Phase A1, per that log entry) and make `isWalkable()` respect it so the
+  player can't walk through it; test by placing at least one blocked tile
+  in the test map and confirming movement into it is rejected from all 4
+  directions, with both keyboard and the new joystick.
+- **Backup tag push**: same 403 as the last two sessions (see the A1 log
+  entry directly below and `.claude/memory.md` 2026-08-24) — did not
+  re-attempt investigating it again this session per the prior note that
+  it's a standing gap; used the pre-merge `main` SHA as the rollback
+  point again, same as last time.
 
 ### 2026-08-31 — Phase A1 done: core render/camera/movement engine
 

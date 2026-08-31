@@ -1,11 +1,11 @@
 /* ============================================================
    Life Balance — game-map.js
-   Ngũ Hành Giang Hồ world map engine — Phase A1 (GAME_MAP_ROADMAP.md):
+   Ngũ Hành Giang Hồ world map engine — Phase A1+A2 (GAME_MAP_ROADMAP.md):
    tile-grid renderer, camera viewport following the player, keyboard
-   (arrow/WASD) movement, on one small placeholder test map. No real
-   Châu/Huyện content yet, no touch controls (A2), no blocked tiles
-   (A3), no interaction triggers (A4) — this file proves the engine
-   itself works before any of that is layered on.
+   (arrow/WASD) movement PLUS a virtual joystick for touch, on one
+   small placeholder test map. No real Châu/Huyện content yet, no
+   blocked tiles (A3), no interaction triggers (A4) — this file
+   proves the engine itself works before any of that is layered on.
 
    Movement model: the player's logical position is always snapped to
    a grid cell (tx, ty) — per GAME_MAP_ROADMAP.md's "tile-grid based
@@ -240,27 +240,132 @@ function resizeCanvas() {
 
 // ── 8. Input wiring ───────────────────────────────────────────
 
-function initMapInput() {
+// Shared by keyboard and joystick: both are just sources of a held
+// "direction" that feeds the same tryStartMove()/processHeldMovement()
+// mechanism. Edge-triggering tryStartMove() on activation (rather than
+// only via the game loop's per-frame poll) matters for BOTH sources —
+// see the Phase A1 log entry in GAME_MAP_ROADMAP.md: a press short
+// enough that release fires before the next animation frame would
+// otherwise never register a move at all, whether that press is a key
+// tap or a quick joystick flick.
+function activateDirection(direction) {
+  const isNewPress = !mapState.pressed.has(direction);
+  if (isNewPress) mapState.lastDirection = direction;
+  mapState.pressed.add(direction);
+  if (isNewPress) tryStartMove(direction);
+}
+
+function deactivateDirection(direction) {
+  mapState.pressed.delete(direction);
+  if (mapState.lastDirection === direction) mapState.lastDirection = null;
+}
+
+function initKeyboardInput() {
   window.addEventListener('keydown', (e) => {
     const direction = KEY_TO_DIRECTION[e.key];
     if (!direction) return;
     e.preventDefault();
-    const isNewPress = !mapState.pressed.has(direction);
-    if (isNewPress) mapState.lastDirection = direction;
-    mapState.pressed.add(direction);
-    // Trigger the step immediately on keydown (edge-triggered) rather than
-    // only via the game loop's per-frame poll — a tap short enough that
-    // keyup fires before the next animation frame would otherwise never
-    // register a move at all. The loop still handles repeat-while-held.
-    if (isNewPress) tryStartMove(direction);
+    activateDirection(direction);
   });
 
   window.addEventListener('keyup', (e) => {
     const direction = KEY_TO_DIRECTION[e.key];
     if (!direction) return;
-    mapState.pressed.delete(direction);
-    if (mapState.lastDirection === direction) mapState.lastDirection = null;
+    deactivateDirection(direction);
   });
+}
+
+// Virtual joystick: drag from the base's center, direction snaps to
+// whichever axis has the larger offset (4-way, matching the tile-grid
+// movement model — no diagonals), a small dead zone avoids jitter from
+// a near-still finger. Uses Pointer Events so touch and mouse share one
+// code path (mouse makes it testable on desktop too).
+const JOYSTICK_DEAD_ZONE_PX = 14;
+const JOYSTICK_MAX_OFFSET_PX = 30;
+
+function initJoystickInput() {
+  const base = document.getElementById('map-joystick');
+  const thumb = document.getElementById('map-joystick-thumb');
+  if (!base || !thumb) return;
+
+  let activePointerId = null;
+  let centerX = 0;
+  let centerY = 0;
+  let currentDirection = null;
+
+  function setThumbOffset(dx, dy) {
+    thumb.style.transform = `translate(${dx}px, ${dy}px)`;
+  }
+
+  function releaseJoystick() {
+    if (currentDirection) deactivateDirection(currentDirection);
+    currentDirection = null;
+    activePointerId = null;
+    setThumbOffset(0, 0);
+    base.classList.remove('map-joystick--active');
+  }
+
+  base.addEventListener('pointerdown', (e) => {
+    if (activePointerId !== null) return;
+    activePointerId = e.pointerId;
+    try {
+      base.setPointerCapture(activePointerId);
+    } catch (err) {
+      console.warn('game-map.js: setPointerCapture failed, continuing without capture', err);
+    }
+    const rect = base.getBoundingClientRect();
+    centerX = rect.left + rect.width / 2;
+    centerY = rect.top + rect.height / 2;
+    base.classList.add('map-joystick--active');
+    e.preventDefault();
+  });
+
+  base.addEventListener('pointermove', (e) => {
+    if (e.pointerId !== activePointerId) return;
+    e.preventDefault();
+
+    const dx = e.clientX - centerX;
+    const dy = e.clientY - centerY;
+    const magnitude = Math.hypot(dx, dy);
+
+    const clamped = Math.min(magnitude, JOYSTICK_MAX_OFFSET_PX);
+    if (magnitude > 0) {
+      setThumbOffset((dx / magnitude) * clamped, (dy / magnitude) * clamped);
+    } else {
+      setThumbOffset(0, 0);
+    }
+
+    let nextDirection = null;
+    if (magnitude >= JOYSTICK_DEAD_ZONE_PX) {
+      nextDirection = Math.abs(dx) > Math.abs(dy)
+        ? (dx > 0 ? 'right' : 'left')
+        : (dy > 0 ? 'down' : 'up');
+    }
+
+    if (nextDirection !== currentDirection) {
+      if (currentDirection) deactivateDirection(currentDirection);
+      currentDirection = nextDirection;
+      if (currentDirection) activateDirection(currentDirection);
+    }
+  });
+
+  const endHandler = (e) => {
+    if (e.pointerId !== activePointerId) return;
+    releaseJoystick();
+  };
+  base.addEventListener('pointerup', endHandler);
+  base.addEventListener('pointercancel', endHandler);
+  base.addEventListener('pointerleave', (e) => {
+    // A mouse can leave the base while still held; touch delivers
+    // pointercancel/pointerup instead, so this mainly matters for mice.
+    if (e.pointerId !== activePointerId || e.pointerType !== 'mouse') return;
+    releaseJoystick();
+  });
+}
+
+function initMapInput() {
+  initKeyboardInput();
+  initJoystickInput();
 }
 
 // ── 9. Boot ───────────────────────────────────────────────────
