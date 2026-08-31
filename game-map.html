@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>World Map Engine — Life Balance</title>
-  <meta name="description" content="Tile-grid world map engine test (GAME_MAP_ROADMAP.md Phase A1-A4) — camera, movement, collision, interaction triggers; no real Châu/Huyện content yet." />
+  <title>World Map — Life Balance</title>
+  <meta name="description" content="Ngũ Hành Giang Hồ world map (GAME_MAP_ROADMAP.md Phase B) — chọn Châu, đi bộ giữa các Huyện; nội dung khu vực thật (Phase C) chưa có." />
   <meta name="robots" content="noindex" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23e6c15c'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
   <link rel="stylesheet" href="css/style.css?v=53" />
-  <link rel="stylesheet" href="css/game-map.css?v=4" />
+  <link rel="stylesheet" href="css/game-map.css?v=5" />
 </head>
 <body>
 
@@ -30,40 +30,42 @@
   <a class="journal-back" href="game-wulin.html"><span class="journal-back__arrow" aria-hidden="true">←</span> Ngũ Hành Giang Hồ</a>
 
   <main class="map-page" role="main">
-    <h2 class="page-title">World Map Engine (thử nghiệm)</h2>
+    <h2 class="page-title">Bản Đồ Thế Giới</h2>
     <p class="map-page__note">
-      Trang thử nghiệm engine bản đồ Phase A1+A2+A3+A4 (xem <code>GAME_MAP_ROADMAP.md</code>) — bản đồ đặt chỗ, chưa có nội dung Châu/Huyện thật. Đang kiểm tra: bản đồ dạng lưới ô vuông, camera bám theo nhân vật, di chuyển bằng bàn phím hoặc cần điều khiển ảo (cảm ứng), va chạm với ô chặn (màu xám, không đi xuyên qua được), và điểm tương tác/chuyển cảnh thử nghiệm (đi vào ô có biểu tượng 🕳️ để thử).
+      Ngũ Hành Giang Hồ (xem <code>GAME_MAP_ROADMAP.md</code> Phase B) — chọn một Châu, đi bộ tới các Huyện trong Châu đó. Nội dung khu vực thật của mỗi Huyện (đánh quái/hang động/tháp/khu dân cư/khu luyện công) sẽ được xây dần ở Phase C/D — bản đồ Huyện hiện tại chỉ là chỗ trống để chứng minh việc chuyển màn hình hoạt động.
     </p>
 
-    <div class="map-canvas-wrap">
-      <div class="map-canvas-inner">
-        <canvas id="map-canvas" role="img" aria-label="Bản đồ thử nghiệm — dùng phím mũi tên, WASD, hoặc cần điều khiển ảo để di chuyển nhân vật"></canvas>
-        <div id="map-joystick" class="map-joystick" aria-hidden="true">
-          <div id="map-joystick-thumb" class="map-joystick__thumb"></div>
-        </div>
-        <div id="map-trigger-prompt" class="map-trigger-prompt" hidden>
-          <span id="map-trigger-prompt-text"></span>
-          <button type="button" id="map-trigger-confirm-btn" class="btn btn-primary map-trigger-prompt__btn">Vào</button>
-        </div>
+    <div id="map-chau-menu" class="map-chau-menu" aria-label="Chọn Châu"></div>
+
+    <div id="map-play-area" class="map-play-area" hidden>
+      <div class="map-nav-header">
+        <button type="button" id="map-nav-back-btn" class="journal-back map-nav-header__back"></button>
+        <h3 id="map-nav-title" class="map-nav-header__title"></h3>
       </div>
-      <div class="map-hud">
-        <span id="map-hud-pos">Ô: (0, 0)</span>
-        <span>Lưới 20×15, kích thước ô 32px</span>
-      </div>
-      <div class="map-controls-hint">
-        <span><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> hoặc <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> để di chuyển, hoặc dùng cần điều khiển ảo trên di động</span>
+
+      <div class="map-canvas-wrap">
+        <div class="map-canvas-inner">
+          <canvas id="map-canvas" role="img" aria-label="Bản đồ — dùng phím mũi tên, WASD, hoặc cần điều khiển ảo để di chuyển nhân vật"></canvas>
+          <div id="map-joystick" class="map-joystick" aria-hidden="true">
+            <div id="map-joystick-thumb" class="map-joystick__thumb"></div>
+          </div>
+          <div id="map-trigger-prompt" class="map-trigger-prompt" hidden>
+            <span id="map-trigger-prompt-text"></span>
+            <button type="button" id="map-trigger-confirm-btn" class="btn btn-primary map-trigger-prompt__btn">Vào</button>
+          </div>
+          <div id="map-huyen-banner" class="map-trigger-prompt map-huyen-banner" hidden>
+            <span id="map-huyen-banner-text"></span>
+          </div>
+        </div>
+        <div class="map-hud">
+          <span id="map-hud-pos">Ô: (0, 0)</span>
+        </div>
+        <div class="map-controls-hint">
+          <span><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> hoặc <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> để di chuyển, hoặc dùng cần điều khiển ảo trên di động</span>
+        </div>
       </div>
     </div>
   </main>
-
-  <div id="map-trigger-overlay" class="finance-modal" hidden>
-    <div class="finance-modal__inner">
-      <button type="button" id="map-trigger-overlay-close" class="finance-modal__close" aria-label="Đóng">✕</button>
-      <h3 class="finance-modal__title" id="map-trigger-overlay-title"></h3>
-      <p class="map-trigger-overlay__body">Đây là màn hình chuyển cảnh thử nghiệm cho Phase A4 — nội dung thật của khu vực này (quái vật, boss, cửa hàng, v.v.) sẽ được xây ở Phase C.</p>
-      <button type="button" id="map-trigger-overlay-back-btn" class="btn btn-primary map-trigger-overlay__back-btn">Quay lại bản đồ</button>
-    </div>
-  </div>
 
   <footer class="site-footer" role="contentinfo">
     <p>&copy; 2026 <strong>Life Balance</strong> — built for Pi Network App Studio.</p>
@@ -72,6 +74,6 @@
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <script src="js/common.js?v=10"></script>
   <script src="js/canvasUtils.js?v=1"></script>
-  <script src="js/game-map.js?v=4"></script>
+  <script src="js/game-map.js?v=5"></script>
 </body>
 </html>

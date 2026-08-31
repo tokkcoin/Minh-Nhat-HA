@@ -171,13 +171,7 @@ game-artillery.js already established:
       walking past) → confirming transitions to the target
       screen/state. Test with one dummy trigger first. Done
       2026-08-31 — see log.
-- [ ] **B — World navigation shell.** 5-Châu menu screen (reuses
-      existing element color tokens/theming). Selecting a Châu loads its
-      walkable overworld map with 3 Huyện markers connected by
-      roads/paths. Walking into (or selecting) a Huyện marker loads that
-      Huyện's own local map. Travel *between* Châu is menu-based (no
-      walking a "world" scale map) — only Huyện-to-Huyện within one
-      Châu is real walking.
+- [x] **B — World navigation shell.** Done 2026-08-31 — see log.
 - [ ] **C1 — Bạc Kim Trấn: Khu đánh quái.** First real Huyện map
       (Kim Châu's first Huyện, bronze/silver tier per the difficulty
       table above), populated with 3-6 monster nodes per the mechanics
@@ -229,6 +223,145 @@ consistent with this repo's existing Vietnamese wuxia flavor)
   Vạn Lý Bình Nguyên
 
 ## Log
+
+### 2026-08-31 (session 6) — Phase B done: world navigation shell
+
+- **Verified ground truth before starting**: read all of `js/game-map.js`/
+  `game-map.html`/`css/game-map.css` as they stood after A4 (not just
+  the log) — confirmed the "next session" note was right that the
+  engine's global `MAP_COLS`/`MAP_ROWS`/`TILE_TYPES`/`TRIGGER_ZONES`
+  constants needed generalizing before a second map (let alone 6) could
+  exist. Refactored those into `mapState.cols`/`rows`/`tileTypes`/
+  `triggerZones`, set per screen by one `loadMap(map, screenName)`
+  function — `isWalkable()`, `updateCamera()`, `renderFrame()` all read
+  the swappable state instead of fixed globals, no other engine logic
+  changed.
+- **Retired the Phase A placeholder test map + A4's dummy trigger/modal
+  overlay** (`buildTestMap()`, `WALL_TILES`, the one dummy
+  `TRIGGER_ZONES` entry, `#map-trigger-overlay`'s `.finance-modal`
+  chrome) — they were explicitly scaffolding to prove the engine before
+  real content existed, and Phase B's real Châu maps + Huyện transition
+  now cover the same ground for real, so keeping the dummy versions
+  around would just be dead code. Noted as a deliberate, in-scope
+  supersession, not scope creep.
+- **Three screens, one canvas** (`js/game-map.js` §9): `mapState.screen`
+  is `'menu' | 'chau' | 'huyen'`. `'menu'` is a plain DOM grid
+  (`#map-chau-menu`, no canvas) of 5 cards, one per Châu, built from a
+  new `CHAU_LIST` data table (name/color token/3 Huyện names+tiers per
+  Châu, from this file's own "Naming" and "Economy & progression"
+  sections). Clicking a card calls `enterChau(key)`, which builds that
+  Châu's walkable overworld and switches the canvas in. Difficulty-tier
+  labels use design.md's existing Sơ cấp/Rèn luyện/Thành thạo/Tinh anh/
+  Huyền thoại rarity vocabulary rather than re-translating this file's
+  own bronze/silver/gold/epic/legendary shorthand, so the in-world
+  language matches what players already see on skills.html/
+  weapon-prototype.html — noting this as a deliberate wording deviation
+  from the roadmap table, not a spec change.
+- **`buildChauMap(chau)`**: a 26x18 grid per Châu, 3 Huyện markers laid
+  out in a triangle and connected by L-shaped roads (`carveRoad()`),
+  plus scattered element-tinted "feature" tiles (`scatterFeaturePatches()`,
+  using that Châu's own `--<element>-tint` token) and two small wall
+  clusters for collision variety — all deterministic (no `Math.random`)
+  so a given Châu's map looks identical on every visit. Walking into
+  (or being close enough to trigger) a Huyện marker reuses A4's
+  walk-in-and-confirm prompt exactly, just re-pointed: confirming now
+  calls `enterHuyen(zone)` instead of opening a modal.
+- **`enterHuyen(zone)`**: switches the whole screen to a small (12x9),
+  wall-bordered, currently-empty placeholder local map
+  (`buildHuyenPlaceholderMap()`) — proves the chau-map -> huyen-map
+  transition and that the generalized engine really does work on a
+  second, differently-sized/shaped map, which was this session's main
+  technical risk per the A4 log's "next session" note. A persistent
+  info banner (`#map-huyen-banner`, a no-button variant of the same
+  `.map-trigger-prompt` bar) names the Huyện + its tier and says its
+  real khu vực content is Phase C's job. Deliberate deviation from a
+  literal reading of "loads that Huyện's own local map": it's real and
+  walkable, just empty — Phase C fills in the first real one (Bạc Kim
+  Trấn) rather than this session hand-building placeholder rooms for
+  all 15 Huyện.
+- **Navigation is otherwise UI-button-driven, not walk-triggered**: one
+  `#map-nav-back-btn` (reusing `.journal-back`'s existing pill style,
+  not a new button system), relabeled/rehandled by `updateNavHeader()`
+  depending on screen — "← Về danh sách Châu" (chau -> menu) or
+  "← Quay lại <Châu name>" (huyen -> chau). Matches the roadmap's
+  "travel between Châu is menu-based" instruction; only Huyện-marker
+  entry is a walk-and-confirm interaction.
+- **Real bug found + fixed (pre-existing since Phase A4, not introduced
+  this session)**: `.map-trigger-prompt` sets `display: flex`, and an
+  *author* CSS rule always wins over the browser's default
+  `[hidden]{display:none}` UA rule regardless of selector specificity —
+  so toggling the `hidden` attribute in JS was never actually hiding
+  the confirm-prompt bar; it just sat there as an empty box until first
+  shown. Went uncaught in every A1-A4 Playwright run because those
+  tests only asserted the DOM `hidden` attribute, not real computed
+  visibility. Same gotcha this project already knew about and worked
+  around for `.finance-modal[hidden]{display:none}` — just hadn't been
+  applied here yet. Fixed by adding the equivalent `[hidden]{display:
+  none}` overrides for `.map-trigger-prompt`, `.map-chau-menu`, and
+  `.map-play-area` (the last two are new this session and would have
+  had the identical bug — caught before shipping because this
+  session's screenshot review caught the menu and chau screens
+  rendering stacked on top of each other, which is what led to
+  re-auditing `.map-trigger-prompt` too). Test methodology fixed to
+  match: added an `isVisible()` helper that reads
+  `getComputedStyle(el).display` instead of the `hidden` attribute, and
+  replaced every hidden/visible assertion in this session's test with
+  it.
+- **Tested via a scratch Playwright script** (`node test-b.js` in the
+  OS scratch dir, same convention as every prior phase): desktop
+  1024px keyboard run — menu shows exactly 5 cards with correct
+  name/color per Châu; entering Kim Châu shows the overworld with the
+  correct nav title and a real (non-zero) canvas size; walked to the
+  first Huyện marker (2 tiles from spawn), confirmed the prompt shows
+  the correct Huyện name and is visually hidden (computed `display`,
+  not just the attribute) both before arriving and after walking off
+  without confirming; walked back and confirmed via Enter, landed on
+  the Huyện placeholder screen with the correct title/banner
+  text/spawn position, confirmed the banner is visually visible there
+  and the chau-screen's trigger prompt is not; walked into the
+  placeholder room's border wall from the interior and confirmed
+  collision still rejects the move (regression check on the Phase A3
+  collision layer generalizing correctly to a new map); clicked the
+  back button and confirmed it returns to the *same* Châu
+  (`Kim Xà Đại Lục`) with the player back at the Châu's spawn tile, not
+  a stale position; confirmed `#map-trigger-overlay` no longer exists
+  in the DOM at all (retired code actually removed, not just unused);
+  clicked back-to-menu and confirmed the menu is visually visible again
+  and the play area is visually hidden. Screenshot-reviewed 1024/768/
+  480px (menu + a Châu overworld at each width, no horizontal overflow
+  at any width) and a 390x844 mobile/touch run (joystick-drove the
+  player on Thổ Châu's overworld, confirmed movement). Also visually
+  reviewed a huyện-screen screenshot directly (not just asserted) —
+  this is what caught the `[hidden]` CSS bug above; the fix was
+  re-verified against the same screenshot set afterward. Zero
+  `pageerror` and zero unexpected `console.error` across all runs
+  (only the same pre-existing sandbox network-block noise for the Pi
+  SDK/fonts every prior session has hit).
+- **Not done / deliberately deferred**: no real per-khu-vực Huyện
+  content (C1-C5) — every Huyện in every Châu currently leads to the
+  same empty placeholder room; only Bạc Kim Trấn is meant to get real
+  content next, per the roadmap's C1-C5 ordering. No economy
+  (Linh Thạch/Điểm Danh Vọng) wiring yet — that starts at C4 per the
+  roadmap. `js/elementStats.js` still isn't read anywhere in this
+  engine — real player stats don't matter until real combat exists
+  (Phase C).
+- **Next session**: start Phase C1 — Bạc Kim Trấn's Khu đánh quái.
+  Replace that one Huyện's placeholder room (`buildHuyenPlaceholderMap()`
+  is currently shared/generic for all 15 Huyện — C1 should branch on
+  which Huyện was entered rather than continuing to always build the
+  same generic room) with 3-6 visible monster nodes wired to
+  game-wulin's existing combat screen, per this file's "Khu vực cơ chế"
+  spec. Decide during that session how `enterHuyen()` should route to
+  per-Huyện-specific map builders vs. staying on one generic builder
+  with content flags — the cleanest generalization isn't obvious yet
+  and shouldn't be guessed at speculatively before C1 needs it.
+- **Backup tag push**: attempted again this session (not skipped, in
+  case the standing gap had cleared) — same `403`/`RPC failed`/
+  `send-pack: unexpected disconnect` as every session since 2026-08-24.
+  Still a confirmed standing gap needing a broader GitHub App
+  permission grant only the human owner can make; used the pre-merge
+  `main` SHA as the rollback point instead (recorded in this session's
+  merge commit).
 
 ### 2026-08-31 (session 5) — Phase A4 done: interaction/transition triggers
 
