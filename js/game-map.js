@@ -1,11 +1,12 @@
 /* ============================================================
    Life Balance — game-map.js
-   Ngũ Hành Giang Hồ world map engine — Phase A1+A2+A3 (GAME_MAP_ROADMAP.md):
+   Ngũ Hành Giang Hồ world map engine — Phase A1+A2+A3+A4 (GAME_MAP_ROADMAP.md):
    tile-grid renderer, camera viewport following the player, keyboard
-   (arrow/WASD) movement, a virtual joystick for touch, and now a
-   blocked-tile collision layer, on one small placeholder test map.
-   No real Châu/Huyện content yet, no interaction triggers (A4) — this
-   file proves the engine itself works before any of that is layered on.
+   (arrow/WASD) movement, a virtual joystick for touch, a blocked-tile
+   collision layer, and now a walk-into-zone confirm prompt +
+   placeholder transition screen, on one small placeholder test map.
+   No real Châu/Huyện content yet — this file proves the engine itself
+   works before any of that is layered on (Phase B/C).
 
    Movement model: the player's logical position is always snapped to
    a grid cell (tx, ty) — per GAME_MAP_ROADMAP.md's "tile-grid based
@@ -65,6 +66,19 @@ function buildTestMap() {
   return tiles;
 }
 
+// Phase A4: one dummy trigger zone, just to prove the walk-in-and-
+// confirm mechanic before any real Châu/Huyện khu vực exist (Phase C
+// wires TRIGGER_ZONES up to real content with this same shape/flow).
+// Placed on an open grass tile, clear of WALL_TILES and the player's
+// spawn tile.
+const TRIGGER_ZONES = [
+  { id: 'dummy-cave', tx: 5, ty: 7, icon: '🕳️', label: 'Hang Động (thử nghiệm)', promptText: 'Nhấn để vào Hang Động' },
+];
+
+function findTriggerAt(tx, ty) {
+  return TRIGGER_ZONES.find((zone) => zone.tx === tx && zone.ty === ty) || null;
+}
+
 // ── 2. State ──────────────────────────────────────────────────
 
 const mapState = {
@@ -84,6 +98,12 @@ const mapState = {
   canvas: null,
   ctx: null,
   dpr: 1,
+  // Phase A4: 'none' (not on a trigger tile) -> 'prompt' (standing on
+  // one, confirm bar visible) -> 'transitioned' (placeholder sub-screen
+  // open, movement paused) -> 'cooldown' (sub-screen just closed, waits
+  // for the player to step off the tile before the prompt can re-fire,
+  // so closing the overlay doesn't instantly re-show the same prompt).
+  trigger: { zone: null, state: 'none' },
 };
 
 const MOVE_DURATION_MS = 140;
@@ -113,6 +133,10 @@ function isWalkable(tx, ty) {
 function tryStartMove(direction) {
   const player = mapState.player;
   if (player.moving) return;
+  // Phase A4: a placeholder transition screen is open — pause movement
+  // until the player closes it, same as any real sub-screen (combat,
+  // shop) will need to in Phase C.
+  if (mapState.trigger.state === 'transitioned') return;
 
   const delta = DIRECTIONS[direction];
   if (!delta) return;
@@ -215,6 +239,20 @@ function renderFrame() {
     }
   }
 
+  // Phase A4: trigger zone markers, drawn after tiles but before the
+  // player so a marker under the player stays visible until they step
+  // off it. Real per-khu-vực marker shapes (Phase C) will follow the
+  // same "loop TRIGGER_ZONES, skip if outside the visible range" pattern.
+  TRIGGER_ZONES.forEach((zone) => {
+    if (zone.tx < startCol || zone.tx > endCol || zone.ty < startRow || zone.ty > endRow) return;
+    const zx = zone.tx * TILE_SIZE - camera.x + TILE_SIZE / 2;
+    const zy = zone.ty * TILE_SIZE - camera.y + TILE_SIZE / 2;
+    ctx.font = `${Math.round(TILE_SIZE * 0.6)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(zone.icon, zx, zy);
+  });
+
   const player = mapState.player;
   const px = player.px - camera.x + TILE_SIZE / 2;
   const py = player.py - camera.y + TILE_SIZE / 2;
@@ -230,11 +268,102 @@ function updateHud() {
   if (hud) hud.textContent = `Ô: (${mapState.player.tx}, ${mapState.player.ty})`;
 }
 
+// ── 5b. Interaction / transition triggers (Phase A4) ───────────
+// Walking onto a marked zone tile shows a confirm prompt — never an
+// instant auto-transition, per GAME_MAP_ROADMAP.md's A4 spec, so a
+// player just passing through/near a zone can't trigger it by
+// accident. Confirming opens a placeholder "sub-screen" overlay (real
+// content — combat/shop/etc. — is Phase C's job; this only proves the
+// trigger mechanism itself).
+
+function showTriggerPrompt(zone) {
+  const promptEl = document.getElementById('map-trigger-prompt');
+  const textEl = document.getElementById('map-trigger-prompt-text');
+  if (!promptEl || !textEl) return;
+  textEl.textContent = `${zone.icon} ${zone.promptText}`;
+  promptEl.hidden = false;
+}
+
+function hideTriggerPrompt() {
+  const promptEl = document.getElementById('map-trigger-prompt');
+  if (promptEl) promptEl.hidden = true;
+}
+
+function showTriggerOverlay(zone) {
+  const overlay = document.getElementById('map-trigger-overlay');
+  const titleEl = document.getElementById('map-trigger-overlay-title');
+  if (!overlay || !titleEl) return;
+  titleEl.textContent = `${zone.icon} ${zone.label}`;
+  overlay.hidden = false;
+}
+
+function hideTriggerOverlay() {
+  const overlay = document.getElementById('map-trigger-overlay');
+  if (overlay) overlay.hidden = true;
+}
+
+function confirmActiveTrigger() {
+  const trig = mapState.trigger;
+  if (trig.state !== 'prompt' || !trig.zone) return;
+  hideTriggerPrompt();
+  showTriggerOverlay(trig.zone);
+  trig.state = 'transitioned';
+}
+
+function closeTriggerOverlay() {
+  if (mapState.trigger.state !== 'transitioned') return;
+  hideTriggerOverlay();
+  // Cooldown, not straight back to 'none': the player is still
+  // standing on the trigger tile, so without this the prompt would
+  // reappear the instant the overlay closes. They have to step off and
+  // back on to re-open it.
+  mapState.trigger.state = 'cooldown';
+  mapState.trigger.zone = null;
+}
+
+function updateTriggerZone() {
+  const trig = mapState.trigger;
+  if (trig.state === 'transitioned') return;
+
+  const zoneHere = findTriggerAt(mapState.player.tx, mapState.player.ty);
+
+  if (trig.state === 'cooldown') {
+    if (!zoneHere) trig.state = 'none';
+    return;
+  }
+
+  if (zoneHere && trig.state !== 'prompt') {
+    trig.zone = zoneHere;
+    trig.state = 'prompt';
+    showTriggerPrompt(zoneHere);
+  } else if (!zoneHere && trig.state === 'prompt') {
+    trig.zone = null;
+    trig.state = 'none';
+    hideTriggerPrompt();
+  }
+}
+
+function initTriggerUi() {
+  document.getElementById('map-trigger-confirm-btn')?.addEventListener('click', confirmActiveTrigger);
+  document.getElementById('map-trigger-overlay-close')?.addEventListener('click', closeTriggerOverlay);
+  document.getElementById('map-trigger-overlay-back-btn')?.addEventListener('click', closeTriggerOverlay);
+
+  window.addEventListener('keydown', (e) => {
+    if (mapState.trigger.state === 'prompt' && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      confirmActiveTrigger();
+    } else if (mapState.trigger.state === 'transitioned' && e.key === 'Escape') {
+      closeTriggerOverlay();
+    }
+  });
+}
+
 // ── 6. Game loop ──────────────────────────────────────────────
 
 function gameLoop(now) {
   updateMovement(now);
   if (!mapState.player.moving) processHeldMovement();
+  updateTriggerZone();
   updateCamera();
   renderFrame();
   updateHud();
@@ -401,6 +530,7 @@ function initGameMap() {
   window.addEventListener('resize', resizeCanvas);
 
   initMapInput();
+  initTriggerUi();
   requestAnimationFrame(gameLoop);
 }
 
