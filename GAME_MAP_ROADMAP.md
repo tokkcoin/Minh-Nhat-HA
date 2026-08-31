@@ -378,9 +378,10 @@ consistent with this repo's existing Vietnamese wuxia flavor)
   `RPC failed`/`send-pack: unexpected disconnect` as every session
   since 2026-08-24, now a full week+ of consecutive failures on
   tag-ref pushes specifically (branch/content pushes are unaffected).
-  Used the pre-merge `main` SHA as the rollback point instead, per the
-  standing "confirmed gap, needs a broader GitHub App permission grant
-  only the human owner can make" note from prior sessions.
+  Used the pre-merge `main` SHA as the rollback point instead:
+  `665216befcb042dcd6b2a40f6e281036973171eb`. Per the standing note
+  from prior sessions, this is a confirmed gap needing a broader
+  GitHub App permission grant only the human owner can make.
 
 ### 2026-08-31 (session 6) — Phase B done: world navigation shell
 
