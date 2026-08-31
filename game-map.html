@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>World Map — Life Balance</title>
-  <meta name="description" content="Ngũ Hành Giang Hồ world map (GAME_MAP_ROADMAP.md Phase B) — chọn Châu, đi bộ giữa các Huyện; nội dung khu vực thật (Phase C) chưa có." />
+  <meta name="description" content="Ngũ Hành Giang Hồ world map (GAME_MAP_ROADMAP.md Phase C1) — chọn Châu, đi bộ giữa các Huyện; Bạc Kim Trấn có Khu đánh quái thật, các Huyện khác vẫn là chỗ trống." />
   <meta name="robots" content="noindex" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23e6c15c'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Inter,sans-serif' font-weight='800' font-size='16' fill='white'>LB</text></svg>" />
   <link rel="stylesheet" href="css/style.css?v=53" />
-  <link rel="stylesheet" href="css/game-map.css?v=5" />
+  <link rel="stylesheet" href="css/game-map.css?v=6" />
 </head>
 <body>
 
@@ -32,7 +32,7 @@
   <main class="map-page" role="main">
     <h2 class="page-title">Bản Đồ Thế Giới</h2>
     <p class="map-page__note">
-      Ngũ Hành Giang Hồ (xem <code>GAME_MAP_ROADMAP.md</code> Phase B) — chọn một Châu, đi bộ tới các Huyện trong Châu đó. Nội dung khu vực thật của mỗi Huyện (đánh quái/hang động/tháp/khu dân cư/khu luyện công) sẽ được xây dần ở Phase C/D — bản đồ Huyện hiện tại chỉ là chỗ trống để chứng minh việc chuyển màn hình hoạt động.
+      Ngũ Hành Giang Hồ (xem <code>GAME_MAP_ROADMAP.md</code> Phase C1) — chọn một Châu, đi bộ tới các Huyện trong Châu đó. Bạc Kim Trấn (Kim Châu) đã có Khu đánh quái thật — đi tới một quái vật để giao đấu. Các khu vực còn lại của mỗi Huyện (hang động/tháp/khu dân cư/khu luyện công) và 14 Huyện khác sẽ được xây dần ở các phiên sau.
     </p>
 
     <div id="map-chau-menu" class="map-chau-menu" aria-label="Chọn Châu"></div>
@@ -44,6 +44,9 @@
       </div>
 
       <div class="map-canvas-wrap">
+        <div id="map-huyen-banner" class="map-huyen-banner" hidden>
+          <span id="map-huyen-banner-text"></span>
+        </div>
         <div class="map-canvas-inner">
           <canvas id="map-canvas" role="img" aria-label="Bản đồ — dùng phím mũi tên, WASD, hoặc cần điều khiển ảo để di chuyển nhân vật"></canvas>
           <div id="map-joystick" class="map-joystick" aria-hidden="true">
@@ -53,12 +56,10 @@
             <span id="map-trigger-prompt-text"></span>
             <button type="button" id="map-trigger-confirm-btn" class="btn btn-primary map-trigger-prompt__btn">Vào</button>
           </div>
-          <div id="map-huyen-banner" class="map-trigger-prompt map-huyen-banner" hidden>
-            <span id="map-huyen-banner-text"></span>
-          </div>
         </div>
         <div class="map-hud">
           <span id="map-hud-pos">Ô: (0, 0)</span>
+          <span id="map-hud-currency">💠 0</span>
         </div>
         <div class="map-controls-hint">
           <span><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> hoặc <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> để di chuyển, hoặc dùng cần điều khiển ảo trên di động</span>
@@ -72,8 +73,9 @@
   </footer>
 
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-  <script src="js/common.js?v=10"></script>
+  <script src="js/common.js?v=11"></script>
   <script src="js/canvasUtils.js?v=1"></script>
-  <script src="js/game-map.js?v=5"></script>
+  <script src="data/wulinMonsters.js?v=1"></script>
+  <script src="js/game-map.js?v=6"></script>
 </body>
 </html>

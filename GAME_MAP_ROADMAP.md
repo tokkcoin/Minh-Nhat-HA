@@ -172,10 +172,7 @@ game-artillery.js already established:
       screen/state. Test with one dummy trigger first. Done
       2026-08-31 — see log.
 - [x] **B — World navigation shell.** Done 2026-08-31 — see log.
-- [ ] **C1 — Bạc Kim Trấn: Khu đánh quái.** First real Huyện map
-      (Kim Châu's first Huyện, bronze/silver tier per the difficulty
-      table above), populated with 3-6 monster nodes per the mechanics
-      spec above, wired to real combat.
+- [x] **C1 — Bạc Kim Trấn: Khu đánh quái.** Done 2026-08-31 — see log.
 - [ ] **C2 — Bạc Kim Trấn: Hang động.** Instanced sub-map + named
       mini-boss + once-per-day clear limit + Linh Thạch/cosmetic reward.
 - [ ] **C3 — Bạc Kim Trấn: Tháp.** Floor-climb loop, best-floor
@@ -223,6 +220,167 @@ consistent with this repo's existing Vietnamese wuxia flavor)
   Vạn Lý Bình Nguyên
 
 ## Log
+
+### 2026-08-31 (session 7) — Phase C1 done: Bạc Kim Trấn's Khu đánh quái, wired to real combat + real Linh Thạch
+
+- **Verified ground truth before starting**: read all of Phase B's actual
+  `js/game-map.js`/`game-map.html`/`css/game-map.css`/`js/game-wulin.js`
+  (not just the log) — confirmed `enterHuyen(zone)` and
+  `buildHuyenPlaceholderMap()` were exactly as documented, and that
+  `game-wulin.html`'s combat is a full separate page (own DOM, own
+  `WULIN_MONSTERS` roster, own `startCombat()`/`endCombat()`), not
+  anything game-map.js could call in-process.
+- **This is a static multi-page app, so "walk into a monster" is a real
+  page navigation, not a same-runtime function call.** Designed the
+  handoff as: `game-map.js`'s `engageMonsterNode(zone)` saves
+  `{chauKey, huyenIndex}` to `localStorage` (`lifebalance_map_return_ctx`,
+  since the URL round-trip only needs to carry the node id + result) and
+  navigates to `game-wulin.html?mapMonster=<id>&mapNode=<nodeId>`;
+  `game-wulin.js`'s `initWulinGame()` detects those params
+  (`parseWulinMapContext()`), skips the monster-select screen, and
+  jumps straight into `startCombat()`; the result overlay's "Chọn quái
+  khác" button relabels to "↩ Quay lại bản đồ" and navigates back to
+  `game-map.html?resumeNode=<id>&resumeResult=win|lose`;
+  `tryResumeFromCombat()` there reads the saved context, reopens the
+  exact Huyện (not just the Chau menu), applies a respawn cooldown only
+  on a win, and strips the query string via `history.replaceState` so a
+  refresh doesn't replay it. Retreating mid-fight round-trips the same
+  way with no `resumeResult`, so the node stays up — confirmed this
+  isn't a discarded edge case, it's real (see the "found a wrong test
+  assumption" note below).
+- **Data dedup, not scope creep**: `WULIN_MONSTERS` moved out of
+  `js/game-wulin.js` into `data/wulinMonsters.js`
+  (`window.WULIN_MONSTERS_DATA`), the project's existing script-loaded
+  data-file convention (tech-defaults.md), so a map monster node can
+  read the real icon/name/reward without loading game-wulin.js's whole
+  combat-screen script (which assumes combat DOM elements exist that
+  game-map.html doesn't have). `game-wulin.js` now just does
+  `const WULIN_MONSTERS = window.WULIN_MONSTERS_DATA || [];` — same
+  array, same values, zero behavior change to the standalone monster-
+  select flow.
+- **`buildBacKimTranMap(chau)`** (`js/game-map.js` §3): a 16x11 walled
+  local map for Bạc Kim Trấn only — every other Huyện still routes
+  through the Phase B placeholder via a new `buildHuyenMap(chauKey,
+  huyenIndex)` dispatcher (the single place C2-D14 will extend). 4
+  monster nodes (`BAC_KIM_TRAN_MOB_PLACEMENTS`, within the roadmap's
+  3-6 range) using `game-wulin.html`'s real Dễ/Trung bình monsters
+  (2x Hồ Ly Sương Sớm, 1x Quỷ Ảnh Cốc Sâu, 1x Xà Tinh Vạn Niên) to
+  actually match this Huyện's Sơ cấp/Rèn luyện tier. Deliberately no
+  interior wall clusters on this map (unlike the Châu overworld) — a
+  fixed wall layout risked landing on a fixed monster tile and making
+  that node permanently unreachable; simpler to skip it for this first
+  real content map than add collision math to verify against.
+- **Trigger zones now carry `kind`** (`'huyen'` | `'monster'`) so
+  `confirmActiveTrigger()` can branch — Huyện markers still call
+  `enterHuyen()`, monster nodes call the new `engageMonsterNode()`.
+  Refactored `enterHuyen(zone)` into a thin wrapper over a new
+  `openHuyen(chauKey, huyenIndex)` core, since `tryResumeFromCombat()`
+  needs to reopen a specific Huyện from saved ids, not a live zone
+  object.
+- **Linh Thạch — the roadmap's common currency — is real now, not just
+  named.** Added `getLinhThach()`/`addLinhThach()` to `js/common.js`
+  (a single `localStorage` running total, deliberately NOT routed
+  through `elementStats.js` — this is the map's own economy layer, per
+  the roadmap's "Economy & progression" section, not real Five
+  Elements data). `game-wulin.js`'s `endCombat('win')` credits it via
+  `addLinhThach(monster.reward)` **only** when the fight was launched
+  from a map node — reused the monster's existing `reward` number
+  (already shown as flavor-only "Nội lực +N" for the standalone
+  monster-select flow) as the "small amount" the roadmap calls for,
+  instead of inventing a second reward table. The standalone flow is
+  completely unchanged — still flavor-only, same as every prior
+  session. `game-map.html` gained a small `💠 <n>` HUD readout next to
+  the tile-position HUD.
+- **Deliberately NOT built this session** (documented, not silently
+  dropped): the "small chance of a temporary buff item" half of Khu
+  đánh quái's reward spec — there's no consumable/buff-item system
+  anywhere in the app yet, and building one now would be leapfrogging
+  into C5's (Khu luyện công) territory before it's needed. Also not
+  built: Bạc Kim Trấn's other 4 khu vực (hang động/tháp/khu dân
+  cư/khu luyện công) — this Huyện's map only has monster nodes right
+  now; C2-C5 add the rest one at a time, same one-khu-vực-per-session
+  discipline as every prior phase split.
+- **Two real bugs found via Playwright, not by inspection** — both
+  because Phase B's own tests happened to exercise a Huyện screen that
+  had zero trigger zones, so neither collision was reachable until a
+  real one existed:
+  1. `.map-huyen-banner` (the persistent "this Huyện's info" bar) and
+     `.map-trigger-prompt` (the walk-into-a-node confirm bar) shared
+     one absolute top-center spot in `.map-canvas-inner`. On a Huyện
+     with real trigger zones both are visible at once, and the banner
+     sat on top of — and silently ate clicks on — the confirm button.
+     First fix attempt (move the banner to the bottom) traded that
+     collision for a second one: at narrow/mobile widths the banner
+     now overlapped the joystick, which lives in that same bottom-left
+     corner. Real fix: took `.map-huyen-banner` out of the absolute-
+     positioned overlay entirely — it's static per-Huyện info text, not
+     a positioned gameplay element, so it never actually needed to be
+     an overlay. It's a plain block in normal document flow above the
+     canvas now (`game-map.html`/`css/game-map.css` v6). Screenshot-
+     verified clean at 1024/768/480px and a 390×844 mobile/touch
+     viewport after the fix.
+  2. My own test script asserted retreating mid-fight should land back
+     on the Châu menu — that assertion was simply wrong, not the app:
+     `wulinState.mapNodeId` is set for the whole session once a fight
+     starts from the map (so "Đấu tiếp" rematches still count as
+     map-launched), so a retreat's `returnToMap(null)` still carries
+     `resumeNode` (just no `resumeResult`), and
+     `tryResumeFromCombat()` correctly reopens the exact same Huyện
+     with no cooldown applied — better UX than dumping the player back
+     at the menu mid-session. Fixed the test's expectation, not the
+     code, once I re-read what the code was actually supposed to do.
+- **Tested via two scratch Playwright scripts** (`node test-c1.js` /
+  `test-c1b.js` in the OS scratch dir, same convention as every prior
+  phase): full happy path — menu → Kim Châu → walk to Bạc Kim Trấn →
+  confirm → correct banner/4 monster zones present → walk to a monster
+  node → confirm prompt shows the right name → navigates to
+  `game-wulin.html` with the right `mapMonster` → combat auto-starts
+  (select screen skipped) → result-select button relabeled → forced a
+  deterministic win (set `monster.hp = 1`, one attack) → reward text
+  and `localStorage` both show the correct Linh Thạch credit (verified
+  the exact number, 20 for Hồ Ly Sương Sớm, not just "some number") →
+  "↩ Quay lại bản đồ" navigates to `game-map.html?resumeNode=...` →
+  resumes directly into Bạc Kim Trấn (not the menu) → query string
+  stripped → node correctly on cooldown in `localStorage` → currency
+  HUD shows 20 → walking back onto the cooling-down node shows no
+  prompt (regression-proof `findTriggerAt` cooldown gate, not just a
+  render-only dim). Regression checks in the same run: a different
+  Huyện (Hoàng Kim Cốc) still shows the generic 🚧 placeholder banner
+  with zero monster zones (dispatcher routes correctly); border-wall
+  collision on the new Bạc Kim Trấn map still rejects movement from the
+  interior corner. Second script covers the retreat/no-cooldown path
+  end to end (see bug #2 above) — confirmed zero Linh Thạch on retreat
+  and the node still engageable afterward. Screenshot-reviewed
+  1024/768/480px (no horizontal overflow at any width, verified via
+  `scrollWidth`/`clientWidth`) plus a 390×844 mobile/touch run
+  (joystick-drove the player around the new map, screenshot-confirmed
+  no banner/joystick overlap after the CSS fix). Zero `pageerror` and
+  zero unexpected `console.error` across every run (only the same
+  pre-existing sandbox network-block noise for the Pi SDK every prior
+  session has hit).
+- **Not done / deliberately deferred**: C2-C5 (Bạc Kim Trấn's other 4
+  khu vực), the buff-item chance on a đánh quái win (see above), and
+  Điểm Danh Vọng (only Tháp/C3 earns it, per the roadmap). D1+ (the
+  other 14 Huyện) untouched.
+- **Next session**: start Phase C2 — Bạc Kim Trấn's Hang động (one
+  instanced sub-map, a named mini-boss, once-per-real-day clear limit
+  via a `localStorage` last-clear timestamp same pattern as
+  `js/dailyTasks.js`, larger Linh Thạch + a chance at a cosmetic weapon
+  skin reward per the roadmap's mechanics spec). Decide during that
+  session whether the sub-map is a genuinely separate map object
+  (loaded via the same `loadMap()`/screen-swap mechanism C1 already
+  proved works for arbitrary map shapes) or something lighter — the
+  roadmap explicitly says "can be a smaller, separately-loaded tile
+  grid, not a literal door into the same overworld," so leaning toward
+  reusing `loadMap()` with a 4th screen state unless that turns out
+  awkward once actually building it.
+- **Backup tag push**: attempted again this session — same `403`/
+  `RPC failed`/`send-pack: unexpected disconnect` as every session
+  since 2026-08-24, now a full week+ of consecutive failures on
+  tag-ref pushes specifically (branch/content pushes are unaffected).
+  Used the pre-merge `main` SHA as the rollback point instead, per the
+  standing "confirmed gap, needs a broader GitHub App permission grant
+  only the human owner can make" note from prior sessions.
 
 ### 2026-08-31 (session 6) — Phase B done: world navigation shell
 

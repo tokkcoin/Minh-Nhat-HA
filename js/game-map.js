@@ -20,6 +20,19 @@
    code works for the Châu overworld maps AND the Huyện placeholder
    maps (different sizes, different tile palettes).
 
+   Phase C1 (this version): Bạc Kim Trấn (Kim Châu's 1st Huyện) gets a
+   real local map — 4 visible monster nodes ("Khu đánh quái") that walk
+   into game-wulin.html's real combat screen via a URL handoff (no
+   iframe/shared-state trick, this is a static multi-page app). Every
+   other Huyện still opens the Phase B empty placeholder room; C2-C5
+   fill in Bạc Kim Trấn's other 4 khu vực (hang động/tháp/khu dân cư/
+   khu luyện công) in later sessions, and D1+ repeats this template for
+   the other 14 Huyện. Trigger zones now carry a `kind` ('huyen' |
+   'monster') so confirmActiveTrigger() can branch; monster nodes read
+   their icon/name/reward from data/wulinMonsters.js
+   (window.WULIN_MONSTERS_DATA), the same data game-wulin.js's combat
+   screen uses, instead of duplicating monster flavor text here.
+
    Loaded as a plain global, same convention as every other page
    script in this project (no bundler, no ES modules).
    ============================================================ */
@@ -182,10 +195,11 @@ function buildChauMap(chau) {
     id: `huyen-${chau.key}-${i}`,
     tx: markers[i].x,
     ty: markers[i].y,
+    kind: 'huyen',
     icon: '🏯',
     label: huyen.name,
     promptText: `Nhấn để vào ${huyen.name}`,
-    meta: { tier: huyen.tier, chauName: chau.name },
+    meta: { tier: huyen.tier, chauName: chau.name, huyenIndex: i },
   }));
 
   return {
@@ -228,8 +242,110 @@ function buildHuyenPlaceholderMap() {
   };
 }
 
+// Bạc Kim Trấn (Kim Châu's 1st Huyện, Sơ cấp · Rèn luyện tier) — Phase
+// C1's real Khu đánh quái content, replacing the generic placeholder
+// room for this one Huyện only. 4 wild-field monster nodes (within the
+// 3-6 range GAME_MAP_ROADMAP.md's mechanics spec calls for), reusing
+// game-wulin.html's real Dễ/Trung bình monsters so the difficulty
+// actually matches this Huyện's tier. No interior wall clusters this
+// map (unlike the Châu overworld) — a fixed layout risked landing a
+// wall on top of a fixed monster-node tile, which would make that node
+// permanently unreachable; simpler to leave the border walls as the
+// only obstacles for this first real content map.
+const BAC_KIM_TRAN_MOB_PLACEMENTS = [
+  { monsterId: 'fox-mist', tx: 4, ty: 3 },
+  { monsterId: 'fox-mist', tx: 11, ty: 4 },
+  { monsterId: 'wraith-valley', tx: 6, ty: 8 },
+  { monsterId: 'serpent-ancient', tx: 13, ty: 7 },
+];
+
+function buildBacKimTranMap(chau) {
+  const cols = 16;
+  const rows = 11;
+  const tiles = [];
+  for (let y = 0; y < rows; y++) {
+    const row = [];
+    for (let x = 0; x < cols; x++) {
+      const border = x === 0 || y === 0 || x === cols - 1 || y === rows - 1;
+      row.push(border ? 2 : 0);
+    }
+    tiles.push(row);
+  }
+  scatterFeaturePatches(tiles, cols, rows);
+
+  const monsterData = window.WULIN_MONSTERS_DATA || [];
+  const triggerZones = BAC_KIM_TRAN_MOB_PLACEMENTS.map((mob, i) => {
+    const def = monsterData.find((m) => m.id === mob.monsterId);
+    return {
+      id: `bac-kim-tran-mob-${i}`,
+      tx: mob.tx,
+      ty: mob.ty,
+      kind: 'monster',
+      monsterId: mob.monsterId,
+      icon: def ? def.icon : '👹',
+      label: def ? def.name : 'Quái vật',
+      promptText: `Giao đấu với ${def ? def.name : 'quái vật'}?`,
+    };
+  });
+
+  return {
+    cols,
+    rows,
+    tiles,
+    tileTypes: buildTileTypesForChau(chau),
+    triggerZones,
+    spawn: { tx: Math.floor(cols / 2), ty: rows - 2 },
+  };
+}
+
+// Dispatches to a Huyện's real map when one exists, otherwise the
+// Phase B placeholder — the single place that needs editing as C2-D14
+// add more real Huyện content, per the A4 log's "next session" note on
+// how enterHuyen() should route to per-Huyện builders.
+function buildHuyenMap(chauKey, huyenIndex) {
+  if (chauKey === 'metal' && huyenIndex === 0) {
+    const chau = CHAU_LIST.find((c) => c.key === chauKey);
+    if (chau) return buildBacKimTranMap(chau);
+  }
+  return buildHuyenPlaceholderMap();
+}
+
 function findTriggerAt(tx, ty) {
-  return mapState.triggerZones.find((zone) => zone.tx === tx && zone.ty === ty) || null;
+  const zone = mapState.triggerZones.find((z) => z.tx === tx && z.ty === ty);
+  if (!zone) return null;
+  // A monster node on respawn cooldown isn't interactable — it just
+  // sits there (dimmed, see renderFrame) until it's back up.
+  if (zone.kind === 'monster' && isNodeOnCooldown(zone.id)) return null;
+  return zone;
+}
+
+// ── Monster node respawn (Phase C1) ──────────────────────────
+// Persisted in localStorage rather than mapState: engaging a node
+// navigates away to game-wulin.html for the actual fight, and coming
+// back is a full page (re)load of this script — an in-memory-only
+// cooldown would be wiped by the very navigation it's supposed to
+// survive. "Short delay" per the roadmap's mechanics spec, not meant
+// to be a long-lived record like dailyTasks.js's daily-clear timestamps.
+const MONSTER_NODE_COOLDOWN_KEY = 'lifebalance_map_monster_cooldowns';
+const MONSTER_RESPAWN_MS = 60 * 1000;
+
+function loadMonsterCooldowns() {
+  try {
+    return JSON.parse(localStorage.getItem(MONSTER_NODE_COOLDOWN_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function isNodeOnCooldown(nodeId) {
+  const until = loadMonsterCooldowns()[nodeId];
+  return typeof until === 'number' && until > Date.now();
+}
+
+function setNodeCooldown(nodeId) {
+  const cooldowns = loadMonsterCooldowns();
+  cooldowns[nodeId] = Date.now() + MONSTER_RESPAWN_MS;
+  safeSetItem(MONSTER_NODE_COOLDOWN_KEY, JSON.stringify(cooldowns));
 }
 
 // ── 4. State ──────────────────────────────────────────────────
@@ -398,7 +514,9 @@ function renderFrame() {
   }
 
   // Trigger zone markers, drawn after tiles but before the player so a
-  // marker under the player stays visible until they step off it.
+  // marker under the player stays visible until they step off it. A
+  // monster node on respawn cooldown is drawn faded so its state reads
+  // at a glance instead of just silently refusing to prompt.
   mapState.triggerZones.forEach((zone) => {
     if (zone.tx < startCol || zone.tx > endCol || zone.ty < startRow || zone.ty > endRow) return;
     const zx = zone.tx * TILE_SIZE - camera.x + TILE_SIZE / 2;
@@ -406,7 +524,9 @@ function renderFrame() {
     ctx.font = `${Math.round(TILE_SIZE * 0.6)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    ctx.globalAlpha = (zone.kind === 'monster' && isNodeOnCooldown(zone.id)) ? 0.3 : 1;
     ctx.fillText(zone.icon, zx, zy);
+    ctx.globalAlpha = 1;
   });
 
   const player = mapState.player;
@@ -422,6 +542,8 @@ function renderFrame() {
 function updateHud() {
   const hud = document.getElementById('map-hud-pos');
   if (hud) hud.textContent = `Ô: (${mapState.player.tx}, ${mapState.player.ty})`;
+  const currencyEl = document.getElementById('map-hud-currency');
+  if (currencyEl) currencyEl.textContent = `💠 ${typeof getLinhThach === 'function' ? getLinhThach() : 0}`;
 }
 
 // ── 8. Interaction / transition triggers ────────────────────────
@@ -449,7 +571,29 @@ function confirmActiveTrigger() {
   const trig = mapState.trigger;
   if (trig.state !== 'prompt' || !trig.zone) return;
   hideTriggerPrompt();
-  enterHuyen(trig.zone);
+  if (trig.zone.kind === 'monster') {
+    engageMonsterNode(trig.zone);
+  } else {
+    enterHuyen(trig.zone);
+  }
+}
+
+// ── Map <-> combat handoff (Phase C1) ────────────────────────
+// This is a static multi-page app (no shared JS runtime between
+// game-map.html and game-wulin.html), so "walk into a monster" has to
+// be a real page navigation. The Châu/Huyện to come back to is saved
+// here since the URL round-trip only carries the node id + win/lose
+// result (see tryResumeFromCombat()); cleared as soon as it's read on
+// return so a stray reload of game-map.html doesn't replay it.
+const MAP_RETURN_CONTEXT_KEY = 'lifebalance_map_return_ctx';
+
+function engageMonsterNode(zone) {
+  const ctx = {
+    chauKey: mapState.currentChauKey,
+    huyenIndex: mapState.currentHuyenMeta ? mapState.currentHuyenMeta.huyenIndex : null,
+  };
+  safeSetItem(MAP_RETURN_CONTEXT_KEY, JSON.stringify(ctx));
+  window.location.href = `game-wulin.html?mapMonster=${encodeURIComponent(zone.monsterId)}&mapNode=${encodeURIComponent(zone.id)}`;
 }
 
 function updateTriggerZone() {
@@ -548,7 +692,9 @@ function updateHuyenBanner() {
   const textEl = document.getElementById('map-huyen-banner-text');
   if (!textEl || !mapState.currentHuyenMeta) return;
   const meta = mapState.currentHuyenMeta;
-  textEl.textContent = `🚧 ${meta.name} · ${meta.tier} — nội dung khu vực thật (đánh quái / hang động / tháp / khu dân cư / khu luyện công) sẽ được xây ở Phase C.`;
+  textEl.textContent = meta.hasRealContent
+    ? `⚔️ ${meta.name} · ${meta.tier} — Khu đánh quái: đi tới một quái vật và xác nhận để giao đấu. Hang động / Tháp / Khu dân cư / Khu luyện công của Huyện này sẽ được xây ở các phiên sau.`
+    : `🚧 ${meta.name} · ${meta.tier} — nội dung khu vực thật (đánh quái / hang động / tháp / khu dân cư / khu luyện công) sẽ được xây ở Phase C.`;
 }
 
 function enterChau(key) {
@@ -560,11 +706,29 @@ function enterChau(key) {
   updateNavHeader();
 }
 
-function enterHuyen(zone) {
-  mapState.currentHuyenMeta = { name: zone.label, tier: zone.meta.tier, chauName: zone.meta.chauName };
-  loadMap(buildHuyenPlaceholderMap(), 'huyen');
+// Single core for both "walked into a Huyện marker" (enterHuyen) and
+// "came back from combat, reopen where the player left off"
+// (tryResumeFromCombat) — both know a chauKey + huyenIndex, neither
+// needs a full triggerZone object.
+function openHuyen(chauKey, huyenIndex) {
+  const chau = CHAU_LIST.find((c) => c.key === chauKey);
+  const huyen = chau && chau.huyen[huyenIndex];
+  if (!chau || !huyen) return;
+  mapState.currentChauKey = chauKey;
+  mapState.currentHuyenMeta = {
+    name: huyen.name,
+    tier: huyen.tier,
+    chauName: chau.name,
+    huyenIndex,
+    hasRealContent: chauKey === 'metal' && huyenIndex === 0,
+  };
+  loadMap(buildHuyenMap(chauKey, huyenIndex), 'huyen');
   updateNavHeader();
   updateHuyenBanner();
+}
+
+function enterHuyen(zone) {
+  openHuyen(mapState.currentChauKey, zone.meta.huyenIndex);
 }
 
 function exitToChau() {
@@ -786,9 +950,42 @@ function initGameMap() {
   initMapInput();
   initTriggerUi();
   renderChauMenu();
-  showMapScreen('menu');
+
+  if (!tryResumeFromCombat()) showMapScreen('menu');
 
   requestAnimationFrame(gameLoop);
+}
+
+// Handles landing back here from game-wulin.html's "↩ Quay lại bản đồ"
+// button (?resumeNode=<id>&resumeResult=win|lose). Applies the node's
+// respawn cooldown on a win (a lose/retreat leaves it up so the player
+// can immediately try again), reopens the exact Huyện they left from
+// (saved in engageMonsterNode() before navigating away), and strips
+// the query string so a page refresh doesn't replay the same cooldown/
+// toast a second time. Returns false (do nothing further) when there's
+// no resume to handle, so initGameMap() falls back to the normal menu.
+function tryResumeFromCombat() {
+  const params = new URLSearchParams(window.location.search);
+  const resumeNode = params.get('resumeNode');
+  if (!resumeNode) return false;
+  const resumeResult = params.get('resumeResult');
+
+  if (resumeResult === 'win') setNodeCooldown(resumeNode);
+
+  let pendingCtx = null;
+  try {
+    pendingCtx = JSON.parse(localStorage.getItem(MAP_RETURN_CONTEXT_KEY));
+  } catch {
+    pendingCtx = null;
+  }
+  localStorage.removeItem(MAP_RETURN_CONTEXT_KEY);
+  window.history.replaceState({}, '', window.location.pathname);
+
+  if (!pendingCtx || !pendingCtx.chauKey || pendingCtx.huyenIndex == null) return false;
+
+  openHuyen(pendingCtx.chauKey, pendingCtx.huyenIndex);
+  if (resumeResult === 'win') showToast('💠 Đã nhận Linh Thạch! Quái vật cần thời gian để hồi phục.');
+  return true;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
