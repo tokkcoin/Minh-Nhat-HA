@@ -23,6 +23,18 @@
    just the chosen skill's id) — read-only against the skills array
    itself, same "never invent a parallel data model" rule as the rest
    of this file.
+
+   2026-08-31 (GAME_MAP_ROADMAP.md Phase C1): the monster roster moved
+   out to data/wulinMonsters.js (window.WULIN_MONSTERS_DATA) so
+   js/game-map.js's Khu đánh quái nodes can read the same icon/name/
+   reward data without loading this whole combat-screen script. This
+   file can also now be entered mid-combat from the map: a
+   ?mapMonster=<id>&mapNode=<nodeId> URL launches straight into
+   startCombat() against that monster (see "Map entry" in §11), and a
+   win credits real Linh Thạch via common.js's addLinhThach() — the
+   existing "Nội lực" reward text elsewhere in this file is still pure
+   flavor, unchanged, only the map-launched path also touches the real
+   currency.
    ============================================================ */
 
 'use strict';
@@ -139,34 +151,10 @@ function computeWulinStats() {
 }
 
 // ── 3. Monster roster — original names/flavor, no real IP references ──
+// Lives in data/wulinMonsters.js now (window.WULIN_MONSTERS_DATA) so
+// js/game-map.js can read it too, per the 2026-08-31 header note above.
 
-const WULIN_MONSTERS = [
-  {
-    id: 'fox-mist', icon: '🦊', name: 'Hồ Ly Sương Sớm', tier: 'Dễ',
-    hp: 70, attack: 9, defense: 4, skillName: 'Miên Sương Trảo', skillMult: 1.4,
-    skillChance: .25, reward: 20,
-  },
-  {
-    id: 'wraith-valley', icon: '👻', name: 'Quỷ Ảnh Cốc Sâu', tier: 'Trung bình',
-    hp: 110, attack: 13, defense: 9, skillName: 'Ám Ảnh Trảm', skillMult: 1.5,
-    skillChance: .3, reward: 35,
-  },
-  {
-    id: 'serpent-ancient', icon: '🐍', name: 'Xà Tinh Vạn Niên', tier: 'Trung bình',
-    hp: 95, attack: 16, defense: 6, skillName: 'Độc Nha Phệ', skillMult: 1.6,
-    skillChance: .3, reward: 35,
-  },
-  {
-    id: 'demon-general', icon: '🛡️', name: 'Ma Tướng Thiết Giáp', tier: 'Khó',
-    hp: 150, attack: 17, defense: 16, skillName: 'Cuồng Phong Trảm', skillMult: 1.5,
-    skillChance: .32, reward: 55,
-  },
-  {
-    id: 'dragonling-hidden', icon: '🐉', name: 'Hắc Long Ẩn Thế', tier: 'Khó',
-    hp: 170, attack: 20, defense: 12, skillName: 'Long Diễm Khí', skillMult: 1.7,
-    skillChance: .35, reward: 65,
-  },
-];
+const WULIN_MONSTERS = window.WULIN_MONSTERS_DATA || [];
 
 // ── 4. Combat state + math ──
 
@@ -176,7 +164,39 @@ const wulinState = {
   playerStats: null,
   inCombat: false,
   actionLocked: false,
+  // Set when this page was opened from a map monster node (Phase C1) —
+  // see parseWulinMapContext()/§11. Non-null for the whole session once
+  // set, so "Đấu tiếp" (re-fight the same monster without returning to
+  // the map first) still counts as launched-from-map on every rematch.
+  mapNodeId: null,
+  lastResult: null,
 };
+
+// ── Map entry (GAME_MAP_ROADMAP.md Phase C1) ──────────────────
+// game-map.js's Khu đánh quái nodes navigate here with
+// ?mapMonster=<id>&mapNode=<nodeId> instead of opening the monster-
+// select grid. Returns null (normal standalone flow) if either param
+// is missing or the id doesn't match a real monster.
+function parseWulinMapContext() {
+  const params = new URLSearchParams(window.location.search);
+  const monsterId = params.get('mapMonster');
+  const nodeId = params.get('mapNode');
+  if (!monsterId || !nodeId) return null;
+  if (!WULIN_MONSTERS.some(m => m.id === monsterId)) return null;
+  return { monsterId, nodeId };
+}
+
+// Navigates back to the map, optionally telling it which node to put
+// on respawn cooldown (only meaningful on a win — see game-map.js's
+// tryResumeFromCombat()). No-op-safe: if mapNodeId somehow isn't set,
+// still just goes to the map with no query params.
+function returnToMap(result) {
+  const params = new URLSearchParams();
+  if (wulinState.mapNodeId) params.set('resumeNode', wulinState.mapNodeId);
+  if (result) params.set('resumeResult', result);
+  const qs = params.toString();
+  window.location.href = qs ? `game-map.html?${qs}` : 'game-map.html';
+}
 
 function wulinRandRange(min, max) {
   return min + Math.random() * (max - min);
@@ -498,6 +518,7 @@ function resolveMonsterTurn() {
 function endCombat(result) {
   wulinState.inCombat = false;
   wulinState.actionLocked = true;
+  wulinState.lastResult = result;
   updateActionButtons();
 
   const overlay = document.getElementById('wulin-result-overlay');
@@ -516,7 +537,16 @@ function endCombat(result) {
     if (title) title.textContent = 'Chiến thắng!';
     if (desc) desc.textContent = `Bạn đã đánh bại ${m?.name || 'đối thủ'}.`;
     if (rewardBox) rewardBox.hidden = false;
-    if (rewardText) rewardText.textContent = `Nội lực +${m?.reward ?? 0}`;
+    let rewardMsg = `Nội lực +${m?.reward ?? 0}`;
+    // Khu đánh quái nodes (Phase C1) also pay real Linh Thạch, reusing
+    // the same monster.reward number as the "small amount" the roadmap
+    // calls for — the standalone monster-select flow (no map node) is
+    // untouched and stays flavor-only, same as it always was.
+    if (wulinState.mapNodeId && m && typeof addLinhThach === 'function') {
+      addLinhThach(m.reward);
+      rewardMsg += ` · 💠 Linh Thạch +${m.reward}`;
+    }
+    if (rewardText) rewardText.textContent = rewardMsg;
     if (retryBtn) retryBtn.textContent = 'Đấu tiếp';
     wulinLog(`🎉 ${m?.name || 'Đối thủ'} đã gục ngã. Nội lực +${m?.reward ?? 0}!`, 'good');
   } else {
@@ -541,7 +571,16 @@ function hideResultOverlay() {
 function initWulinGame() {
   refreshWulinCharacterPanels();
   renderMonsterGrid();
-  wulinShowScreen('select');
+
+  const mapContext = parseWulinMapContext();
+  if (mapContext) {
+    wulinState.mapNodeId = mapContext.nodeId;
+    const selectBtn = document.getElementById('wulin-result-select');
+    if (selectBtn) selectBtn.textContent = '↩ Quay lại bản đồ';
+    startCombat(mapContext.monsterId);
+  } else {
+    wulinShowScreen('select');
+  }
 
   document.getElementById('wulin-weapon-choose-btn')?.addEventListener('click', openWeaponModal);
   document.getElementById('wulin-weapon-modal-close')?.addEventListener('click', closeWeaponModal);
@@ -564,7 +603,13 @@ function initWulinGame() {
   document.getElementById('wulin-retreat-btn')?.addEventListener('click', () => {
     wulinState.inCombat = false;
     wulinState.actionLocked = false;
-    wulinShowScreen('select');
+    if (wulinState.mapNodeId) {
+      // Retreating mid-fight doesn't count as a win — the node stays
+      // up, no cooldown applied (see game-map.js's tryResumeFromCombat).
+      returnToMap(null);
+    } else {
+      wulinShowScreen('select');
+    }
   });
 
   document.getElementById('wulin-result-retry')?.addEventListener('click', () => {
@@ -574,7 +619,11 @@ function initWulinGame() {
 
   document.getElementById('wulin-result-select')?.addEventListener('click', () => {
     hideResultOverlay();
-    wulinShowScreen('select');
+    if (wulinState.mapNodeId) {
+      returnToMap(wulinState.lastResult);
+    } else {
+      wulinShowScreen('select');
+    }
   });
 }
 

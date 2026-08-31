@@ -20,6 +20,11 @@
    styling), and .map-huyen-banner (a persistent variant of
    .map-trigger-prompt with no button, shown while on a Huyện's
    placeholder local map).
+   v6 (Phase C1): .map-huyen-banner is no longer an absolute-positioned
+   overlay sharing .map-trigger-prompt's chrome/spot — it's a plain
+   static-flow bar above the canvas now. See the real-bug comment on
+   that rule below (two collisions found via Playwright once Bạc Kim
+   Trấn had real monster-node trigger zones to click/joystick through).
    ============================================================ */
 
 /* ── 1. Page shell ── */
@@ -184,12 +189,35 @@
   display: none;
 }
 
-/* Persistent variant shown while on a Huyện's placeholder local map —
-   same bar chrome, no confirm button, can't be dismissed by walking
-   away (it isn't tied to a tile). */
+/* Persistent info bar shown while on a Huyện's local map — same bar
+   chrome as .map-trigger-prompt but NOT an overlay: it sits in normal
+   document flow above the canvas instead of position:absolute inside
+   .map-canvas-inner. Phase C1 real bug (found via Playwright, two
+   iterations): first tried sharing .map-trigger-prompt's absolute
+   top-center spot with the walk-into-a-node confirm prompt — those two
+   only ever had to coexist once Bạc Kim Trấn had real trigger zones,
+   and the banner sat on top of (and silently swallowed clicks on) the
+   prompt's confirm button. Moving the banner to the bottom fixed that
+   collision but created a second one at narrow viewports, where it now
+   overlapped the joystick (same bottom-left corner). Taking it out of
+   the absolute-positioned overlay entirely avoids both — it's static
+   text, not a positioned gameplay element, so it never needed to be an
+   overlay in the first place. */
 .map-huyen-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-size: 13px;
   color: var(--text-secondary);
   line-height: 1.5;
+}
+
+.map-huyen-banner[hidden] {
+  display: none;
 }
 
 /* ── 6. Châu select menu (Phase B) ── */

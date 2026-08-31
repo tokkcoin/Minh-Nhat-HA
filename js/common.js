@@ -246,3 +246,24 @@ function runBootStep(fn) {
     console.warn(`Boot step "${fn.name}" failed:`, err);
   }
 }
+
+// ── Map Economy — Linh Thạch (GAME_MAP_ROADMAP.md, Phase C1) ──
+// The world map's common currency ("Economy & progression" section of
+// GAME_MAP_ROADMAP.md) — earned by Khu đánh quái/Hang động, spent
+// starting at Phase C4 (Khu dân cư). One running total, not per-
+// element — this is the map's own layer on top of real Five Elements
+// data, so it deliberately does NOT go through elementStats.js. Lives
+// in common.js (not game-map.js) because js/game-wulin.js also needs
+// to credit it on a map-launched combat win.
+const LINH_THACH_KEY = 'lifebalance_linh_thach';
+
+function getLinhThach() {
+  const raw = parseInt(localStorage.getItem(LINH_THACH_KEY), 10);
+  return Number.isFinite(raw) && raw >= 0 ? raw : 0;
+}
+
+function addLinhThach(amount) {
+  const next = getLinhThach() + Math.max(0, Math.round(amount));
+  safeSetItem(LINH_THACH_KEY, String(next));
+  return next;
+}
