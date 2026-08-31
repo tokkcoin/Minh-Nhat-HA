@@ -1,19 +1,25 @@
 /* ============================================================
    Life Balance — game-map.css
-   Ngũ Hành Giang Hồ world map engine (GAME_MAP_ROADMAP.md Phase A).
-   Standalone engine test shell (game-map.html) — not yet wired into
-   game-wulin.html's combat flow. Same dark-theme token system as
-   every other page, no hardcoded hex.
+   Ngũ Hành Giang Hồ world map (GAME_MAP_ROADMAP.md).
+   Not yet wired into game-wulin.html's combat flow. Same dark-theme
+   token system as every other page, no hardcoded hex.
    v2 (Phase A2): added .map-joystick — the on-screen virtual joystick
    overlay for touch/mobile movement.
    v3 (Phase A3): no new CSS — blocked-tile styling is drawn on canvas
    (game-map.js), version bumped only to keep the cache-bust convention
    in step with the paired JS change.
    v4 (Phase A4): added .map-trigger-prompt (walk-into-zone confirm
-   bar) and .map-trigger-overlay__body/__back-btn (the placeholder
-   transition screen reuses .finance-modal's existing chrome classes
-   for the overlay/card/close-button, so only the parts unique to this
-   screen need new rules).
+   bar) and a modal transition-screen overlay reusing .finance-modal's
+   chrome — since retired, see v5.
+   v5 (Phase B): retired the A4 modal overlay (Huyện entry now switches
+   the whole screen instead of opening a modal — see game-map.js).
+   Added .map-chau-menu/.map-chau-card--<element> (the 5-Châu select
+   screen, reusing the same "modifier class per element" convention as
+   .chart-mini-card--metal etc. in style.css), .map-nav-header (the
+   in-map back button + screen title, reusing .journal-back's pill
+   styling), and .map-huyen-banner (a persistent variant of
+   .map-trigger-prompt with no button, shown while on a Huyện's
+   placeholder local map).
    ============================================================ */
 
 /* ── 1. Page shell ── */
@@ -138,7 +144,7 @@
   }
 }
 
-/* ── 5. Trigger prompt + transition overlay (Phase A4) ── */
+/* ── 5. Trigger prompt (walk-into-a-Huyện-marker confirm bar) ── */
 /* Non-blocking bar over the canvas — appears while the player stands
    on a marked zone tile, lets them still see the map around them
    (never an instant auto-transition) and confirm or just walk away. */
@@ -166,17 +172,124 @@
   flex: 0 0 auto;
 }
 
-/* The full-screen placeholder sub-screen reuses .finance-modal's
-   overlay/card/close-button chrome (#map-trigger-overlay carries that
-   class in game-map.html) — only its body text and back button are
-   specific to this screen. */
-.map-trigger-overlay__body {
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin-bottom: var(--space-md);
+/* Real bug found in Phase B testing, present since Phase A4: an author
+   `display` rule always beats the browser's default
+   `[hidden]{display:none}` UA rule, so setting `.hidden = true` in JS
+   was never actually hiding this bar (it just rendered an empty box
+   until first shown). Every prior Phase A4 Playwright check only
+   asserted the DOM `hidden` attribute, not real computed visibility,
+   so this went uncaught. Same fix this project already applies to
+   .finance-modal. */
+.map-trigger-prompt[hidden] {
+  display: none;
 }
 
-.map-trigger-overlay__back-btn {
-  width: 100%;
+/* Persistent variant shown while on a Huyện's placeholder local map —
+   same bar chrome, no confirm button, can't be dismissed by walking
+   away (it isn't tied to a tile). */
+.map-huyen-banner {
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ── 6. Châu select menu (Phase B) ── */
+/* Menu-based travel between Châu, per GAME_MAP_ROADMAP.md's Phase B
+   spec ("no walking a world-scale map") — a grid of 5 cards, one per
+   element, each tinted with that element's own color/tint tokens.
+   Modifier-class-per-element follows the same convention as
+   .chart-mini-card--metal etc. in style.css. */
+.map-chau-menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md);
+}
+
+/* An author `display` rule always beats the browser's default
+   `[hidden]{display:none}` UA rule, regardless of selector specificity
+   — same gotcha this project already works around for .finance-modal
+   (see its [hidden] rule). Without this, toggling the `hidden`
+   attribute via JS would stop actually hiding either screen. */
+.map-chau-menu[hidden],
+.map-play-area[hidden] {
+  display: none;
+}
+
+.map-chau-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top-width: 3px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-md);
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+}
+
+.map-chau-card:hover { transform: translateY(-2px); }
+
+.map-chau-card--metal { border-top-color: var(--metal); }
+.map-chau-card--wood  { border-top-color: var(--wood); }
+.map-chau-card--water { border-top-color: var(--water); }
+.map-chau-card--fire  { border-top-color: var(--fire); }
+.map-chau-card--earth { border-top-color: var(--earth); }
+
+.map-chau-card--metal:hover { background: var(--metal-tint); }
+.map-chau-card--wood:hover  { background: var(--wood-tint); }
+.map-chau-card--water:hover { background: var(--water-tint); }
+.map-chau-card--fire:hover  { background: var(--fire-tint); }
+.map-chau-card--earth:hover { background: var(--earth-tint); }
+
+.map-chau-card__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.map-chau-card__name {
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.map-chau-card__huyen {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ── 7. In-map nav header (Phase B) ── */
+/* Back button (Châu overworld -> menu, or Huyện map -> Châu overworld)
+   + current screen title, shown above the canvas whenever a map is
+   loaded. Reuses .journal-back's pill styling instead of a new button
+   style. */
+.map-nav-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.map-nav-header__back {
+  margin: 0;
+  border: 1px solid var(--border);
+}
+
+.map-nav-header__title {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  color: var(--text-primary);
+}
+
+.map-play-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
 }
