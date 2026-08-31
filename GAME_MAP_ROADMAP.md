@@ -24,21 +24,121 @@ enterable buildings/dungeons. Adapted to this app's Five Elements theme:
   châu's 3 Huyện via walkable terrain/roads. Entering a Huyện marker
   transitions to that Huyện's local map.
 - **Huyện map** (walkable local map): contains 5 distinct, physically
-  enterable khu vực (zones):
-  1. Khu đánh quái (wild monster field) — walking in triggers combat
-     (reuse game-wulin's existing monster-select/combat system).
-  2. Hang động (cave/dungeon) — a tougher, themed instance.
-  3. Tháp (tower) — floor-climbing scaling challenge, tracks highest
-     floor reached.
-  4. Khu dân cư / mua sắm (town/shop) — NPC(s), a shop UI (define/reuse
-     a spendable currency — check what already exists, e.g. skill hours,
-     before inventing a new one).
-  5. Khu luyện công (training grounds) — an active/idle training
-     interaction feeding back into the player's stats.
+  enterable khu vực — see "Khu vực mechanics" below for what each one
+  actually does, not just what it's called.
 
-Player stats everywhere in this world still derive from the player's
-real Five Elements data via `js/elementStats.js` (already built) —
-never invent a parallel stat system.
+Player **combat/character** stats everywhere in this world still derive
+from the player's real Five Elements data via `js/elementStats.js`
+(already built) — never invent a parallel stat system. The in-world
+**economy** (currency, shop items, cosmetics) is a separate, secondary
+system layered on top — see "Economy & progression" below for exactly
+where the line is.
+
+## Economy & progression (new — fills the gap the first draft left vague)
+
+Two earnable currencies, both from playing the map, neither from real
+Five Elements data:
+
+- **Linh Thạch** (Spirit Stones) — the common currency. Earned from
+  Khu đánh quái (small amounts) and Hang động (larger amounts, per
+  clear). Spent in Khu dân cư on consumables and cosmetics.
+- **Điểm Danh Vọng** (Prestige Points) — the rare currency. Earned only
+  from Tháp, scaled by floor reached (e.g. floor 10 pays more per floor
+  than floor 1). Spent in Khu dân cư on exclusive cosmetic titles/skins
+  not purchasable with Linh Thạch.
+
+**Hard rule (do not violate this while building any khu vực):**
+everything either currency buys is cosmetic, a consumable, or a
+short-duration buff (minutes, not permanent) — never a permanent stat
+increase, never a shortcut around real Five Elements progress. The
+app's entire hook is "real habits → real power"; a shop that sells
+permanent power would let players buy their way around that and quietly
+gut the reason the feature exists. Consumables/buffs are fine (e.g. a
+potion that gives +5% crit for the next 3 fights) because they're
+temporary and still gated behind playing the map, not behind spending
+real money or skipping real habits.
+
+**Difficulty tiers per Huyện**, reusing the game's existing 5-tier
+rarity language (`bronze → silver → gold → epic → legendary`, same
+tiers `js/elementStats.js`/`weapon-prototype.js` already use) so a
+player recognizes the scale immediately:
+
+| Huyện position in its Châu | Recommended tier | Monster/tower scaling |
+|---|---|---|
+| 1st Huyện | bronze/silver | Beatable with baseline (no-real-data) stats |
+| 2nd Huyện | silver/gold | Expects some real Five Elements progress |
+| 3rd Huyện | gold/epic/legendary | Expects meaningful real progress across multiple elements |
+
+This gives a legible reason to explore further Huyện as the player's
+real habits grow, rather than all 15 Huyện being flat difficulty.
+
+## Khu vực mechanics (what each of the 5 zones actually does)
+
+The first draft of this roadmap only named these. Concrete specs below
+— build to these, adjusting only where the real code makes something
+clearly better, and note the deviation in your commit message + log.
+
+1. **Khu đánh quái (wild field)** — 3-6 visible monster nodes placed on
+   the local map (not random-encounter-on-every-tile — a VLTK-style
+   visible mob you walk up to and engage). Walking into one opens the
+   existing game-wulin combat screen. Reward: small Linh Thạch, small
+   chance of a temporary buff item. Respawns after a short delay so the
+   zone isn't a one-time-use.
+2. **Hang động (cave/dungeon)** — one instanced sub-map (can be a
+   smaller, separately-loaded tile grid, not a literal door into the
+   same overworld) ending in a single named mini-boss fight (a stronger
+   version of an existing monster, or a new one themed to that Châu's
+   element). Once-per-real-day clear limit (track last-clear timestamp
+   in localStorage, same pattern `js/dailyTasks.js` already uses
+   elsewhere in this app) so it's a daily-return hook, not farmable.
+   Reward: larger Linh Thạch, chance at a cosmetic weapon skin.
+3. **Tháp (tower)** — sequential floors, each one harder than the last
+   (simple scaling formula on monster HP/attack is fine to start).
+   Player climbs until they lose; their best floor is saved
+   (`localStorage`, per-Huyện or global — decide and document which
+   when you build this). Reward scales with floor reached, paid in
+   Điểm Danh Vọng. No multiplayer leaderboard yet (no backend for
+   that) — a personal best is enough for this phase.
+4. **Khu dân cư / mua sắm (town)** — the one khu vực that's a UI screen
+   more than a combat encounter. At minimum two NPCs: a shopkeeper
+   (spends Linh Thạch on consumables/cosmetics) and a "Cải Trang Sư"
+   (spends Điểm Danh Vọng on exclusive cosmetics). This is also the
+   natural home for a simple daily-quest NPC later (not required for
+   the first build) that nudges the player toward the app's real habit
+   pages. Reuse the existing `.finance-modal` chrome convention for any
+   shop dialog, same as weapon-prototype.js's picker does.
+5. **Khu luyện công (training grounds)** — a short interactive
+   mini-challenge (a tap-timing or hold-and-release game is enough,
+   doesn't need to be elaborate) that on success grants a *short*
+   temporary combat buff (minutes-scale, e.g. +5% crit for 10 minutes)
+   — a pre-fight ritual, not a stat system. This is the one khu vực
+   most likely to tempt scope creep into "just another mini-game" —
+   keep it under a few minutes of build time; it's a flavor beat, not
+   a fifth full game.
+
+## Visual direction (new — needed once real content starts, not just
+the engine)
+
+No external art assets (consistent with this repo's existing
+no-dependency stance) — everything is drawn via canvas primitives
+through `js/canvasUtils.js`, same convention game-arena.js/
+game-artillery.js already established:
+
+- **Tiles**: flat-colored rectangles + a simple 1-2px border, no
+  texture/sprites. Color per tile type pulled from CSS tokens via
+  `readCssVar()` — grass/path neutral tones for shared terrain, and
+  each Châu's own element color (`--kim`/`--moc`/`--thuy`/`--hoa`/
+  `--tho`, already defined in `css/style.css`) tinting that Châu's
+  distinctive terrain (e.g. Hoả Châu's ground reads warmer/redder than
+  Thuỷ Châu's).
+- **Player sprite**: a simple filled shape (circle or diamond) with a
+  small directional indicator (e.g. a notch/triangle pointing the
+  facing direction) — not a pixel-art character. Matches this
+  project's existing minimalist canvas style, keeps scope realistic.
+- **Buildings/zone markers**: simple geometric shapes (rect body +
+  triangle roof reads as "building" instantly) using `roundRectPath()`
+  from canvasUtils, color-coded per khu vực type so a player can tell
+  Hang động from Tháp from across the map at a glance.
 
 ## Technical approach (mandatory constraints)
 
@@ -46,10 +146,8 @@ never invent a parallel stat system.
   frameworks/libraries — same constraint as the rest of this repo.
 - Reuse `js/canvasUtils.js` (readCssVar/roundRectPath) for any canvas
   color/shape work rather than re-deriving it a third time.
-- Mobile-first controls: Pi Browser is primarily a phone browser. Touch
-  input (virtual joystick or tap-to-move) is not optional polish — it's
-  core, build it in Phase A2, don't ship desktop-only keyboard controls
-  as if that were sufficient.
+- Mobile-first controls: Pi Browser is primarily a phone browser —
+  confirmed working as of Phase A2 (virtual joystick).
 - Tile-grid based movement + collision (simpler and more tractable in
   vanilla JS than pixel-perfect free-form physics) — a 2D grid of
   walkable/blocked cells, player position snapped to it, camera is a
@@ -61,32 +159,59 @@ never invent a parallel stat system.
 
 ## Phase checklist (update after every session)
 
-- [x] **A1 — Core render/camera/movement.** Tile-grid renderer, camera
-      viewport following the player sprite, keyboard (arrow/WASD)
-      movement, on one small placeholder test map (doesn't need real
-      content yet — just prove the engine works). Done 2026-08-31 —
-      see log entry below.
-- [x] **A2 — Mobile touch controls.** Virtual joystick, tested at a real
-      mobile viewport width (390px class). Done 2026-08-31 — see log
-      entry below.
+- [x] **A1 — Core render/camera/movement.** Done 2026-08-31 — see log.
+- [x] **A2 — Mobile touch controls.** Virtual joystick. Done
+      2026-08-31 — see log.
 - [ ] **A3 — Collision / walkability layer.** A per-tile
       walkable/blocked flag; player cannot walk through blocked tiles
       (buildings, water, map edges).
-- [ ] **A4 — Interaction/transition triggers.** Proximity- or
-      overlap-based zones that transition to another screen/state when
-      the player walks into them (test with one dummy trigger first).
+- [ ] **A4 — Interaction/transition triggers.** Player enters a marked
+      zone → a confirm prompt appears ("Nhấn để vào Hang Động", not an
+      instant auto-transition, to avoid accidental triggers from just
+      walking past) → confirming transitions to the target
+      screen/state. Test with one dummy trigger first.
 - [ ] **B — World navigation shell.** 5-Châu menu screen (reuses
       existing element color tokens/theming). Selecting a Châu loads its
       walkable overworld map with 3 Huyện markers connected by
       roads/paths. Walking into (or selecting) a Huyện marker loads that
-      Huyện's own local map.
-- [ ] **C — First full Huyện vertical slice.** Pick Kim Châu's first
-      Huyện. Build its local walkable map with all 5 khu vực physically
-      present and enterable, each wired to real (even if simple at
-      first) functionality — not placeholder labels.
-- [ ] **D — Replicate to remaining Huyện/Châu.** Once the Huyện template
-      is proven, build out the other 2 Huyện of Kim Châu, then the
-      remaining 4 Châu (3 Huyện each) — 14 more Huyện maps total.
+      Huyện's own local map. Travel *between* Châu is menu-based (no
+      walking a "world" scale map) — only Huyện-to-Huyện within one
+      Châu is real walking.
+- [ ] **C1 — Bạc Kim Trấn: Khu đánh quái.** First real Huyện map
+      (Kim Châu's first Huyện, bronze/silver tier per the difficulty
+      table above), populated with 3-6 monster nodes per the mechanics
+      spec above, wired to real combat.
+- [ ] **C2 — Bạc Kim Trấn: Hang động.** Instanced sub-map + named
+      mini-boss + once-per-day clear limit + Linh Thạch/cosmetic reward.
+- [ ] **C3 — Bạc Kim Trấn: Tháp.** Floor-climb loop, best-floor
+      persistence, Điểm Danh Vọng payout.
+- [ ] **C4 — Bạc Kim Trấn: Khu dân cư.** Shopkeeper + Cải Trang Sư
+      NPCs, shop UI, introduces the Linh Thạch/Điểm Danh Vọng currency
+      system for real (this is the first khu vực that needs it —
+      C1-C3 only *earn* currency, C4 is where it's *spent*).
+- [ ] **C5 — Bạc Kim Trấn: Khu luyện công.** Short training
+      mini-interaction + temporary buff.
+- [ ] **D1 — Hoàng Kim Cốc** (Kim Châu's 2nd Huyện, silver/gold tier).
+      Apply the proven C1-C5 template with this Huyện's own monster/
+      NPC flavor.
+- [ ] **D2 — Thiết Huyết Thành** (Kim Châu's 3rd Huyện, gold/epic/
+      legendary tier). Completes Kim Châu.
+- [ ] **D3-D5 — Mộc Châu's 3 Huyện** (Lục Trúc Trang, Bách Thảo Cốc,
+      Sơn Lâm Trấn).
+- [ ] **D6-D8 — Thuỷ Châu's 3 Huyện** (Vân Thuỷ Trấn, Đông Hải Cảng,
+      Bích Ba Cốc).
+- [ ] **D9-D11 — Hoả Châu's 3 Huyện** (Viêm Dương Thành, Hồng Liên Tự,
+      Cuồng Phong Trại).
+- [ ] **D12-D14 — Thổ Châu's 3 Huyện** (Bàn Sơn Thành, Tuyệt Bích Trấn,
+      Vạn Lý Bình Nguyên). Completes the full 5-Châu, 15-Huyện world.
+
+Each D-item should ship with genuinely different monster/NPC flavor for
+its Châu's element (not a copy-pasted reskin in name only) — e.g. Hoả
+Châu's monsters/theming should read as fire-flavored, not generically
+identical to Kim Châu's with a different color variable. Use judgment
+on how much per-Huyện variation is worth the build time; a reasonable
+bar is "a player who's seen 2 Huyện can tell they're in a new one within
+a few seconds," not full bespoke art for all 15.
 
 ## Naming (starting suggestions — refine freely as you build, keep it
 consistent with this repo's existing Vietnamese wuxia flavor)
@@ -103,6 +228,20 @@ consistent with this repo's existing Vietnamese wuxia flavor)
   Vạn Lý Bình Nguyên
 
 ## Log
+
+### 2026-08-31 (session 3) — Roadmap expanded: economy, khu vực mechanics, C split into C1-C5, D ordered
+Owner asked for more detail after reviewing the first draft. Added: a
+concrete two-currency economy (Linh Thạch / Điểm Danh Vọng) with an
+explicit hard rule that neither ever buys permanent stat power (only
+cosmetics/consumables/short buffs) so the map layer can't undercut the
+app's core "real habits → real power" hook; per-Huyện difficulty tiers
+reusing the existing bronze→legendary language; a real mechanics spec
+for all 5 khu vực types (previously just named, not specified); a
+visual-direction section (canvas-primitive tiles/sprites, no external
+art, per-Châu color tinting via existing CSS tokens); and split the
+previously-monolithic Phase C into C1-C5 (one khu vực each, sized to
+one daily-dev session) plus an explicit D1-D14 build order covering all
+15 Huyện with a note against copy-paste reskinning.
 
 ### 2026-08-31 (session 2) — Phase A2 done: virtual joystick touch controls
 
