@@ -9,6 +9,11 @@
    v3 (Phase A3): no new CSS — blocked-tile styling is drawn on canvas
    (game-map.js), version bumped only to keep the cache-bust convention
    in step with the paired JS change.
+   v4 (Phase A4): added .map-trigger-prompt (walk-into-zone confirm
+   bar) and .map-trigger-overlay__body/__back-btn (the placeholder
+   transition screen reuses .finance-modal's existing chrome classes
+   for the overlay/card/close-button, so only the parts unique to this
+   screen need new rules).
    ============================================================ */
 
 /* ── 1. Page shell ── */
@@ -131,4 +136,47 @@
     left: var(--space-md);
     bottom: var(--space-md);
   }
+}
+
+/* ── 5. Trigger prompt + transition overlay (Phase A4) ── */
+/* Non-blocking bar over the canvas — appears while the player stands
+   on a marked zone tile, lets them still see the map around them
+   (never an instant auto-transition) and confirm or just walk away. */
+.map-trigger-prompt {
+  position: absolute;
+  top: var(--space-md);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - var(--space-lg));
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-sm) var(--space-md);
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.map-trigger-prompt__btn {
+  padding: 6px 14px;
+  font-size: 13px;
+  flex: 0 0 auto;
+}
+
+/* The full-screen placeholder sub-screen reuses .finance-modal's
+   overlay/card/close-button chrome (#map-trigger-overlay carries that
+   class in game-map.html) — only its body text and back button are
+   specific to this screen. */
+.map-trigger-overlay__body {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-md);
+}
+
+.map-trigger-overlay__back-btn {
+  width: 100%;
 }

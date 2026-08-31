@@ -165,11 +165,12 @@ game-artillery.js already established:
 - [x] **A3 — Collision / walkability layer.** A per-tile
       walkable/blocked flag; player cannot walk through blocked tiles
       (buildings, water, map edges). Done 2026-08-31 — see log.
-- [ ] **A4 — Interaction/transition triggers.** Player enters a marked
+- [x] **A4 — Interaction/transition triggers.** Player enters a marked
       zone → a confirm prompt appears ("Nhấn để vào Hang Động", not an
       instant auto-transition, to avoid accidental triggers from just
       walking past) → confirming transitions to the target
-      screen/state. Test with one dummy trigger first.
+      screen/state. Test with one dummy trigger first. Done
+      2026-08-31 — see log.
 - [ ] **B — World navigation shell.** 5-Châu menu screen (reuses
       existing element color tokens/theming). Selecting a Châu loads its
       walkable overworld map with 3 Huyện markers connected by
@@ -228,6 +229,95 @@ consistent with this repo's existing Vietnamese wuxia flavor)
   Vạn Lý Bình Nguyên
 
 ## Log
+
+### 2026-08-31 (session 5) — Phase A4 done: interaction/transition triggers
+
+- **Verified ground truth before starting**: read the actual A1-A3 code
+  in `js/game-map.js` (not just this log) — `isWalkable()`/
+  `tryStartMove()` and the wall-tile collision from Phase A3 were
+  confirmed working as claimed, so A4 could build cleanly on top
+  without re-deriving anything.
+- **`TRIGGER_ZONES`** (`js/game-map.js`) — one dummy zone,
+  `{ id: 'dummy-cave', tx: 5, ty: 7, icon: '🕳️', label, promptText }`,
+  on an open grass tile clear of `WALL_TILES` and the player spawn.
+  Shaped so Phase C's real khu vực markers slot into the same array
+  with no rewrite (same pattern `TILE_TYPES` used for A3's wall type).
+- **State machine** (`mapState.trigger.state`): `none` → `prompt`
+  (standing on a zone tile, confirm bar visible) → `transitioned`
+  (placeholder sub-screen open, movement paused via an early return in
+  `tryStartMove()`) → `cooldown` (sub-screen just closed; waits for the
+  player to step off the tile before the prompt can re-fire, so closing
+  the overlay doesn't instantly re-show the same prompt) → back to
+  `none` once they've left the tile. `updateTriggerZone()` drives all
+  the automatic transitions (entering/leaving a zone tile) each frame
+  from the game loop; `confirmActiveTrigger()`/`closeTriggerOverlay()`
+  handle the two explicit user actions.
+- **UI**: a new non-blocking `.map-trigger-prompt` bar
+  (`game-map.html`/`css/game-map.css`) anchored to the top of the
+  canvas — deliberately not a full overlay, so the player can still see
+  the map and just walk away to cancel, per the roadmap's "not an
+  instant auto-transition" spec. The placeholder "transitioned"
+  sub-screen reuses `.finance-modal`'s existing overlay/card/close-
+  button chrome (`#map-trigger-overlay` carries that class directly) —
+  only its body copy and back button needed new CSS
+  (`.map-trigger-overlay__body`/`__back-btn`) — same reuse-over-new-
+  system instinct the roadmap calls out for the real C4 shop dialog.
+  Confirm works via clicking/tapping the "Vào" button or pressing
+  Enter/Space while the prompt is open; closing works via the "Quay lại
+  bản đồ" button, the modal's "✕", or Escape.
+- **No design deviation from the roadmap spec** — built exactly what
+  A4 described (confirm-first entry, walk-away-to-cancel, transition to
+  a placeholder screen). The only addition not explicitly spelled out
+  is the `cooldown` state, added because without it closing the overlay
+  while still standing on the tile would instantly re-show the same
+  prompt — worth calling out in case Phase C's real zones want
+  different re-entry behavior (e.g. a dungeon you can walk straight
+  back into after leaving mid-fight).
+- **Tested via a scratch Playwright script** (same convention as every
+  prior phase, `node test-a4.js` in the OS scratch dir): desktop
+  keyboard run at 1024px — walked from spawn (10,7) to the trigger tile
+  (5,7), confirmed the prompt appears with the correct text; walked off
+  without confirming and confirmed the prompt auto-hides (cancel-by-
+  leaving); walked back on and confirmed via Enter, confirmed the
+  overlay opens with the correct title and the prompt hides; confirmed
+  movement (ArrowUp) is rejected while the overlay is open, position
+  unchanged; closed via Escape, confirmed the prompt does NOT
+  immediately reappear (cooldown working) and does reappear after
+  stepping off then back onto the tile; re-confirmed via a mouse click
+  on the "Vào" button and closed via the "✕" button; re-ran the Phase
+  A3 wall-collision regression (approaching (10,4) from the south,
+  movement into it still rejected) to confirm A4 didn't regress
+  collision. Mobile run at 390×844 with `hasTouch`/`isMobile` — drove
+  the player to the trigger tile via joystick flicks, confirmed the
+  prompt appears, tapped "Vào" to open the overlay and "Quay lại bản
+  đồ" to close it. Screenshot-checked 1024/768/480px (plus the mobile
+  viewport) — prompt bar and overlay both render inside the canvas/page
+  bounds with no overlap with the joystick or HUD, no horizontal
+  overflow; visually confirmed the overlay's dark-theme modal chrome
+  reads correctly. Zero `pageerror` and zero unexpected `console.error`
+  across all runs (only the same pre-existing sandbox network-block
+  noise for the Pi SDK/fonts every prior session has hit).
+- **Not done / deliberately deferred**: no real Châu/Huyện content (B/C/D)
+  — this dummy trigger and its placeholder sub-screen are still
+  engine-proof-only, same "one phase at a time" discipline as every
+  prior session. Phase A is now fully complete (A1-A4 all done).
+- **Next session**: start Phase B — the 5-Châu menu screen (reuses
+  existing element color tokens/theming) and the first walkable
+  overworld map with 3 Huyện markers connected by roads/paths, per the
+  roadmap's Phase B spec. This is the first phase that needs a second,
+  larger map (a Châu overworld) alongside the existing placeholder test
+  map — decide during that session whether `game-map.js`'s engine
+  functions generalize to an arbitrary map object/size cleanly, or need
+  a small refactor first, before adding the real Kim Châu content.
+- **Backup tag push**: not re-attempted this session — per the 2026-08-31
+  (session 2) note, this is treated as a confirmed standing gap (a full
+  week+ of consecutive `403`/`RPC failed` failures on tag-ref pushes
+  specifically, branch/content pushes unaffected) rather than worth
+  re-testing every session. Still needs a broader GitHub App permission
+  grant only the human owner can make. Used the pre-merge `main` SHA as
+  the rollback point instead (see this session's actual commit history
+  for the exact SHA, since this log entry is written before the merge
+  commit exists).
 
 ### 2026-08-31 (session 4) — Phase A3 done: collision/walkability layer
 
