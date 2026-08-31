@@ -280,9 +280,16 @@ consistent with this repo's existing Vietnamese wuxia flavor)
   the roadmap spec; test with one dummy trigger tile first, confirming
   the prompt appears on entry, confirming transitions, and declining (or
   walking away) does not.
-- **Backup tag push**: see this session's note below the git-workflow
-  step in this log entry's follow-up, or the next session's log if this
-  one didn't get updated after the push attempt.
+- **Backup tag push**: retried this session rather than skipped outright
+  (in case the earlier 403 was transient) — still fails with the same
+  `403`/`RPC failed`/`send-pack: unexpected disconnect` as every session
+  since 2026-08-24, a full week of consecutive failures now. Used the
+  pre-merge `main` SHA as the rollback point instead:
+  `c8e47891ef6cd6c2937b9ff86753b75aca4686d8`. Per the 2026-08-31
+  (session 2) note, treating this as a confirmed standing gap rather
+  than worth re-testing every single session going forward — likely
+  needs a broader GitHub App permission grant (tag-ref push specifically,
+  branch/content pushes work fine) that only the human owner can grant.
 
 ### 2026-08-31 (session 3) — Roadmap expanded: economy, khu vực mechanics, C split into C1-C5, D ordered
 Owner asked for more detail after reviewing the first draft. Added: a
